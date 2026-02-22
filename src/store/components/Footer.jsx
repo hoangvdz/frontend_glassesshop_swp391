@@ -9,24 +9,24 @@ function Footer() {
           {/* Brand */}
           <div>
             <h2 className="text-lg font-bold tracking-wide mb-4">
-              Eyewear
+              Mắt Kính
             </h2>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Premium eyewear inspired by modern minimalism.  
-              Designed for everyday clarity and comfort.
+              Mắt kinh thời trang cao cấp, nơi phong cách gặp gỡ chất lượng.  
+              Thiết kế tinh tế, chất lượng vượt trội, mang đến sự tự tin và phong cách cho mọi ánh nhìn.
             </p>
           </div>
 
           {/* Shop */}
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-widest mb-4">
-              Shop
+              Cửa hàng
             </h3>
             <ul className="space-y-3 text-sm text-gray-500">
-              <li className="hover:opacity-60 cursor-pointer">New Arrivals</li>
-              <li className="hover:opacity-60 cursor-pointer">Optical Glasses</li>
-              <li className="hover:opacity-60 cursor-pointer">Sunglasses</li>
-              <li className="hover:opacity-60 cursor-pointer">Accessories</li>
+              <li className="hover:opacity-60 cursor-pointer">Hàng mới</li>
+              <li className="hover:opacity-60 cursor-pointer">Kính mắt công sở</li>
+              <li className="hover:opacity-60 cursor-pointer">Kính râm</li>
+              <li className="hover:opacity-60 cursor-pointer">Phụ kiện</li>
             </ul>
           </div>
 
@@ -36,17 +36,17 @@ function Footer() {
               Support
             </h3>
             <ul className="space-y-3 text-sm text-gray-500">
-              <li className="hover:opacity-60 cursor-pointer">About Us</li>
-              <li className="hover:opacity-60 cursor-pointer">Shipping & Returns</li>
-              <li className="hover:opacity-60 cursor-pointer">Warranty</li>
-              <li className="hover:opacity-60 cursor-pointer">Contact</li>
+              <li className="hover:opacity-60 cursor-pointer">Giới thiệu</li>
+              <li className="hover:opacity-60 cursor-pointer">Vận chuyển & Trả hàng</li>
+              <li className="hover:opacity-60 cursor-pointer">Bảo hành</li>
+              <li className="hover:opacity-60 cursor-pointer">Liên hệ</li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-widest mb-4">
-              Contact
+              Liên hệ
             </h3>
             <ul className="space-y-3 text-sm text-gray-500">
               <li>Email: support@eyewear.com</li>
@@ -61,7 +61,7 @@ function Footer() {
 
           {/* Copyright */}
           <p className="text-xs text-gray-400 tracking-wide">
-            © 2026 Eyewear. All rights reserved.
+            © 2026 Bản quyền thuộc về Mắt Kính. Bảo lưu mọi quyền.
           </p>
 
           {/* Social */}
