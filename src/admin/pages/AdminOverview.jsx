@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import Chart from "react-apexcharts";
 
 import {
@@ -6,6 +7,10 @@ import {
   FiShoppingCart,
   FiUsers,
   FiTrendingUp,
+  FiArrowUpRight,
+  FiArrowDownRight,
+  FiCalendar,
+  FiMoreHorizontal,
 } from "react-icons/fi";
 
 import {
@@ -15,104 +20,171 @@ import {
   recentOrders,
 } from "../data/adminMock";
 
-/* =========================
-    PREPARE DATA
-========================= */
+/* ── animation helpers ── */
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.4, delay, ease: "easeOut" },
+});
 
+/* ── chart data ── */
 const revenueSeries = [
+  { name: "Doanh thu", data: revenueData.map((i) => i.revenue) },
+];
+const revenueCategories = revenueData.map((i) => i.day);
+
+/* ── stat card config ── */
+const statCards = [
   {
-    name: "Doanh thu",
-    data: revenueData.map((item) => item.revenue),
+    label: "Tổng doanh thu",
+    icon: FiDollarSign,
+    color: "blue",
+    bg: "bg-blue-50",
+    text: "text-blue-600",
+    ring: "ring-blue-100",
+    change: "+12.5%",
+    up: true,
+    note: "so với tháng trước",
+  },
+  {
+    label: "Đơn hàng",
+    icon: FiShoppingCart,
+    color: "green",
+    bg: "bg-green-50",
+    text: "text-green-600",
+    ring: "ring-green-100",
+    change: "+8.2%",
+    up: true,
+    note: "so với tháng trước",
+  },
+  {
+    label: "Khách hàng",
+    icon: FiUsers,
+    color: "yellow",
+    bg: "bg-yellow-50",
+    text: "text-yellow-600",
+    ring: "ring-yellow-100",
+    change: "-2.1%",
+    up: false,
+    note: "so với tháng trước",
+  },
+  {
+    label: "Tăng trưởng",
+    icon: FiTrendingUp,
+    color: "purple",
+    bg: "bg-purple-50",
+    text: "text-purple-600",
+    ring: "ring-purple-100",
+    change: "+5.4%",
+    up: true,
+    note: "so với tháng trước",
   },
 ];
 
-const revenueCategories = revenueData.map((item) => item.day);
+/* ── order status badge ── */
+const statusStyle = {
+  "Hoàn thành": "bg-green-50 text-green-700 ring-1 ring-green-200",
+  "Đang xử lý": "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  "Đã hủy": "bg-red-50 text-red-700 ring-1 ring-red-200",
+  "Chờ xác nhận": "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",
+};
 
 function AdminOverview() {
+  const today = new Date().toLocaleDateString("vi-VN", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <div className="px-8 pt-8 pb-16 bg-gradient-to-br from-gray-50 to-gray-100 min-h-full">
-      {/* TITLE */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Tổng quan hệ thống</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Theo dõi hiệu suất kinh doanh và đơn hàng
-        </p>
-      </div>
+      {/* ── TITLE ── */}
+      <motion.div
+        {...fadeUp(0)}
+        className="mb-8 flex items-start justify-between"
+      >
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Tổng quan hệ thống
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Theo dõi hiệu suất kinh doanh và đơn hàng
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-400 bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-2">
+          <FiCalendar size={14} />
+          <span className="capitalize">{today}</span>
+        </div>
+      </motion.div>
 
-      {/* =========================
-            STATS
-      ========================= */}
+      {/* ── STAT CARDS ── */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-        {/* Doanh thu */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">Tổng doanh thu</p>
-            <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-inner group-hover:scale-110 transition">
-              <FiDollarSign size={18} />
-            </div>
-          </div>
+        {statCards.map((card, i) => {
+          const Icon = card.icon;
+          const ChangeIcon = card.up ? FiArrowUpRight : FiArrowDownRight;
+          return (
+            <motion.div
+              key={card.label}
+              {...fadeUp(0.05 * i)}
+              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-500">{card.label}</p>
+                <div
+                  className={`w-11 h-11 flex items-center justify-center rounded-xl ${card.bg} ${card.text} shadow-inner group-hover:scale-110 transition`}
+                >
+                  <Icon size={18} />
+                </div>
+              </div>
 
-          <p className="text-2xl font-semibold mt-5 text-gray-800">
-            {overviewStats[0].value}
-          </p>
-        </div>
+              <p className="text-2xl font-semibold mt-5 text-gray-800">
+                {overviewStats[i]?.value ?? "—"}
+              </p>
 
-        {/* Đơn hàng */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">Đơn hàng</p>
-            <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-green-50 text-green-600 shadow-inner group-hover:scale-110 transition">
-              <FiShoppingCart size={18} />
-            </div>
-          </div>
-
-          <p className="text-2xl font-semibold mt-5 text-gray-800">
-            {overviewStats[1].value}
-          </p>
-        </div>
-
-        {/* Khách hàng */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">Khách hàng</p>
-            <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-yellow-50 text-yellow-600 shadow-inner group-hover:scale-110 transition">
-              <FiUsers size={18} />
-            </div>
-          </div>
-
-          <p className="text-2xl font-semibold mt-5 text-gray-800">
-            {overviewStats[2].value}
-          </p>
-        </div>
-
-        {/* Tăng trưởng */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">Tăng trưởng</p>
-            <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-purple-50 text-purple-600 shadow-inner group-hover:scale-110 transition">
-              <FiTrendingUp size={18} />
-            </div>
-          </div>
-
-          <p className="text-2xl font-semibold mt-5 text-gray-800">
-            {overviewStats[3].value}
-          </p>
-        </div>
+              {/* Change badge */}
+              <div className="flex items-center gap-1.5 mt-3">
+                <span
+                  className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    card.up
+                      ? "bg-green-50 text-green-600"
+                      : "bg-red-50 text-red-500"
+                  }`}
+                >
+                  <ChangeIcon size={11} />
+                  {card.change}
+                </span>
+                <span className="text-xs text-gray-400">{card.note}</span>
+              </div>
+            </motion.div>
+          );
+        })}
       </section>
 
-      {/* =========================
-            CHART LỚN + RECENT ORDERS
-      ========================= */}
+      {/* ── CHART + RECENT ORDERS ── */}
       <section className="mt-10 grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* AREA */}
-        <div className="xl:col-span-2 bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">
-            Doanh thu 7 ngày
-          </h2>
+        {/* Area chart */}
+        <motion.div
+          {...fadeUp(0.15)}
+          className="xl:col-span-2 bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300"
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div>
+              <h2 className="text-base font-semibold text-gray-800">
+                Doanh thu 7 ngày
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Tổng hợp doanh số theo ngày
+              </p>
+            </div>
+            <button className="text-gray-300 hover:text-gray-500 transition">
+              <FiMoreHorizontal size={18} />
+            </button>
+          </div>
 
           <Chart
             type="area"
-            height={320}
+            height={300}
             series={revenueSeries}
             options={{
               chart: {
@@ -132,27 +204,38 @@ function AdminOverview() {
                 },
               },
               dataLabels: { enabled: false },
-              xaxis: { categories: revenueCategories },
-              grid: {
-                borderColor: "#f1f5f9",
-                strokeDashArray: 4,
+              xaxis: {
+                categories: revenueCategories,
+                labels: { style: { fontSize: "12px", colors: "#9ca3af" } },
               },
-              tooltip: {
-                y: {
-                  formatter: (val) => val.toLocaleString("vi-VN") + " đ",
+              yaxis: {
+                labels: {
+                  style: { fontSize: "12px", colors: "#9ca3af" },
+                  formatter: (v) => v.toLocaleString("vi-VN"),
                 },
+              },
+              grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
+              tooltip: {
+                y: { formatter: (val) => val.toLocaleString("vi-VN") + " đ" },
               },
             }}
           />
-        </div>
+        </motion.div>
 
-        {/* RECENT ORDERS */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-semibold text-gray-800">
-              Đơn hàng gần đây
-            </h2>
-
+        {/* Recent orders */}
+        <motion.div
+          {...fadeUp(0.2)}
+          className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 p-6 flex flex-col"
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-base font-semibold text-gray-800">
+                Đơn hàng gần đây
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {recentOrders.length} đơn hàng mới nhất
+              </p>
+            </div>
             <Link
               to="/dashboard/orders"
               className="text-sm font-medium text-blue-600 hover:text-blue-700 transition"
@@ -161,84 +244,150 @@ function AdminOverview() {
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {recentOrders.slice(0, 5).map((order) => (
-              <div
+          <div className="space-y-1 flex-1">
+            {recentOrders.slice(0, 5).map((order, i) => (
+              <motion.div
                 key={order.id}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 + i * 0.06 }}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 hover:shadow-sm transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <img
                     src={order.avatar}
                     alt={order.customer}
-                    className="w-9 h-9 rounded-full object-cover"
+                    className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-100"
                   />
                   <div>
-                    <p className="text-sm font-medium text-gray-800">
+                    <p className="text-sm font-medium text-gray-800 leading-tight">
                       {order.customer}
                     </p>
-                    <p className="text-xs text-gray-500">{order.createdAt}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {order.createdAt}
+                    </p>
                   </div>
                 </div>
 
-                <p className="text-sm font-semibold text-gray-700">
-                  {order.total}
-                </p>
-              </div>
+                <div className="flex flex-col items-end gap-1">
+                  <p className="text-sm font-semibold text-gray-700">
+                    {order.total}
+                  </p>
+                  {order.status && (
+                    <span
+                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusStyle[order.status] ?? "bg-gray-50 text-gray-500"}`}
+                    >
+                      {order.status}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* =========================
-            CÁC CHART KHÁC
-      ========================= */}
+      {/* ── DONUT + LINE ── */}
       <section className="mt-10 grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* DONUT */}
-        <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">
-            Tỷ lệ trạng thái
-          </h2>
+        {/* Donut */}
+        <motion.div
+          {...fadeUp(0.25)}
+          className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300"
+        >
+          <div className="mb-1">
+            <h2 className="text-base font-semibold text-gray-800">
+              Tỷ lệ trạng thái
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Phân bổ đơn hàng theo trạng thái
+            </p>
+          </div>
 
           <Chart
             type="donut"
-            height={320}
+            height={300}
             series={orderStatusData.map((i) => i.value)}
             options={{
               labels: orderStatusData.map((i) => i.name),
               colors: ["#2563eb", "#22c55e", "#facc15", "#ef4444"],
               stroke: { width: 0 },
-              legend: {
-                position: "bottom",
-                fontSize: "13px",
+              plotOptions: {
+                pie: {
+                  donut: {
+                    size: "65%",
+                    labels: {
+                      show: true,
+                      total: {
+                        show: true,
+                        label: "Tổng",
+                        fontSize: "13px",
+                        color: "#6b7280",
+                        formatter: (w) =>
+                          w.globals.seriesTotals.reduce((a, b) => a + b, 0),
+                      },
+                    },
+                  },
+                },
               },
+              legend: { position: "bottom", fontSize: "13px" },
+              dataLabels: { enabled: false },
             }}
           />
-        </div>
+        </motion.div>
 
-        {/* LINE */}
-        <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 xl:col-span-2">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">
-            Xu hướng tăng trưởng
-          </h2>
+        {/* Line */}
+        <motion.div
+          {...fadeUp(0.3)}
+          className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 xl:col-span-2"
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div>
+              <h2 className="text-base font-semibold text-gray-800">
+                Xu hướng tăng trưởng
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Biến động doanh thu theo từng ngày
+              </p>
+            </div>
+            <button className="text-gray-300 hover:text-gray-500 transition">
+              <FiMoreHorizontal size={18} />
+            </button>
+          </div>
 
           <Chart
             type="line"
-            height={300}
+            height={280}
             series={revenueSeries}
             options={{
-              chart: { toolbar: { show: false } },
+              chart: {
+                toolbar: { show: false },
+                animations: { enabled: true },
+              },
               stroke: { curve: "smooth", width: 3 },
-              markers: { size: 4, hover: { size: 7 } },
+              markers: {
+                size: 5,
+                strokeWidth: 2,
+                strokeColors: "#fff",
+                hover: { size: 7 },
+              },
               colors: ["#22c55e"],
-              xaxis: { categories: revenueCategories },
-              grid: {
-                borderColor: "#f1f5f9",
-                strokeDashArray: 4,
+              xaxis: {
+                categories: revenueCategories,
+                labels: { style: { fontSize: "12px", colors: "#9ca3af" } },
+              },
+              yaxis: {
+                labels: {
+                  style: { fontSize: "12px", colors: "#9ca3af" },
+                  formatter: (v) => v.toLocaleString("vi-VN"),
+                },
+              },
+              grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
+              tooltip: {
+                y: { formatter: (val) => val.toLocaleString("vi-VN") + " đ" },
               },
             }}
           />
-        </div>
+        </motion.div>
       </section>
     </div>
   );

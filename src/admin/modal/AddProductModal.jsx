@@ -5,115 +5,138 @@ import {
   FiCheck,
   FiArrowRight,
   FiArrowLeft,
+  FiImage,
+  FiTag,
+  FiDollarSign,
+  FiBox,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
-/* ================= STEPPER COMPONENT (ĐƯA RA NGOÀI ĐỂ FIX LỖI) ================= */
+/* ── stepper ── */
+const STEPS = ["Danh mục", "Chi tiết", "Hoàn thành"];
+
 function Stepper({ step }) {
-  const progressPercent = step === 1 ? 0 : step === 2 ? 50 : 100;
-
+  const progress = step === 1 ? 0 : step === 2 ? 50 : 100;
   return (
-    <div className="px-8 pt-6 pb-2">
+    <div className="px-8 py-5 border-b border-gray-100">
       <div className="relative flex items-center justify-between">
-        {/* LINE WRAPPER - giới hạn đúng từ tâm circle 1 đến circle 3 */}
-        <div className="absolute top-5 left-5 right-5 h-1">
-          {/* Background Line */}
-          <div className="w-full h-1 bg-gray-200 rounded-full" />
-
-          {/* Active Line */}
+        {/* track */}
+        <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-100 rounded-full">
           <div
-            className="absolute top-0 left-0 h-1 bg-blue-600 rounded-full transition-all duration-500"
-            style={{ width: `${progressPercent}%` }}
+            className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-in-out"
+            style={{ width: `${progress}%` }}
           />
         </div>
 
-        {[1, 2, 3].map((s) => (
-          <div key={s} className="relative z-10 flex flex-col items-center">
+        {STEPS.map((label, i) => {
+          const s = i + 1;
+          const done = step > s;
+          const active = step === s;
+          return (
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300
-                ${
-                  step >= s
-                    ? "bg-blue-600 text-white shadow-md scale-105"
-                    : "bg-gray-200 text-gray-500"
-                }`}
+              key={s}
+              className="relative z-10 flex flex-col items-center gap-2"
             >
-              {step > s ? <FiCheck /> : s}
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300
+                  ${
+                    done
+                      ? "bg-blue-600 text-white shadow-md"
+                      : active
+                        ? "bg-blue-600 text-white shadow-md ring-4 ring-blue-100"
+                        : "bg-white border-2 border-gray-200 text-gray-400"
+                  }`}
+              >
+                {done ? <FiCheck size={16} strokeWidth={3} /> : s}
+              </div>
+              <span
+                className={`text-xs font-medium ${active ? "text-blue-600" : done ? "text-gray-500" : "text-gray-400"}`}
+              >
+                {label}
+              </span>
             </div>
-
-            <span className="text-xs mt-2 text-gray-500">
-              {s === 1 && "Danh mục"}
-              {s === 2 && "Chi tiết"}
-              {s === 3 && "Hoàn thành"}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
-/* ================= MAIN COMPONENT ================= */
+/* ── category cards ── */
+const CATEGORIES = [
+  {
+    value: "kinhmat",
+    label: "Kính mát",
+    desc: "Kính thời trang, chống UV",
+    icon: "🕶️",
+  },
+  {
+    value: "gongkinh",
+    label: "Gọng kính",
+    desc: "Gọng cận, viễn, loạn",
+    icon: "👓",
+  },
+  {
+    value: "trongkinh",
+    label: "Tròng kính",
+    desc: "Tròng quang học các loại",
+    icon: "🔍",
+  },
+];
+
+const EMPTY_FORM = {
+  type: "",
+  name: "",
+  brand: "",
+  gender: "unisex",
+  price: "",
+  salePrice: "",
+  stock: "",
+  sku: "",
+  image: "",
+  specs: {},
+};
+
+/* ── slide variants ── */
+const slide = (dir) => ({
+  initial: { opacity: 0, x: dir * 30 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: dir * -30 },
+  transition: { duration: 0.2, ease: "easeOut" },
+});
+
 function AddProductModal({ onClose, onAdd }) {
   const [step, setStep] = useState(1);
   const [completed, setCompleted] = useState(false);
+  const [direction, setDirection] = useState(1);
+  const [form, setForm] = useState(EMPTY_FORM);
 
-  const [form, setForm] = useState({
-    type: "",
-    name: "",
-    brand: "",
-    gender: "unisex",
-    price: "",
-    salePrice: "",
-    stock: "",
-    sku: "",
-    image: "",
-    specs: {},
-  });
+  const go = (n) => {
+    setDirection(n > step ? 1 : -1);
+    setStep(n);
+  };
 
-  /* ================= HANDLE CHANGE ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "type") {
-      setForm({
-        type: value,
-        name: "",
-        brand: "",
-        gender: "unisex",
-        price: "",
-        salePrice: "",
-        stock: "",
-        sku: "",
-        image: "",
-        specs: {},
-      });
+      setForm({ ...EMPTY_FORM, type: value });
       return;
     }
-
-    setForm({ ...form, [name]: value });
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
   const handleSpecChange = (e) => {
     const { name, value } = e.target;
-    setForm({
-      ...form,
-      specs: {
-        ...form.specs,
-        [name]: value,
-      },
-    });
+    setForm((f) => ({ ...f, specs: { ...f.specs, [name]: value } }));
   };
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = () => {
     if (!form.name || !form.type || !form.price) return;
-
     const categoryMap = {
       kinhmat: "Kính mát",
       gongkinh: "Gọng kính",
       trongkinh: "Tròng kính",
     };
-
     onAdd({
       id: Date.now(),
       ...form,
@@ -123,34 +146,23 @@ function AddProductModal({ onClose, onAdd }) {
       salePrice: form.salePrice ? Number(form.salePrice) : null,
       stock: Number(form.stock),
     });
-
+    setDirection(1);
     setCompleted(true);
     setStep(3);
   };
 
   const resetForm = () => {
     setCompleted(false);
+    setDirection(1);
     setStep(1);
-    setForm({
-      type: "",
-      name: "",
-      brand: "",
-      gender: "unisex",
-      price: "",
-      salePrice: "",
-      stock: "",
-      sku: "",
-      image: "",
-      specs: {},
-    });
+    setForm(EMPTY_FORM);
   };
 
-  /* ================= RENDER TYPE FIELDS ================= */
-  const renderTypeFields = () => {
+  const typeFields = () => {
     switch (form.type) {
       case "kinhmat":
         return (
-          <Section title="Thông tin kính mát">
+          <FieldGroup title="Thông số kính mát">
             <Input
               label="Màu tròng"
               name="lensColor"
@@ -166,11 +178,11 @@ function AddProductModal({ onClose, onAdd }) {
               name="polarized"
               onChange={handleSpecChange}
             />
-          </Section>
+          </FieldGroup>
         );
       case "gongkinh":
         return (
-          <Section title="Thông tin gọng kính">
+          <FieldGroup title="Thông số gọng kính">
             <Input
               label="Chất liệu gọng"
               name="frameMaterial"
@@ -178,11 +190,11 @@ function AddProductModal({ onClose, onAdd }) {
             />
             <Input label="Kích thước" name="size" onChange={handleSpecChange} />
             <Input label="Màu gọng" name="color" onChange={handleSpecChange} />
-          </Section>
+          </FieldGroup>
         );
       case "trongkinh":
         return (
-          <Section title="Thông tin tròng kính">
+          <FieldGroup title="Thông số tròng kính">
             <Input
               label="Chiết suất"
               name="lensIndex"
@@ -194,115 +206,175 @@ function AddProductModal({ onClose, onAdd }) {
               onChange={handleSpecChange}
             />
             <Input label="Chống UV" name="uv" onChange={handleSpecChange} />
-          </Section>
+          </FieldGroup>
         );
       default:
         return null;
     }
   };
 
+  const canNext = step === 1 ? !!form.type : !!form.name && !!form.price;
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-lg flex items-center justify-center z-50 px-4">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl flex flex-col max-h-[95vh]"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="bg-white w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[92vh]"
       >
-        {/* HEADER */}
-        <div className="relative px-8 pt-6 pb-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-blue-50">
-                <FiPackage className="text-blue-600 text-lg" />
-              </div>
-              <h2 className="font-semibold text-xl text-gray-800">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+              <FiPackage size={17} className="text-blue-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800 leading-tight">
                 Thêm sản phẩm
               </h2>
+              <p className="text-xs text-gray-400">
+                Bước {step} / {STEPS.length}
+              </p>
             </div>
-
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
-            >
-              <FiX size={20} />
-            </button>
           </div>
-
-          {/* STRONG DIVIDER */}
-          <div className="-mx-8 mt-6 border-t border-gray-300"></div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <FiX size={18} />
+          </button>
         </div>
 
-        {/* Stepper luôn hiển thị */}
+        {/* Stepper */}
         <Stepper step={step} />
 
-        {/* CONTENT */}
-        <div className="p-8 flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          <AnimatePresence mode="wait" initial={false}>
+            {/* Step 1 — Category */}
             {step === 1 && !completed && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-              >
-                <Section title="Chọn danh mục">
-                  <Select
-                    label="Loại sản phẩm"
-                    name="type"
-                    value={form.type}
-                    onChange={handleChange}
-                    options={[
-                      { label: "Kính mát", value: "kinhmat" },
-                      { label: "Gọng kính", value: "gongkinh" },
-                      { label: "Tròng kính", value: "trongkinh" },
-                    ]}
-                  />
-                </Section>
+              <motion.div key="step1" {...slide(direction)}>
+                <p className="text-sm text-gray-500 mb-5">
+                  Chọn loại sản phẩm bạn muốn thêm vào hệ thống.
+                </p>
+                <div className="grid grid-cols-1 gap-3">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.value}
+                      onClick={() =>
+                        handleChange({
+                          target: { name: "type", value: cat.value },
+                        })
+                      }
+                      className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-150
+                        ${
+                          form.type === cat.value
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        }`}
+                    >
+                      <span className="text-3xl">{cat.icon}</span>
+                      <div className="flex-1">
+                        <p
+                          className={`font-semibold text-sm ${form.type === cat.value ? "text-blue-700" : "text-gray-800"}`}
+                        >
+                          {cat.label}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {cat.desc}
+                        </p>
+                      </div>
+                      {form.type === cat.value && (
+                        <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                          <FiCheck
+                            size={11}
+                            strokeWidth={3}
+                            className="text-white"
+                          />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </motion.div>
             )}
 
+            {/* Step 2 — Details */}
             {step === 2 && !completed && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
+                {...slide(direction)}
+                className="space-y-6"
               >
-                <Section title="Thông tin cơ bản">
+                <FieldGroup
+                  title="Thông tin cơ bản"
+                  icon={<FiTag size={14} className="text-blue-500" />}
+                >
                   <Input
-                    label="Tên sản phẩm"
+                    label="Tên sản phẩm *"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
+                    placeholder="VD: Kính Rayban RB3025"
                   />
                   <Input
                     label="Thương hiệu"
                     name="brand"
                     value={form.brand}
                     onChange={handleChange}
+                    placeholder="VD: Rayban"
                   />
-                  <Select
-                    label="Giới tính"
-                    name="gender"
-                    value={form.gender}
-                    onChange={handleChange}
-                    options={[
-                      { label: "Unisex", value: "unisex" },
-                      { label: "Nam", value: "male" },
-                      { label: "Nữ", value: "female" },
-                    ]}
-                  />
-                </Section>
-
-                {renderTypeFields()}
-
-                <Section title="Thông tin kinh doanh">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1.5 block font-medium">
+                      Giới tính
+                    </label>
+                    <div className="flex gap-2">
+                      {[
+                        { v: "unisex", l: "Unisex" },
+                        { v: "male", l: "Nam" },
+                        { v: "female", l: "Nữ" },
+                      ].map(({ v, l }) => (
+                        <button
+                          key={v}
+                          onClick={() =>
+                            handleChange({
+                              target: { name: "gender", value: v },
+                            })
+                          }
+                          className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors
+                            ${form.gender === v ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                        >
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <Input
-                    label="Giá"
+                    label="URL hình ảnh"
+                    name="image"
+                    value={form.image}
+                    onChange={handleChange}
+                    placeholder="https://..."
+                    icon={<FiImage size={13} />}
+                  />
+                </FieldGroup>
+
+                {typeFields()}
+
+                <FieldGroup
+                  title="Thông tin kinh doanh"
+                  icon={<FiDollarSign size={14} className="text-blue-500" />}
+                >
+                  <Input
+                    label="Giá bán *"
                     name="price"
                     type="number"
                     value={form.price}
                     onChange={handleChange}
+                    placeholder="0"
+                    suffix="₫"
                   />
                   <Input
                     label="Giá khuyến mãi"
@@ -310,6 +382,8 @@ function AddProductModal({ onClose, onAdd }) {
                     type="number"
                     value={form.salePrice}
                     onChange={handleChange}
+                    placeholder="0"
+                    suffix="₫"
                   />
                   <Input
                     label="Tồn kho"
@@ -317,46 +391,76 @@ function AddProductModal({ onClose, onAdd }) {
                     type="number"
                     value={form.stock}
                     onChange={handleChange}
+                    placeholder="0"
+                    icon={<FiBox size={13} />}
                   />
                   <Input
                     label="SKU"
                     name="sku"
                     value={form.sku}
                     onChange={handleChange}
+                    placeholder="VD: RB-3025-001"
                   />
-                </Section>
+                </FieldGroup>
+
+                {/* Preview image */}
+                {form.image && (
+                  <div className="rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center gap-4 px-4 py-3">
+                    <img
+                      src={form.image}
+                      alt=""
+                      className="w-14 h-14 object-cover rounded-lg border"
+                      onError={(e) => (e.target.style.display = "none")}
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        {form.name || "Tên sản phẩm"}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {form.price
+                          ? Number(form.price).toLocaleString("vi-VN") + " ₫"
+                          : "Chưa có giá"}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
 
+            {/* Step 3 — Done */}
             {completed && (
               <motion.div
                 key="done"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center text-center py-20"
+                transition={{ duration: 0.25 }}
+                className="flex flex-col items-center justify-center text-center py-16"
               >
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                  <FiCheck className="text-green-600 text-3xl" />
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-5">
+                  <FiCheck
+                    size={28}
+                    className="text-green-600"
+                    strokeWidth={2.5}
+                  />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">
-                  Đã thêm sản phẩm thành công 🎉
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                  Thêm sản phẩm thành công!
                 </h3>
-                <p className="text-gray-500 mb-6">
-                  Bạn có muốn thêm sản phẩm khác không?
+                <p className="text-sm text-gray-400 mb-8">
+                  Sản phẩm đã được lưu vào hệ thống.
                 </p>
-
-                <div className="flex gap-4">
+                <div className="flex gap-3">
                   <button
                     onClick={resetForm}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-xl"
+                    className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
-                    Thêm tiếp
+                    Thêm sản phẩm khác
                   </button>
                   <button
                     onClick={onClose}
-                    className="px-6 py-2 border rounded-xl"
+                    className="px-5 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                   >
-                    Thoát
+                    Đóng
                   </button>
                 </div>
               </motion.div>
@@ -364,36 +468,51 @@ function AddProductModal({ onClose, onAdd }) {
           </AnimatePresence>
         </div>
 
-        {/* FOOTER */}
+        {/* Footer */}
         {!completed && (
-          <div className="flex justify-between px-8 py-5 border-t bg-gray-50">
-            {step > 1 && (
-              <button
-                onClick={() => setStep(step - 1)}
-                className="px-4 py-2 border rounded-xl flex items-center gap-2"
-              >
-                <FiArrowLeft /> Quay lại
-              </button>
-            )}
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+            <div>
+              {step > 1 && (
+                <button
+                  onClick={() => go(step - 1)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                >
+                  <FiArrowLeft size={14} /> Quay lại
+                </button>
+              )}
+            </div>
 
-            {step === 1 && (
-              <button
-                disabled={!form.type}
-                onClick={() => setStep(2)}
-                className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-40"
-              >
-                Tiếp
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {/* Step dots */}
+              <div className="flex gap-1.5 mr-2">
+                {[1, 2].map((s) => (
+                  <div
+                    key={s}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${step === s ? "bg-blue-600" : "bg-gray-300"}`}
+                  />
+                ))}
+              </div>
 
-            {step === 2 && (
-              <button
-                onClick={handleSubmit}
-                className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-xl"
-              >
-                Hoàn thành
-              </button>
-            )}
+              {step === 1 && (
+                <button
+                  disabled={!canNext}
+                  onClick={() => go(2)}
+                  className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  Tiếp theo <FiArrowRight size={14} />
+                </button>
+              )}
+
+              {step === 2 && (
+                <button
+                  disabled={!canNext}
+                  onClick={handleSubmit}
+                  className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  <FiCheck size={14} /> Hoàn thành
+                </button>
+              )}
+            </div>
           </div>
         )}
       </motion.div>
@@ -401,44 +520,43 @@ function AddProductModal({ onClose, onAdd }) {
   );
 }
 
-/* COMPONENTS */
-
-function Section({ title, children }) {
+/* ── field group ── */
+function FieldGroup({ title, icon, children }) {
   return (
-    <div className="mb-10">
-      <h3 className="text-lg font-semibold text-gray-800 mb-5">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{children}</div>
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        {icon}
+        <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
     </div>
   );
 }
 
-function Input({ label, ...props }) {
+/* ── input ── */
+function Input({ label, icon, suffix, ...props }) {
   return (
     <div>
-      <label className="text-sm text-gray-600 mb-2 block">{label}</label>
-      <input
-        {...props}
-        className="w-full border px-4 py-3 rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  );
-}
-
-function Select({ label, options, ...props }) {
-  return (
-    <div>
-      <label className="text-sm text-gray-600 mb-2 block">{label}</label>
-      <select
-        {...props}
-        className="w-full border px-4 py-3 rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="">Chọn...</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <label className="text-xs text-gray-500 mb-1.5 block font-medium">
+        {label}
+      </label>
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            {icon}
+          </span>
+        )}
+        <input
+          {...props}
+          className={`w-full border border-gray-200 rounded-lg text-sm py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white focus:border-transparent transition-shadow
+            ${icon ? "pl-9 pr-4" : suffix ? "pl-4 pr-10" : "px-4"}`}
+        />
+        {suffix && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">
+            {suffix}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
