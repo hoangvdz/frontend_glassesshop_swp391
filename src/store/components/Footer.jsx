@@ -33,7 +33,7 @@ function Footer() {
           {/* Support */}
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-widest mb-4">
-              Support
+              Hỗ trợ
             </h3>
             <ul className="space-y-3 text-sm text-gray-500">
               <li className="hover:opacity-60 cursor-pointer">Giới thiệu</li>
