@@ -17,6 +17,7 @@ import CheckoutPage from "./store/pages/CheckoutPage";
 import PaymentPage from "./store/pages/PaymentPage";
 import OrderSuccessPage from "./store/pages/OrderSuccessPage";
 import AdminProfile from "./admin/pages/AdminProfile.jsx";
+import AdminPrescription from "./admin/pages/AdminPrescription.jsx";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/dashboard/profile" element={<AdminProfile />} />
           <Route path="/dashboard/products" element={<AdminProducts />} />
           <Route path="/dashboard/orders" element={<AdminOrders />} />
+          <Route path="/dashboard/prescriptions" element={<AdminPrescription />} />
         </Route>
       </Routes>
     </div>
