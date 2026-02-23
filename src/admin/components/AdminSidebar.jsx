@@ -7,13 +7,13 @@ import {
   FiUser,
   FiLogOut,
   FiMoreHorizontal,
-  FiChevronLeft,
+  FiEye,
 } from "react-icons/fi";
 
 const navItem =
   "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200";
 
-function AdminSidebar({ collapsed, onToggle }) {
+function AdminSidebar({ collapsed }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -171,6 +171,13 @@ function AdminSidebar({ collapsed, onToggle }) {
               "/dashboard/orders",
               <FiShoppingCart size={18} />,
               "Đơn hàng",
+            )}
+          </div>
+          <div className="relative">
+            {renderItem(
+              "/dashboard/prescriptions",
+              <FiEye size={18} />,
+              "Đơn thuốc",
             )}
           </div>
           <div className="relative">
