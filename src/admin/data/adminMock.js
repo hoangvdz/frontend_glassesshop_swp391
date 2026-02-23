@@ -50,7 +50,11 @@ export const productsMock = [
     gender: "female",
     sku: "KM-01-TT",
     img: "https://picsum.photos/seed/sunglass1/400/400",
-    specs: { lensColor: "Nâu gradient", uvProtection: "UV400", polarized: "Không" },
+    specs: {
+      lensColor: "Nâu gradient",
+      uvProtection: "UV400",
+      polarized: "Không",
+    },
   },
   {
     id: 5,
@@ -171,7 +175,10 @@ export const ordersMock = [
     avatar: "https://randomuser.me/api/portraits/women/44.jpg",
     status: "pending",
     createdAt: "03/02/2026",
-    items: [{ productId: 3, quantity: 1 }, { productId: 12, quantity: 1 }],
+    items: [
+      { productId: 3, quantity: 1 },
+      { productId: 12, quantity: 1 },
+    ],
     total: 1300000,
   },
   {
@@ -237,7 +244,10 @@ export const ordersMock = [
     avatar: "https://randomuser.me/api/portraits/women/19.jpg",
     status: "completed",
     createdAt: "09/02/2026",
-    items: [{ productId: 4, quantity: 1 }, { productId: 2, quantity: 1 }],
+    items: [
+      { productId: 4, quantity: 1 },
+      { productId: 2, quantity: 1 },
+    ],
     total: 2550000,
   },
   {
@@ -248,7 +258,10 @@ export const ordersMock = [
     avatar: "https://randomuser.me/api/portraits/men/45.jpg",
     status: "pending",
     createdAt: "10/02/2026",
-    items: [{ productId: 5, quantity: 1 }, { productId: 8, quantity: 1 }],
+    items: [
+      { productId: 5, quantity: 1 },
+      { productId: 8, quantity: 1 },
+    ],
     total: 3300000,
   },
   {
@@ -259,7 +272,10 @@ export const ordersMock = [
     avatar: "https://randomuser.me/api/portraits/women/55.jpg",
     status: "completed",
     createdAt: "11/02/2026",
-    items: [{ productId: 1, quantity: 1 }, { productId: 2, quantity: 1 }],
+    items: [
+      { productId: 1, quantity: 1 },
+      { productId: 2, quantity: 1 },
+    ],
     total: 2150000,
   },
   {
@@ -281,7 +297,10 @@ export const ordersMock = [
     avatar: "https://randomuser.me/api/portraits/women/33.jpg",
     status: "cancelled",
     createdAt: "18/02/2026",
-    items: [{ productId: 6, quantity: 1 }, { productId: 9, quantity: 1 }],
+    items: [
+      { productId: 6, quantity: 1 },
+      { productId: 9, quantity: 1 },
+    ],
     total: 3400000,
   },
 ];
@@ -304,7 +323,7 @@ export const prescriptionsMock = [
     issuedDate: "18/02/2026",
     eyes: {
       right: { sphere: -2.25, cylinder: -0.75, axis: 10, add: null },
-      left:  { sphere: -1.75, cylinder: -0.50, axis: 170, add: null },
+      left: { sphere: -1.75, cylinder: -0.5, axis: 170, add: null },
     },
     pd: 62,
     reviewNote: "",
@@ -324,8 +343,8 @@ export const prescriptionsMock = [
     hospital: "Phòng khám Mắt Sáng",
     issuedDate: "19/02/2026",
     eyes: {
-      right: { sphere: -3.00, cylinder: -1.25, axis: 5,   add: null },
-      left:  { sphere: -3.50, cylinder: -1.00, axis: 175, add: null },
+      right: { sphere: -3.0, cylinder: -1.25, axis: 5, add: null },
+      left: { sphere: -3.5, cylinder: -1.0, axis: 175, add: null },
     },
     pd: 64,
     reviewNote: "Toa hợp lệ, thông tin rõ ràng.",
@@ -345,8 +364,8 @@ export const prescriptionsMock = [
     hospital: "Bệnh viện Chợ Rẫy",
     issuedDate: "15/02/2026",
     eyes: {
-      right: { sphere: +1.50, cylinder: null, axis: null, add: +2.00 },
-      left:  { sphere: +1.75, cylinder: null, axis: null, add: +2.00 },
+      right: { sphere: +1.5, cylinder: null, axis: null, add: +2.0 },
+      left: { sphere: +1.75, cylinder: null, axis: null, add: +2.0 },
     },
     pd: 66,
     reviewNote: "Toa đã quá 6 tháng, yêu cầu cấp lại.",
@@ -366,8 +385,8 @@ export const prescriptionsMock = [
     hospital: "BV Mắt Trung Ương",
     issuedDate: "21/02/2026",
     eyes: {
-      right: { sphere: -0.75, cylinder: -0.25, axis: 90,  add: null },
-      left:  { sphere: -1.00, cylinder: -0.50, axis: 85,  add: null },
+      right: { sphere: -0.75, cylinder: -0.25, axis: 90, add: null },
+      left: { sphere: -1.0, cylinder: -0.5, axis: 85, add: null },
     },
     pd: 60,
     reviewNote: "",
@@ -387,8 +406,8 @@ export const prescriptionsMock = [
     hospital: "Phòng khám Mắt Ánh Sáng",
     issuedDate: "20/02/2026",
     eyes: {
-      right: { sphere: -4.00, cylinder: -1.50, axis: 15, add: null },
-      left:  { sphere: -4.25, cylinder: -1.75, axis: 165, add: null },
+      right: { sphere: -4.0, cylinder: -1.5, axis: 15, add: null },
+      left: { sphere: -4.25, cylinder: -1.75, axis: 165, add: null },
     },
     pd: 65,
     reviewNote: "Đã xác minh trực tiếp với khách.",
@@ -408,8 +427,8 @@ export const prescriptionsMock = [
     hospital: "Bệnh viện Mắt TP.HCM",
     issuedDate: "22/02/2026",
     eyes: {
-      right: { sphere: -5.50, cylinder: -0.75, axis: 180, add: null },
-      left:  { sphere: -5.00, cylinder: -1.00, axis: 5,   add: null },
+      right: { sphere: -5.5, cylinder: -0.75, axis: 180, add: null },
+      left: { sphere: -5.0, cylinder: -1.0, axis: 5, add: null },
     },
     pd: 63,
     reviewNote: "",
@@ -429,8 +448,8 @@ export const prescriptionsMock = [
     hospital: "Phòng khám tư Yến Nhi",
     issuedDate: "23/02/2026",
     eyes: {
-      right: { sphere: +2.00, cylinder: null, axis: null, add: +2.50 },
-      left:  { sphere: +2.25, cylinder: null, axis: null, add: +2.50 },
+      right: { sphere: +2.0, cylinder: null, axis: null, add: +2.5 },
+      left: { sphere: +2.25, cylinder: null, axis: null, add: +2.5 },
     },
     pd: 68,
     reviewNote: "",
@@ -439,7 +458,7 @@ export const prescriptionsMock = [
 
 /* ===== THỐNG KÊ TỔNG QUAN ===== */
 export const dashboardStats = [
-  { id: 1, title: "Tổng sản phẩm",   value: productsMock.length },
+  { id: 1, title: "Tổng sản phẩm", value: productsMock.length },
   {
     id: 2,
     title: "Đơn hàng hôm nay",
@@ -459,65 +478,109 @@ export const dashboardStats = [
 
 /* ===== OVERVIEW STATS (STAT CARD) ===== */
 export const overviewStats = [
-  { title: "Tổng sản phẩm",    value: productsMock.length.toString(), percent: "+4.2%",  trend: "up",   icon: "box" },
-  { title: "Đơn hàng hôm nay", value: "32",                           percent: "-1.8%",  trend: "down", icon: "shopping" },
-  { title: "Khách hàng",       value: "540",                          percent: "+6.1%",  trend: "up",   icon: "users" },
-  { title: "Doanh thu",
-    value: ordersMock.filter(o => o.status === "completed").reduce((s,o) => s + o.total, 0).toLocaleString("vi-VN") + " ₫",
-    percent: "+12.5%", trend: "up", icon: "wallet" },
+  {
+    title: "Tổng sản phẩm",
+    value: productsMock.length.toString(),
+    percent: "+4.2%",
+    trend: "up",
+    icon: "box",
+  },
+  {
+    title: "Đơn hàng hôm nay",
+    value: "32",
+    percent: "-1.8%",
+    trend: "down",
+    icon: "shopping",
+  },
+  {
+    title: "Khách hàng",
+    value: "540",
+    percent: "+6.1%",
+    trend: "up",
+    icon: "users",
+  },
+  {
+    title: "Doanh thu",
+    value:
+      ordersMock
+        .filter((o) => o.status === "completed")
+        .reduce((s, o) => s + o.total, 0)
+        .toLocaleString("vi-VN") + " ₫",
+    percent: "+12.5%",
+    trend: "up",
+    icon: "wallet",
+  },
 ];
 
 /* ===== RECENT ORDERS ===== */
 export const recentOrders = ordersMock.slice(0, 5).map((order) => ({
-  id:        order.code,
-  customer:  order.customer,
-  email:     order.email,
-  avatar:    order.avatar,
-  status:    order.status,
-  total:     order.total.toLocaleString("vi-VN") + " ₫",
+  id: order.code,
+  customer: order.customer,
+  email: order.email,
+  avatar: order.avatar,
+  status: order.status,
+  total: order.total.toLocaleString("vi-VN") + " ₫",
   createdAt: order.createdAt,
 }));
 
 /* ===== ORDER STATUS DONUT ===== */
 export const orderStatusData = [
-  { name: "Hoàn thành", value: ordersMock.filter((o) => o.status === "completed").length },
-  { name: "Chờ xử lý",  value: ordersMock.filter((o) => o.status === "pending").length },
-  { name: "Đã huỷ",     value: ordersMock.filter((o) => o.status === "cancelled").length },
+  {
+    name: "Hoàn thành",
+    value: ordersMock.filter((o) => o.status === "completed").length,
+  },
+  {
+    name: "Chờ xử lý",
+    value: ordersMock.filter((o) => o.status === "pending").length,
+  },
+  {
+    name: "Đã huỷ",
+    value: ordersMock.filter((o) => o.status === "cancelled").length,
+  },
 ];
 
 /* ===== PRESCRIPTION STATUS ===== */
 export const prescriptionStatusData = [
-  { name: "Chờ duyệt",  value: prescriptionsMock.filter((r) => r.status === "pending").length },
-  { name: "Đã duyệt",   value: prescriptionsMock.filter((r) => r.status === "approved").length },
-  { name: "Từ chối",    value: prescriptionsMock.filter((r) => r.status === "declined").length },
+  {
+    name: "Chờ duyệt",
+    value: prescriptionsMock.filter((r) => r.status === "pending").length,
+  },
+  {
+    name: "Đã duyệt",
+    value: prescriptionsMock.filter((r) => r.status === "approved").length,
+  },
+  {
+    name: "Từ chối",
+    value: prescriptionsMock.filter((r) => r.status === "declined").length,
+  },
 ];
 
 /* ===== REVENUE CHART ===== */
 export const revenueData = [
-  { day: "Thứ 2",    revenue: 1200000 },
-  { day: "Thứ 3",    revenue: 2100000 },
-  { day: "Thứ 4",    revenue: 1800000 },
-  { day: "Thứ 5",    revenue: 2600000 },
-  { day: "Thứ 6",    revenue: 3200000 },
-  { day: "Thứ 7",    revenue: 2800000 },
-  { day: "CN",        revenue: 3500000 },
+  { day: "Thứ 2", revenue: 1200000 },
+  { day: "Thứ 3", revenue: 2100000 },
+  { day: "Thứ 4", revenue: 1800000 },
+  { day: "Thứ 5", revenue: 2600000 },
+  { day: "Thứ 6", revenue: 3200000 },
+  { day: "Thứ 7", revenue: 2800000 },
+  { day: "CN", revenue: 3500000 },
 ];
 
 /* ===== ADMIN PROFILE ===== */
 export const adminMock = {
   id: 1,
-  name: "Võ Dương Hoàng",
-  email: "hoangvo@admin.com",
+  name: "Admin not Loggin",
+  email: "admin@admin.com",
   password: "123",
-  phone: "0787565699",
+  phone: "0123456789",
   role: "Quản trị hệ thống",
   role_EN: "Admin",
   img: "https://www.shutterstock.com/image-photo/create-imageiphone-memoji-avatar-style-600nw-2683889647.jpg",
-  address: "39A đường 149C, Long Trường, Thủ Đức, Thành Phố Hồ Chí Minh",
+  address: "this is address fields",
   joinedAt: "12/2022",
   social: {
-    github:   "https://github.com/mikeyvo",
+    github: "https://github.com/mikeyvo",
     facebook: "https://facebook.com/mikeyvo",
-    gmail:    "mailto:admin@gmail.com",
+    gmail: "mailto:admin@gmail.com",
   },
 };

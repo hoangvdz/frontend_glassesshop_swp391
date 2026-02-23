@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {  useState } from "react";
 import {
   FiEdit,
   FiMail,
@@ -18,8 +18,12 @@ import {
 import { adminMock } from "../data/adminMock";
 
 function AdminProfile() {
-  const [admin, setAdmin] = useState(adminMock);
-  const [draft, setDraft] = useState(adminMock);
+  const stored = localStorage.getItem("currentUser");
+
+  const getAdminData = stored ? JSON.parse(stored) : adminMock;
+
+  const [admin, setAdmin] = useState(getAdminData);
+  const [draft, setDraft] = useState(getAdminData);
   const [editing, setEditing] = useState(false);
 
   const handleChange = (e) =>
