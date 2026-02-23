@@ -51,10 +51,10 @@ function Header() {
 
           {/* MENU DESKTOP */}
           <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest">
-            <Link to="/shop" className="hover:text-amber-600 transition-colors font-medium">Shop</Link>
-            <Link to="/checkout" className="hover:text-amber-600 transition-colors font-medium">Order</Link>
-            <Link to="#" className="hover:text-amber-600 transition-colors font-medium">About</Link>
-            <Link to="#" className="hover:text-amber-600 transition-colors font-medium">Contact</Link>
+            <Link to="/shop" className="hover:text-amber-600 transition-colors font-medium">Cửa hàng</Link>
+            <Link to="/checkout" className="hover:text-amber-600 transition-colors font-medium">Đơn hàng</Link>
+            <Link to="#" className="hover:text-amber-600 transition-colors font-medium">Giới thiệu</Link>
+            <Link to="#" className="hover:text-amber-600 transition-colors font-medium">Liên hệ</Link>
 
             {/* ICON GIỎ HÀNG */}
             <Link to="/cart" className="relative group p-2 hover:bg-gray-100 rounded-full transition">

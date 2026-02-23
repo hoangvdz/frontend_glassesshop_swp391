@@ -1,82 +1,104 @@
 import { useState } from "react";
+import HeaderBar from "../components/prescription/Headerbar";
+import FrameSummary from "../components/prescription/FrameSummary";
+import PrescriptionTable from "../components/prescription/PrescriptionTable";
+import PDSection from "../components/prescription/PDSection";
+import ExtrasSection from "../components/prescription/ExtrasSection";
+import SubmitBar from "../components/prescription/SubmitBar";
 
 export default function PrescriptionPage() {
-  const [prescription, setPrescription] = useState({
-    rightSPH: "",
-    leftSPH: "",
-    rightCYL: "",
-    leftCYL: "",
-    rightAxis: "",
-    leftAxis: "",
+  const [form, setForm] = useState({
+    right: { sph:"", cyl:"", axis:"", add:"" },
+    left:  { sph:"", cyl:"", axis:"", add:"" },
     pd: "",
+    twoPD: false,
+    prism: false,
+    savePrescription: false
   });
 
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setPrescription(prev => ({
+  const [errors, setErrors] = useState({});
+
+  /* ---------- UPDATE HELPERS ---------- */
+
+  const updateEye = (eye, field, value) => {
+    setForm(prev => ({
       ...prev,
-      [name]: value,
+      [eye]: { ...prev[eye], [field]: value }
     }));
   };
 
-  const isValid =
-    prescription.rightSPH &&
-    prescription.leftSPH &&
-    prescription.pd;
+  const updateField = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  /* ---------- VALIDATION ---------- */
+
+  const validate = () => {
+    const e = {};
+
+    if (!form.right.sph) e.rightSph = "Required";
+    if (!form.left.sph) e.leftSph = "Required";
+    if (!form.pd) e.pd = "Required";
+
+    if (form.right.cyl && !form.right.axis)
+      e.rightAxis = "Axis required if CYL entered";
+
+    if (form.left.cyl && !form.left.axis)
+      e.leftAxis = "Axis required if CYL entered";
+
+    return e;
+  };
+
+  const handleSubmit = () => {
+    const v = validate();
+    setErrors(v);
+
+    if (Object.keys(v).length > 0) return;
+
+    const payload = {
+      prescription: form,
+      frameId: "FRAME123"
+    };
+
+    console.log("SUBMITTING", payload);
+  };
+
+  const isValid = Object.keys(validate()).length === 0;
 
   return (
-    <div className="min-h-screen px-8 py-10 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6">
-        Enter Your Prescription
-      </h1>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      {/* Right Eye */}
-      <div className="mb-6">
-        <h2 className="font-medium mb-2">Right Eye (OD)</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <Input label="SPH" name="rightSPH" value={prescription.rightSPH} onChange={handleChange} />
-          <Input label="CYL" name="rightCYL" value={prescription.rightCYL} onChange={handleChange} />
-          <Input label="AXIS" name="rightAxis" value={prescription.rightAxis} onChange={handleChange} />
+      <HeaderBar />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8 px-8 py-6 flex-1">
+
+        <FrameSummary />
+
+        <div>
+          <h1 className="text-2xl font-semibold mb-6">
+            Enter Your Prescription
+          </h1>
+
+          <PrescriptionTable
+            form={form}
+            errors={errors}
+            updateEye={updateEye}
+          />
+
+          <PDSection
+            form={form}
+            errors={errors}
+            updateField={updateField}
+          />
+
+          <ExtrasSection
+            form={form}
+            updateField={updateField}
+          />
         </div>
       </div>
 
-      {/* Left Eye */}
-      <div className="mb-6">
-        <h2 className="font-medium mb-2">Left Eye (OS)</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <Input label="SPH" name="leftSPH" value={prescription.leftSPH} onChange={handleChange} />
-          <Input label="CYL" name="leftCYL" value={prescription.leftCYL} onChange={handleChange} />
-          <Input label="AXIS" name="leftAxis" value={prescription.leftAxis} onChange={handleChange} />
-        </div>
-      </div>
-
-      {/* PD */}
-      <div className="mb-8 max-w-xs">
-        <Input label="Pupillary Distance (PD)" name="pd" value={prescription.pd} onChange={handleChange} />
-      </div>
-
-      <div className="flex justify-end">
-        <button
-          disabled={!isValid}
-          className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Input({ label, ...props }) {
-  return (
-    <div>
-      <label className="block text-sm mb-1">{label}</label>
-      <input
-        type="number"
-        step="0.25"
-        className="w-full border rounded px-3 py-2"
-        {...props}
-      />
+      <SubmitBar onSubmit={handleSubmit} disabled={!isValid}/>
     </div>
   );
 }
