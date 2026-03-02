@@ -4,13 +4,14 @@ import glassesImg1 from "../image/image1.jpg";
 import glassesImg2 from "../image/image2.jpg";
 import glassesImg3 from "../image/image3.jpg";
 import {
-  FiLock,
+  FiSettings,
+  FiTruck,
+  FiEye,
+  FiRepeat,
   FiX,
-  FiCheck,
   FiChevronLeft,
   FiChevronRight,
-  FiArrowRight,
-  FiShoppingBag,
+  FiArrowRight, FiShoppingBag,
 } from "react-icons/fi";
 
 //mock data thay bằng api sau này
@@ -53,22 +54,22 @@ const sliderData = [
 
 const services = [
   {
-    icon: <FiShoppingBag size={20} />,
+    icon: <FiSettings size={22} />,
     title: "Bảo Dưỡng Kính",
     desc: "Vệ sinh và nắn chỉnh kính miễn phí trọn đời.",
   },
   {
-    icon: <FiCheck size={20} />,
+    icon: <FiTruck  size={22} />,
     title: "Giao Hàng Nhanh",
     desc: "Miễn phí vận chuyển cho đơn hàng trên 1 triệu.",
   },
   {
-    icon: <FiArrowRight size={20} />,
+    icon: <FiRepeat  size={22} />,
     title: "Thu Cũ Đổi Mới",
     desc: "Trợ giá lên đời kính mới cực hấp dẫn.",
   },
   {
-    icon: <FiLock size={20} />,
+    icon: <FiEye  size={22} />,
     title: "Đo Mắt Miễn Phí",
     desc: "Kỹ thuật viên chuyên nghiệp, máy móc hiện đại.",
   },
@@ -479,38 +480,60 @@ function HomePage() {
         </section>
 
         {/* ── SERVICES ── */}
-        <section className="bg-stone-50 py-20">
-          <div className="max-w-5xl mx-auto px-6">
+        <section className="relative bg-stone-50 py-24 overflow-hidden">
+          {/* subtle background decoration */}
+          <div className="absolute -top-20 -right-20 w-72 h-72 bg-amber-100 rounded-full blur-3xl opacity-30" />
+          <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-stone-200 rounded-full blur-3xl opacity-40" />
+
+          <div className="relative max-w-6xl mx-auto px-6">
             <div
               id="services-header"
               data-reveal
-              className={`text-center mb-14 transition-all duration-700 ${rv("services-header")}`}
+              className={`text-center mb-16 transition-all duration-700 ${rv("services-header")}`}
             >
-              <p className="text-stone-400 text-[11px] tracking-[0.25em] uppercase font-medium mb-3">
+              <p className="text-stone-400 text-[11px] tracking-[0.3em] uppercase font-medium mb-4">
                 Dịch vụ
               </p>
+
               <h2 className="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight">
                 Cam kết của chúng tôi
               </h2>
+
+              <div className="w-16 h-[2px] bg-amber-500 mx-auto mt-6" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {services.map((item, i) => (
                 <div
                   key={i}
                   id={`service-${i}`}
                   data-reveal
-                  className={`text-center group transition-all duration-700 ${rv(`service-${i}`)}`}
-                  style={{ transitionDelay: `${i * 0.09}s` }}
+                  style={{ transitionDelay: `${i * 0.1}s` }}
+                  className={`group relative p-8 bg-white border border-stone-200 rounded-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-xl ${rv(
+                    `service-${i}`,
+                  )}`}
                 >
-                  <div className="w-28 h-28 mx-auto mb-4 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-stone-500 group-hover:bg-amber-500 group-hover:text-white group-hover:border-stone-900 transition-all duration-300">
-                    <span className="text-base">{item.icon}</span>
+                  {/* icon */}
+                  <div
+                    className="w-16 h-16 mx-auto mb-6 rounded-xl bg-stone-100 flex items-center justify-center text-stone-600 
+                          transition-all duration-300
+                          group-hover:bg-amber-500 group-hover:text-white"
+                  >
+                    {item.icon}
                   </div>
-                  <h3 className="font-semibold text-stone-800 text-xl mb-1.5 tracking-tight">
+
+                  {/* title */}
+                  <h3 className="text-lg font-semibold text-stone-900 mb-3 tracking-tight">
                     {item.title}
                   </h3>
-                  <p className="text-xs text-stone-400 leading-relaxed">
+
+                  {/* description */}
+                  <p className="text-sm text-stone-500 leading-relaxed">
                     {item.desc}
                   </p>
+
+                  {/* subtle hover border effect */}
+                  <div className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-amber-400 transition-all duration-500 pointer-events-none" />
                 </div>
               ))}
             </div>
