@@ -52,7 +52,7 @@ function Header() {
           {/* MENU DESKTOP */}
           <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest">
             <Link to="/shop" className="hover:text-amber-600 transition-colors font-medium">Cửa hàng</Link>
-            <Link to="/checkout" className="hover:text-amber-600 transition-colors font-medium">Đơn hàng</Link>
+            <Link to="/prescription" className="hover:text-amber-600 transition-colors font-medium">Đơn hàng</Link>
             <Link to="#" className="hover:text-amber-600 transition-colors font-medium">Giới thiệu</Link>
             <Link to="#" className="hover:text-amber-600 transition-colors font-medium">Liên hệ</Link>
 
