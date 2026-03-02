@@ -8,6 +8,10 @@ import {
   FiPlus,
 } from "react-icons/fi";
 
+import { FaCopyright } from "react-icons/fa";
+
+
+
 function Header() {
   const navigate = useNavigate();
 
@@ -121,7 +125,7 @@ function Header() {
               FALCON
             </span>
             <span className="text-amber-500 text-3xl ml-0.5 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
-              .
+              <FaCopyright size={14}/>
             </span>
           </Link>
 

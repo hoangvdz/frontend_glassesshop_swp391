@@ -1,5 +1,5 @@
-// src/data/products.js
 
+//store/data/shopMock.js
 export const products = [
   // ===== FRAMES =====
   {
