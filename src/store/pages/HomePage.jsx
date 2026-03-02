@@ -1,267 +1,557 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // Import Link và useNavigate
-/* LƯU Ý: Đảm bảo bạn vẫn giữ các hình ảnh này trong thư mục image */
-import glassesImg from "../image/img1.png";
-import glassesImg1 from "../image/images.jpg";
-import glassesImg2 from "../image/getty-images-t00PsxNOJrg-unsplash.jpg";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import glassesImg1 from "../image/image1.jpg";
+import glassesImg2 from "../image/image2.jpg";
+import glassesImg3 from "../image/image3.jpg";
+import {
+  FiLock,
+  FiX,
+  FiCheck,
+  FiChevronLeft,
+  FiChevronRight,
+  FiArrowRight,
+  FiShoppingBag,
+} from "react-icons/fi";
 
-/* ===== DATA SLIDER (Banner chính) ===== */
+//mock data thay bằng api sau này
+import { products, formatPrice } from "../data/shopMock";
+
+// Lấy các sản phẩm có featured: true từ mock data
+const featuredProducts = products
+  .filter((p) => p.featured)
+  .map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: formatPrice(p.price),
+    category: p.brand, // dùng brand làm badge (Ray-Ban, Zeiss...)
+    img: p.images[0],
+  }));
+/* ===== DATA ===== */
 const sliderData = [
   {
     id: 1,
-    title: "Modern Eyewear Collection",
+    title: "Modern Eyewear",
+    subtitle: "Collection 2026",
     desc: "Thiết kế tối giản, tinh tế cho sự thoải mái hàng ngày.",
-    image: glassesImg2,
-  },
-  {
-    id: 2,
-    title: "Premium Optical Experience",
-    desc: "Trải nghiệm hình ảnh rõ nét với tròng kính công nghệ cao.",
     image: glassesImg1,
   },
   {
-    id: 3,
-    title: "Seasonal Limited Selection",
-    desc: "Bộ sưu tập giới hạn dành riêng cho mùa hè này.",
-    image: glassesImg,
-  },
-];
-
-/* ===== DATA SẢN PHẨM NỔI BẬT ===== */
-const featuredProducts = [
-  {
-    id: 1,
-    name: "Classic Round Ray-Ban",
-    price: "2.500.000đ",
-    category: "Unisex",
-    img: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-  {
     id: 2,
-    name: "Matte Black Wayfarer",
-    price: "3.200.000đ",
-    category: "Men",
-    img: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    title: "Premium Optical",
+    subtitle: "Experience",
+    desc: "Trải nghiệm hình ảnh rõ nét với tròng kính công nghệ cao.",
+    image: glassesImg2,
   },
   {
     id: 3,
-    name: "Titanium Gold Frame",
-    price: "4.500.000đ",
-    category: "Women",
-    img: "https://images.unsplash.com/photo-1591076482161-42ce6da69f67?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 4,
-    name: "Blue Light Filter Lens",
-    price: "1.800.000đ",
-    category: "Office",
-    img: "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    title: "Seasonal Limited",
+    subtitle: "Selection",
+    desc: "Bộ sưu tập giới hạn dành riêng cho mùa hè này.",
+    image: glassesImg3,
   },
 ];
 
-/* ===== DATA DỊCH VỤ ===== */
 const services = [
   {
+    icon: <FiShoppingBag size={20} />,
     title: "Bảo Dưỡng Kính",
     desc: "Vệ sinh và nắn chỉnh kính miễn phí trọn đời.",
   },
   {
+    icon: <FiCheck size={20} />,
     title: "Giao Hàng Nhanh",
     desc: "Miễn phí vận chuyển cho đơn hàng trên 1 triệu.",
   },
-  { title: "Thu Cũ Đổi Mới", desc: "Trợ giá lên đời kính mới cực hấp dẫn." },
   {
+    icon: <FiArrowRight size={20} />,
+    title: "Thu Cũ Đổi Mới",
+    desc: "Trợ giá lên đời kính mới cực hấp dẫn.",
+  },
+  {
+    icon: <FiLock size={20} />,
     title: "Đo Mắt Miễn Phí",
     desc: "Kỹ thuật viên chuyên nghiệp, máy móc hiện đại.",
   },
 ];
 
-function HomePage() {
-  const [current, setCurrent] = useState(0);
+/* ===== LOGIN MODAL ===== */
+function LoginModal({ isOpen, onClose, productName }) {
   const navigate = useNavigate();
 
-  // <--- CẬP NHẬT LOGIC MỚI Ở ĐÂY (Check currentUser thay vì isLoggedIn)
-  const handleAddToCart = (e, productName) => {
-    // Ngăn không cho sự kiện click lan ra ngoài
-    e.stopPropagation();
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
-    // 1. Lấy user từ localStorage
-    const storedUser = localStorage.getItem("currentUser");
-
-    // 2. Nếu không có user -> Bắt đăng nhập
-    if (!storedUser) {
-      alert("Bạn cần đăng nhập để thêm sản phẩm vào giỏ!");
-      navigate("/login");
-    } else {
-      // 3. Nếu có user -> Thành công
-      const user = JSON.parse(storedUser);
-      alert(`Đã thêm ${productName} vào giỏ hàng!\n(Khách hàng: ${user.name || user.email})`);
-    }
-  };
-
-  const prevSlide = () => {
-    setCurrent((prev) => (prev === 0 ? sliderData.length - 1 : prev - 1));
-  };
-
-  const nextSlide = () => {
-    setCurrent((prev) => (prev === sliderData.length - 1 ? 0 : prev + 1));
-  };
+  if (!isOpen) return null;
 
   return (
-      <main className="w-full font-sans text-gray-800">
-        {/* ===== 1. SLIDER SECTION ===== */}
-        <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-100">
-          <div className="w-full h-full relative">
-            <img
-                key={current}
-                src={sliderData[current].image}
-                alt={sliderData[current].title}
-                className="w-full h-full object-cover md:object-contain object-center transition-all duration-700 ease-in-out"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent md:via-black/10" />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ animation: "fadeIn 0.2s ease" }}
+    >
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div
+        className="relative bg-white rounded-2xl w-full max-w-sm mx-4 overflow-hidden shadow-2xl"
+        style={{ animation: "slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+      >
+        {/* Accent line */}
+        <div className="h-0.5 w-full bg-stone-900" />
+
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all"
+        >
+          <FiX size={16} />
+        </button>
+
+        <div className="px-8 pt-8 pb-10">
+          <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-6">
+            <FiLock size={18} className="text-stone-600" />
           </div>
 
-          <div className="absolute inset-0 flex flex-col justify-center px-10 md:px-24 max-w-4xl text-white">
-          <span className="text-amber-400 font-bold tracking-widest uppercase mb-2 text-sm md:text-base animate-fadeIn">
-            New Collection 2026
-          </span>
-            <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">
-              {sliderData[current].title}
-            </h2>
-            <p className="text-lg md:text-xl opacity-90 mb-8 max-w-lg drop-shadow-md">
-              {sliderData[current].desc}
+          <div className="text-center mb-7">
+            <h3 className="text-lg font-semibold text-stone-900 mb-2 tracking-tight">
+              Đăng nhập để tiếp tục
+            </h3>
+            <p className="text-sm text-stone-500 leading-relaxed">
+              {productName ? (
+                <>
+                  Bạn cần đăng nhập để thêm{" "}
+                  <span className="font-medium text-stone-700">
+                    "{productName}"
+                  </span>{" "}
+                  vào giỏ hàng.
+                </>
+              ) : (
+                "Vui lòng đăng nhập để mua sắm."
+              )}
             </p>
+          </div>
 
-            <button className="w-fit px-8 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-full shadow-lg hover:shadow-amber-500/50 transition-all transform hover:-translate-y-1">
-              Khám Phá Ngay
+          <div className="flex flex-col gap-2.5">
+            <button
+              onClick={() => {
+                onClose();
+                navigate("/login");
+              }}
+              className="w-full py-3 cursor-pointer bg-stone-900 hover:bg-amber-500 text-white font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
+            >
+              Đăng nhập
+            </button>
+            <button
+              onClick={() => {
+                onClose();
+                navigate("/register");
+              }}
+              className="w-full py-3 border border-stone-200 cursor-pointer hover:border-stone-300 hover:bg-stone-50 text-stone-700 font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
+            >
+              Tạo tài khoản
             </button>
           </div>
 
-          <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 text-white border border-white/30 flex items-center justify-center backdrop-blur-sm transition"
-          >
-            ❮
-          </button>
-          <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 text-white border border-white/30 flex items-center justify-center backdrop-blur-sm transition"
-          >
-            ❯
-          </button>
-        </section>
+          <p className="text-center text-xs text-stone-400 mt-5">
+            <button
+              onClick={onClose}
+              className="hover:text-stone-700 transition-colors cursor-pointer"
+            >
+              Tiếp tục xem sản phẩm
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* ===== 2. FEATURED PRODUCTS (SẢN PHẨM NỔI BẬT) ===== */}
-        <section className="max-w-7xl mx-auto px-6 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Sản Phẩm Nổi Bật
-            </h2>
-            <div className="w-20 h-1 bg-amber-500 mx-auto rounded-full"></div>
-            <p className="text-gray-500 mt-4">
-              Những mẫu kính được yêu thích nhất tháng này
-            </p>
+/* ===== TOAST ===== */
+function Toast({ message, visible }) {
+  if (!visible) return null;
+  return (
+    <div
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white px-5 py-3 rounded-full text-sm font-medium shadow-xl flex items-center gap-2"
+      style={{ animation: "slideUp 0.3s ease" }}
+    >
+      <FiCheck size={14} className="text-green-400" />
+      {message}
+    </div>
+  );
+}
+
+/* ===== MAIN ===== */
+function HomePage() {
+  const [current, setCurrent] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState(null);
+  const [toast, setToast] = useState({ visible: false, message: "" });
+  const [visibleSections, setVisibleSections] = useState({});
+  const navigate = useNavigate();
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setCurrent((p) => (p === sliderData.length - 1 ? 0 : p + 1));
+    }, 5000);
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting)
+            setVisibleSections((p) => ({ ...p, [e.target.id]: true }));
+        }),
+      { threshold: 0.1 },
+    );
+    document
+      .querySelectorAll("[data-reveal]")
+      .forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  const showToast = (msg) => {
+    setToast({ visible: true, message: msg });
+    setTimeout(() => setToast({ visible: false, message: "" }), 3000);
+  };
+
+  const handleAddToCart = (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 1. Chưa login → mở modal
+    if (!localStorage.getItem("currentUser")) {
+      setPendingProduct(product);
+      setModalOpen(true);
+      return;
+    }
+
+    // 2. Đọc cart hiện tại
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    // 3. Đã tồn tại → tăng qty, chưa có → thêm mới
+    const idx = cart.findIndex(
+      (item) => String(item.id) === String(product.id),
+    );
+    if (idx !== -1) {
+      cart[idx].quantity += 1;
+    } else {
+      cart.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.img, // homepage dùng .img → map sang "image" cho cart
+        quantity: 1,
+      });
+    }
+
+    // 4. Lưu & báo Header cập nhật badge
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event("storage"));
+
+    // 5. Toast
+    showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
+  };
+
+  const handleProductClick = (productId) => {
+    if (!localStorage.getItem("currentUser")) {
+      setPendingProduct(null);
+      setModalOpen(true);
+      return;
+    }
+    navigate(`/product/${productId}`);
+  };
+
+  const prevSlide = () => {
+    clearInterval(intervalRef.current);
+    setCurrent((p) => (p === 0 ? sliderData.length - 1 : p - 1));
+  };
+
+  const nextSlide = () => {
+    clearInterval(intervalRef.current);
+    setCurrent((p) => (p === sliderData.length - 1 ? 0 : p + 1));
+  };
+
+  const rv = (id) =>
+    visibleSections[id]
+      ? "opacity-100 translate-y-0"
+      : "opacity-0 translate-y-6";
+
+  return (
+    <>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes slideLeft { from { opacity: 0; transform: translateX(-18px) } to { opacity: 1; transform: translateX(0) } }
+
+        .slide-in   { animation: slideLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .slide-in-d1 { animation: slideLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.07s both; }
+        .slide-in-d2 { animation: slideLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.14s both; }
+        .slide-in-d3 { animation: slideLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.21s both; }
+
+        .product-card { transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(0,0,0,0.09); }
+      `}</style>
+
+      <main
+        className="w-full bg-white text-stone-800"
+        style={{
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+        }}
+      >
+        <LoginModal
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setPendingProduct(null);
+          }}
+          productName={pendingProduct?.name}
+        />
+        <Toast visible={toast.visible} message={toast.message} />
+
+        {/* ── HERO ── */}
+        <section className="relative w-full h-screen max-h-[720px] min-h-[520px] overflow-hidden bg-stone-900">
+          {sliderData.map((slide, i) => (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ${i === current ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            >
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-full object-cover"
+                style={{
+                  transform: i === current ? "scale(1.04)" : "scale(1)",
+                  transition: "transform 7s ease",
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" />
+            </div>
+          ))}
+
+          <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-20 lg:px-28">
+            <div key={current}>
+              <p className="slide-in text-amber-300 tracking-[0.35em] uppercase text-[11px] font-medium mb-5">
+                New Collection 2026
+              </p>
+              <h1 className="slide-in-d1 text-5xl md:text-7xl font-semibold text-amber-500 leading-[1.05] tracking-tight mb-2">
+                {sliderData[current].title}
+              </h1>
+              <h2 className="slide-in-d1 text-5xl md:text-7xl font-light text-white leading-[1.05] tracking-tight mb-6">
+                {sliderData[current].subtitle}
+              </h2>
+              <p className="slide-in-d2 text-gray-200 text-sm max-w-xs mb-8 leading-relaxed">
+                {sliderData[current].desc}
+              </p>
+              <div className="slide-in-d3 flex items-center gap-4">
+                <Link to="/shop">
+                  <button className="px-6 py-2.5 bg-white hover:bg-stone-100 text-stone-900 font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
+                    Khám phá ngay
+                  </button>
+                </Link>
+                <button className="text-stone-400 hover:text-white text-sm transition-colors flex items-center gap-1.5">
+                  <span className="w-6 h-px bg-stone-500 inline-block" />
+                  Xem thêm
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-                <div
-                    key={product.id}
-                    className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer"
-                >
-                  {/* <--- 2. THÊM LINK ĐỂ CHUYỂN SANG TRANG CHI TIẾT */}
-                  {/* Bấm vào vùng ảnh sẽ chuyển trang */}
-                  <Link to={`/product/${product.id}`}>
-                    <div className="relative h-64 overflow-hidden bg-gray-50">
-                      <img
-                          src={product.img}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <span className="absolute top-3 left-3 bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-md text-gray-800">
-                    {product.category}
-                  </span>
+          <button
+            onClick={prevSlide}
+            className="absolute left-5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white flex items-center justify-center backdrop-blur-sm transition-all"
+          >
+            <FiChevronLeft size={16} />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="absolute right-5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white flex items-center justify-center backdrop-blur-sm transition-all"
+          >
+            <FiChevronRight size={16} />
+          </button>
 
-                      {/* NÚT ADD TO CART */}
-                      <button
-                          onClick={(e) => handleAddToCart(e, product.name)} // Truyền thêm 'e' để chặn sự kiện
-                          className="absolute bottom-4 left-1/2 -translate-x-1/2 translate-y-12 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-amber-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg whitespace-nowrap z-10"
-                      >
-                        Thêm vào giỏ
-                      </button>
-                    </div>
-                  </Link>
-
-                  <div className="p-5 text-center">
-                    {/* Bấm vào tên sản phẩm cũng chuyển trang */}
-                    <Link to={`/product/${product.id}`}>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-1 group-hover:text-amber-600 transition-colors">
-                        {product.name}
-                      </h3>
-                    </Link>
-                    <p className="text-amber-600 font-bold text-lg">
-                      {product.price}
-                    </p>
-                  </div>
-                </div>
+          <div className="absolute bottom-8 left-8 md:left-20 lg:left-28 flex items-center gap-2">
+            {sliderData.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`transition-all duration-300 rounded-full ${i === current ? "w-6 h-1 bg-white" : "w-1 h-1 bg-white/30 hover:bg-white/50"}`}
+              />
             ))}
           </div>
 
-          <div className="text-center mt-12">
-            <Link to="/shop">
-              <button className="px-8 py-3 border-2 border-gray-800 text-gray-800 font-bold uppercase tracking-widest hover:bg-gray-800 hover:text-white transition rounded-md">
-                Xem Tất Cả Sản Phẩm
-              </button>
-            </Link>
+          <div className="absolute bottom-8 right-8 text-white/30 text-xs tracking-widest tabular-nums">
+            0{current + 1} / 0{sliderData.length}
           </div>
         </section>
 
-        {/* ===== 3. SERVICES SECTION ===== */}
-        <section className="bg-gray-50 py-20">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
-            {services.map((item, index) => (
+        {/* ── BRAND STRIP ── */}
+        <section className="border-y border-stone-100 py-4 bg-stone-50/60">
+          <div className="max-w-4xl mx-auto px-6 flex flex-wrap justify-center gap-x-8 gap-y-2 text-stone-400 text-[11px] tracking-[0.22em] uppercase font-medium">
+            {[...new Set(products.map((p) => p.brand))].map((brand) => (
+              <span
+                key={brand}
+                className="hover:text-stone-600 transition-colors cursor-default"
+              >
+                {brand}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* ── FEATURED PRODUCTS ── */}
+        <section className="max-w-6xl mx-auto px-6 py-24">
+          <div
+            id="products-header"
+            data-reveal
+            className={`mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-4 transition-all duration-700 ${rv("products-header")}`}
+          >
+            <div>
+              <p className="text-stone-600 text-[11px] tracking-[0.25em] uppercase font-medium mb-3">
+                Được yêu thích nhất
+              </p>
+              <h2 className="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight">
+                Sản phẩm nổi bật
+              </h2>
+            </div>
+            <Link
+              to="/shop"
+              className="text-stone-400 hover:text-stone-900 text-sm flex items-center gap-1.5 transition-colors group"
+            >
+              Xem tất cả
+              <FiArrowRight
+                size={14}
+                className="group-hover:translate-x-0.5 transition-transform"
+              />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            {featuredProducts.map((product, i) => (
+              <div
+                key={product.id}
+                id={`product-${product.id}`}
+                data-reveal
+                className={`product-card group cursor-pointer transition-all duration-700 rounded-xl overflow-hidden  ${rv(`product-${product.id}`)}`}
+                style={{ transitionDelay: `${i * 0.07}s` }}
+              >
                 <div
-                    key={index}
-                    className="text-center p-6 hover:bg-white hover:shadow-lg rounded-xl transition-all duration-300"
+                  className="relative aspect-[3/4] overflow-hidden rounded-xl bg-stone-100 mb-3"
+                  onClick={() => handleProductClick(product.id)}
                 >
-                  <div className="w-14 h-14 mx-auto bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-2xl mb-4">
-                    ✦
+                  <img
+                    src={product.img}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                  <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm text-stone-600 text-[10px] font-medium tracking-wider uppercase px-2.5 py-1 rounded-full">
+                    {product.category}
+                  </span>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/8 transition-all duration-300" />
+                  <button
+                    onClick={(e) => handleAddToCart(e, product)}
+                    className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-8 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white hover:bg-amber-500 text-stone-800 hover:text-white px-4 py-2 rounded-full text-xs font-medium shadow-md whitespace-nowrap flex items-center gap-1.5"
+                  >
+                    <FiShoppingBag size={12} /> Thêm giỏ hàng
+                  </button>
+                </div>
+                <div className="pl-4 pb-4">
+                  <p
+                    className="text-stone-800 text-sm font-medium mb-0.5 cursor-pointer hover:text-stone-500 transition-colors leading-tight"
+                    onClick={() => handleProductClick(product.id)}
+                  >
+                    {product.name}
+                  </p>
+                  <p className="text-stone-900 text-sm font-semibold">
+                    {product.price}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── SERVICES ── */}
+        <section className="bg-stone-50 py-20">
+          <div className="max-w-5xl mx-auto px-6">
+            <div
+              id="services-header"
+              data-reveal
+              className={`text-center mb-14 transition-all duration-700 ${rv("services-header")}`}
+            >
+              <p className="text-stone-400 text-[11px] tracking-[0.25em] uppercase font-medium mb-3">
+                Dịch vụ
+              </p>
+              <h2 className="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight">
+                Cam kết của chúng tôi
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {services.map((item, i) => (
+                <div
+                  key={i}
+                  id={`service-${i}`}
+                  data-reveal
+                  className={`text-center group transition-all duration-700 ${rv(`service-${i}`)}`}
+                  style={{ transitionDelay: `${i * 0.09}s` }}
+                >
+                  <div className="w-30 h-30 mx-auto mb-4 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-stone-500 group-hover:bg-amber-500 group-hover:text-white group-hover:border-stone-900 transition-all duration-300">
+                    <span className="text-base">{item.icon}</span>
                   </div>
-                  <h3 className="font-bold text-lg mb-2 text-gray-900">
+                  <h3 className="font-semibold text-stone-800 text-xl mb-1.5 tracking-tight">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
+                  <p className="text-xs text-stone-400 leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* ===== 4. CTA SECTION ===== */}
-        <section className="relative py-24 bg-gray-900 text-white overflow-hidden">
-          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-          <div className="relative max-w-4xl mx-auto text-center px-6 z-10">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Tìm Chiếc Kính Hoàn Hảo Của Bạn
-            </h2>
-            <p className="text-gray-400 mb-10 text-lg max-w-2xl mx-auto">
-              Hàng ngàn mẫu gọng kính và tròng kính chất lượng cao đang chờ bạn
-              khám phá. Đặt lịch đo mắt ngay hôm nay.
+        {/* ── CTA ── */}
+        <section
+          id="cta"
+          data-reveal
+          className={`relative py-28 overflow-hidden bg-stone-900 transition-all duration-700 ${rv("cta")}`}
+        >
+          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full border border-white/[0.04]" />
+          <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full border border-white/[0.04]" />
+
+          <div className="relative max-w-2xl mx-auto text-center px-6 z-10">
+            <p className="text-amber-300 text-[11px] tracking-[0.3em] uppercase font-medium mb-5">
+              Bắt đầu hành trình
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <h2 className="text-4xl md:text-5xl font-semibold text-amber-500 mb-4 leading-tight tracking-tight">
+              Tìm chiếc kính
+              <br />
+              hoàn hảo của bạn
+            </h2>
+            <p className="text-stone-400 mb-10 text-sm max-w-sm mx-auto leading-relaxed">
+              Hàng ngàn mẫu gọng kính và tròng kính chất lượng cao. Đặt lịch đo
+              mắt ngay hôm nay.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link to="/shop">
-                <button className="px-8 py-4 bg-amber-600 text-white uppercase font-bold tracking-widest rounded-lg hover:bg-amber-500 transition shadow-lg shadow-amber-900/50">
-                  Mua Ngay
+                <button className="px-7 py-3 bg-amber-500 hover:bg-stone-100 text-stone-900 font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
+                  Mua ngay
                 </button>
               </Link>
-              <button className="px-8 py-4 border border-gray-600 text-white uppercase font-bold tracking-widest rounded-lg hover:bg-white hover:text-black transition">
-                Tìm Cửa Hàng Gần Nhất
+              <button className="px-7 py-3 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
+                Tìm cửa hàng
               </button>
             </div>
           </div>
         </section>
       </main>
+    </>
   );
 }
 

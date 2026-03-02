@@ -27,6 +27,8 @@ function App() {
       <Routes>
         <Route element={<StoreLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<HomePage />} />
+          <Route path="/contact" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
