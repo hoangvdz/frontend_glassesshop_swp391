@@ -266,7 +266,7 @@ function ShopPage() {
               Bộ sưu tập
             </p>
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2">
-              <h1 className="text-4xl md:text-5xl font-semibold text-stone-900 tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight">
                 Cửa hàng
               </h1>
               <p className="text-stone-400 text-sm">
@@ -368,7 +368,7 @@ function ShopPage() {
                   key={product.id}
                   id={`card-${product.id}`}
                   data-card
-                  className={`product-card group cursor-pointer transition-all duration-500 ${rv(`card-${product.id}`)}`}
+                  className={`product-card group cursor-pointer rounded-xl transition-all duration-500 ${rv(`card-${product.id}`)}`}
                   style={{ transitionDelay: `${(i % 4) * 0.06}s` }}
                 >
                   <Link

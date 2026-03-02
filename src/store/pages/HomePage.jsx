@@ -331,6 +331,7 @@ function HomePage() {
                   transition: "transform 7s ease",
                 }}
               />
+              <div className="absolute inset-0 bg-black/40" />
               <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" />
             </div>
           ))}
@@ -351,7 +352,7 @@ function HomePage() {
               </p>
               <div className="slide-in-d3 flex items-center gap-4">
                 <Link to="/shop">
-                  <button className="px-6 py-2.5 bg-white hover:bg-stone-100 text-stone-900 font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
+                  <button className="px-6 py-2.5 bg-white cursor-pointer hover:bg-amber-500 text-stone-900 font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
                     Khám phá ngay
                   </button>
                 </Link>
@@ -501,7 +502,7 @@ function HomePage() {
                   className={`text-center group transition-all duration-700 ${rv(`service-${i}`)}`}
                   style={{ transitionDelay: `${i * 0.09}s` }}
                 >
-                  <div className="w-30 h-30 mx-auto mb-4 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-stone-500 group-hover:bg-amber-500 group-hover:text-white group-hover:border-stone-900 transition-all duration-300">
+                  <div className="w-28 h-28 mx-auto mb-4 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-stone-500 group-hover:bg-amber-500 group-hover:text-white group-hover:border-stone-900 transition-all duration-300">
                     <span className="text-base">{item.icon}</span>
                   </div>
                   <h3 className="font-semibold text-stone-800 text-xl mb-1.5 tracking-tight">
