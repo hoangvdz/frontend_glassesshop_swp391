@@ -17,7 +17,7 @@ import CheckoutPage from "./store/pages/CheckoutPage";
 import OrderSuccessPage from "./store/pages/OrderSuccessPage";
 import AdminProfile from "./admin/pages/AdminProfile.jsx";
 import AdminPrescription from "./admin/pages/AdminPrescription.jsx";
-
+import ContactPage from "./store/pages/ContactPage.jsx";
 function App() {
   return (
     <div>
@@ -27,7 +27,7 @@ function App() {
         <Route element={<StoreLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<HomePage />} />
-          <Route path="/contact" element={<HomePage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
@@ -37,6 +37,7 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />
+
         </Route>
         <Route element={<AdminLayout />}>
           <Route path="/dashboard/" element={<AdminOverview />} />
