@@ -1,5 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import FramePurchaseOptions from "../components/Purchase/FramePurchaseOption";
+import LensPurchaseOptions from "../components/Purchase/LensePurchaseOption";
 import {
   FiShoppingBag,
   FiHeart,
@@ -265,6 +267,18 @@ function ProductDetailPage() {
                   </button>
                 </div>
               </div>
+
+            <div> 
+           
+              {product.category === "frame" && (
+                <FramePurchaseOptions product={product} />
+              )} 
+              {product.category === "lens" && (
+                <LensPurchaseOptions product={product} />
+              )} 
+
+
+            </div>
 
               {/* CTA buttons — đồng bộ rounded-full với HomePage/ShopPage */}
               <div className="flex gap-3 pt-1">
