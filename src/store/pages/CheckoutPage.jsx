@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   FiArrowLeft, FiCheck, FiTruck, FiCreditCard,
   FiUser, FiPhone, FiMapPin, FiFileText,
+  FiMinus, FiPlus, FiX // Đã thêm các icon cần thiết
 } from "react-icons/fi";
 
 /* ── Toast ── */
@@ -59,6 +60,31 @@ function CheckoutPage() {
     setToast({ visible:true, message:msg });
     setTimeout(() => setToast({ visible:false, message:"" }), 3000);
   };
+
+  /* ── HÀM XỬ LÝ GIỎ HÀNG THÊM MỚI ── */
+  const updateCartAndStorage = (updatedCart) => {
+    setCartItems(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event("storage")); // Bắn event để Header update số lượng giỏ xách
+    
+    // Nếu xóa hết sạch đồ thì văng về trang shop
+    if (updatedCart.length === 0) {
+      navigate("/shop");
+    }
+  };
+
+  const updateQty = (id, delta) => {
+    const updated = cartItems
+      .map((i) => (i.id === id ? { ...i, quantity: i.quantity + delta } : i))
+      .filter((i) => i.quantity > 0);
+    updateCartAndStorage(updated);
+  };
+
+  const removeItem = (id) => {
+    const updated = cartItems.filter((i) => i.id !== id);
+    updateCartAndStorage(updated);
+  };
+  /* ── KẾT THÚC HÀM XỬ LÝ ── */
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -230,17 +256,53 @@ function CheckoutPage() {
                   Đơn hàng · <span className="text-stone-400 font-normal">{cartItems.length} sản phẩm</span>
                 </h3>
 
-                <div className="space-y-4 max-h-60 overflow-y-auto pr-1 mb-5">
+                <div className="space-y-5 max-h-[320px] overflow-y-auto pr-2 mb-5">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-xl bg-stone-100 overflow-hidden flex-shrink-0">
+                    <div key={item.id} className="flex gap-4 relative group">
+                      
+                      {/* Image */}
+                      <div className="w-16 h-16 rounded-xl bg-stone-100 overflow-hidden flex-shrink-0 border border-stone-100">
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover"/>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-stone-800 truncate leading-tight">{item.name}</p>
-                        <p className="text-xs text-stone-400 mt-0.5">x{item.quantity}</p>
+
+                      {/* Info & Controls */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                        <div>
+                          <p className="text-sm font-medium text-stone-800 truncate leading-tight pr-6">{item.name}</p>
+                          <p className="text-xs text-amber-500 font-semibold mt-1">{item.price}</p>
+                        </div>
+
+                        {/* Qty Control (Nút tăng giảm) */}
+                        <div className="flex items-center gap-0 mt-2 border border-stone-200 rounded-full w-fit overflow-hidden">
+                          <button
+                            type="button" 
+                            onClick={() => updateQty(item.id, -1)}
+                            className="w-7 h-7 flex items-center justify-center text-stone-500 hover:bg-stone-100 transition-colors"
+                          >
+                            <FiMinus size={11} />
+                          </button>
+                          <span className="w-7 text-center text-xs font-semibold text-stone-800 tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQty(item.id, +1)}
+                            className="w-7 h-7 flex items-center justify-center text-stone-500 hover:bg-stone-100 transition-colors"
+                          >
+                            <FiPlus size={11} />
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-sm font-semibold text-stone-900 flex-shrink-0">{item.price}</p>
+
+                      {/* Nút Remove (X) */}
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="absolute top-0 right-0 p-1 text-stone-300 hover:text-red-400 transition-colors bg-white rounded-full"
+                      >
+                        <FiX size={16} />
+                      </button>
+
                     </div>
                   ))}
                 </div>

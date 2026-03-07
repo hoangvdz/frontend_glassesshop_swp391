@@ -1,16 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import {
-  FiShoppingBag,
-  FiX,
-  FiArrowRight,
-  FiMinus,
-  FiPlus,
-} from "react-icons/fi";
-
+import { FiShoppingBag, FiClipboard } from "react-icons/fi"; // Thêm FiClipboard
 import { FaCopyright } from "react-icons/fa";
-
-
 
 function Header() {
   const navigate = useNavigate();
@@ -29,17 +20,11 @@ function Header() {
     JSON.parse(localStorage.getItem("currentUser")),
   );
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showCart, setShowCart] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const cartRef = useRef(null);
   const userRef = useRef(null);
 
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
-  const cartTotal = cart.reduce((s, i) => {
-    const p = parseInt(i.price.replace(/\./g, "").replace("₫", ""));
-    return s + p * i.quantity;
-  }, 0);
 
   /* sync storage events */
   useEffect(() => {
@@ -59,8 +44,6 @@ function Header() {
   /* close dropdowns on outside click */
   useEffect(() => {
     const fn = (e) => {
-      if (cartRef.current && !cartRef.current.contains(e.target))
-        setShowCart(false);
       if (userRef.current && !userRef.current.contains(e.target))
         setShowUserMenu(false);
     };
@@ -68,33 +51,11 @@ function Header() {
     return () => document.removeEventListener("mousedown", fn);
   }, []);
 
-  /* update qty in cart */
-  const updateQty = (id, delta) => {
-    const updated = cart
-      .map((i) => (i.id === id ? { ...i, quantity: i.quantity + delta } : i))
-      .filter((i) => i.quantity > 0);
-    setCart(updated);
-    localStorage.setItem("cart", JSON.stringify(updated));
-    window.dispatchEvent(new Event("storage"));
-  };
-
-  const removeItem = (id) => {
-    const updated = cart.filter((i) => i.id !== id);
-    setCart(updated);
-    localStorage.setItem("cart", JSON.stringify(updated));
-    window.dispatchEvent(new Event("storage"));
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
     setCurrentUser(null);
     setShowUserMenu(false);
     navigate("/");
-  };
-
-  const goCheckout = () => {
-    setShowCart(false);
-    navigate("/checkout");
   };
 
   return (
@@ -130,7 +91,7 @@ function Header() {
           </Link>
 
           {/* DESKTOP NAV */}
-          <nav className="hidden md:flex items-center gap-10 text-xs uppercase tracking-[0.2em] font-semibold text-stone-600">
+          <nav className="hidden md:flex items-center gap-8 lg:gap-10 text-xs uppercase tracking-[0.2em] font-semibold text-stone-600">
             {MENU_ITEMS.map((item) => (
               <NavLink
                 key={item.path}
@@ -150,145 +111,44 @@ function Header() {
               </NavLink>
             ))}
 
-            {/* ── CART DROPDOWN ── */}
-            <div className="relative" ref={cartRef}>
-              <button
-                onClick={() => {
-                  setShowCart((p) => !p);
-                  setShowUserMenu(false);
-                }}
-                className="relative p-2 rounded-full hover:bg-stone-100 transition-colors"
+            {/* CỤM NÚT BÊN PHẢI (Lịch sử đơn hàng + Giỏ hàng) */}
+            <div className="flex items-center gap-5 ml-2 border-l border-stone-200 pl-6">
+              
+              {/* ── NÚT LỊCH SỬ ĐƠN HÀNG ── */}
+              <Link 
+                to="/my-orders" 
+                className="flex items-center gap-1.5 text-stone-500 hover:text-amber-500 transition-colors group"
+                title="Đơn hàng của bạn"
               >
-                <FiShoppingBag size={18} className="text-stone-700" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full shadow">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
+                <FiClipboard size={18} className="group-hover:-translate-y-0.5 transition-transform" />
+                <span className="mt-0.5">Đơn hàng</span>
+              </Link>
 
-              {showCart && (
-                <div className="dropdown absolute right-0 top-full mt-3 w-80 bg-white border border-stone-100 rounded-2xl shadow-xl overflow-hidden z-50">
-                  {/* header */}
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-                    <p className="font-semibold text-stone-900 text-sm tracking-tight">
-                      Giỏ hàng
-                      {cartCount > 0 && (
-                        <span className="ml-1.5 text-stone-400 font-normal">
-                          ({cartCount})
-                        </span>
-                      )}
-                    </p>
-                    <button
-                      onClick={() => setShowCart(false)}
-                      className="text-stone-400 hover:text-stone-700 transition-colors"
-                    >
-                      <FiX size={15} />
-                    </button>
-                  </div>
-
-                  {/* items */}
-                  {cart.length === 0 ? (
-                    <div className="px-5 py-10 text-center">
-                      <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-3">
-                        <FiShoppingBag size={18} className="text-stone-400" />
-                      </div>
-                      <p className="text-sm text-stone-500 font-medium mb-1">
-                        Giỏ hàng trống
-                      </p>
-                      <p className="text-xs text-stone-400">
-                        Hãy thêm sản phẩm bạn yêu thích!
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="max-h-72 overflow-y-auto px-5 py-3 space-y-4">
-                        {cart.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-3"
-                          >
-                            {/* image */}
-                            <div className="w-14 h-14 rounded-xl bg-stone-100 overflow-hidden flex-shrink-0">
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-
-                            {/* info */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-stone-800 truncate leading-tight">
-                                {item.name}
-                              </p>
-                              <p className="text-xs text-amber-500 font-semibold mt-0.5">
-                                {item.price}
-                              </p>
-
-                              {/* qty control */}
-                              <div className="flex items-center gap-0 mt-1.5 border border-stone-200 rounded-full w-fit overflow-hidden">
-                                <button
-                                  onClick={() => updateQty(item.id, -1)}
-                                  className="w-7 h-7 flex items-center justify-center text-stone-500 hover:bg-stone-50 transition-colors"
-                                >
-                                  <FiMinus size={11} />
-                                </button>
-                                <span className="w-7 text-center text-xs font-semibold text-stone-800 tabular-nums">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() => updateQty(item.id, +1)}
-                                  className="w-7 h-7 flex items-center justify-center text-stone-500 hover:bg-stone-50 transition-colors"
-                                >
-                                  <FiPlus size={11} />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* remove */}
-                            <button
-                              onClick={() => removeItem(item.id)}
-                              className="text-stone-300 hover:text-red-400 transition-colors flex-shrink-0"
-                            >
-                              <FiX size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* footer */}
-                      <div className="px-5 py-4 border-t border-stone-100 bg-stone-50/50">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm text-stone-500">
-                            Tổng cộng
-                          </span>
-                          <span className="font-semibold text-stone-900 text-sm">
-                            {cartTotal.toLocaleString("vi-VN")}₫
-                          </span>
-                        </div>
-                        <button
-                          onClick={goCheckout}
-                          className="w-full flex items-center justify-center gap-2 bg-stone-900 hover:bg-amber-500 text-white py-3 rounded-full text-sm font-medium tracking-wide transition-all active:scale-95"
-                        >
-                          Thanh toán ngay <FiArrowRight size={14} />
-                        </button>
-                      </div>
-                    </>
+              {/* ── CART BUTTON ── */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    navigate("/checkout");
+                    setShowUserMenu(false);
+                  }}
+                  className="relative p-2 rounded-full hover:bg-stone-100 hover:text-amber-500 transition-colors"
+                >
+                  <FiShoppingBag size={18} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full shadow">
+                      {cartCount}
+                    </span>
                   )}
-                </div>
-              )}
+                </button>
+              </div>
             </div>
 
             {/* USER */}
             {currentUser ? (
               <div className="relative" ref={userRef}>
                 <button
-                  onClick={() => {
-                    setShowUserMenu((p) => !p);
-                    setShowCart(false);
-                  }}
-                  className="flex items-center gap-2"
+                  onClick={() => setShowUserMenu((p) => !p)}
+                  className="flex items-center gap-2 ml-2"
                 >
                   <img
                     src={`https://ui-avatars.com/api/?name=${currentUser.name || currentUser.email}&background=1c1917&color=fff&bold=true`}
@@ -303,13 +163,23 @@ function Header() {
                       <p className="text-xs font-medium text-stone-700 truncate">
                         {currentUser.name || "Người dùng"}
                       </p>
-                      <p className="text-[11px] text-stone-400 truncate mt-0.5">
+                      <p className="text-[11px] text-stone-400 truncate mt-0.5 lowercase tracking-normal">
                         {currentUser.email}
                       </p>
                     </div>
+                    
+                    {/* Link đơn hàng trong dropdown cho chắc ăn */}
+                    <Link
+                      to="/my-orders"
+                      onClick={() => setShowUserMenu(false)}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 hover:text-amber-500 transition-colors tracking-normal font-medium capitalize border-b border-stone-50"
+                    >
+                      Đơn hàng của tôi
+                    </Link>
+
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-stone-50 transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors tracking-normal font-medium capitalize"
                     >
                       Đăng xuất
                     </button>
@@ -319,17 +189,35 @@ function Header() {
             ) : (
               <button
                 onClick={() => navigate("/login")}
-                className="bg-stone-900 text-white px-5 py-2 rounded-full text-xs font-semibold tracking-wider hover:bg-amber-500 transition-all duration-300"
+                className="bg-stone-900 text-white px-5 py-2 rounded-full text-xs font-semibold tracking-wider hover:bg-amber-500 transition-all duration-300 ml-2"
               >
                 Đăng nhập
               </button>
             )}
           </nav>
 
-          {/* MOBILE */}
-          <button className="md:hidden text-stone-700 p-2">
-            <FiShoppingBag size={20} />
-          </button>
+          {/* MOBILE NAV */}
+          <div className="md:hidden flex items-center gap-3">
+            <Link 
+              to="/my-orders" 
+              className="text-stone-600 hover:text-amber-500 p-2"
+            >
+              <FiClipboard size={20} />
+            </Link>
+
+            <button 
+              onClick={() => navigate("/checkout")} 
+              className="text-stone-700 p-2 relative"
+            >
+              <FiShoppingBag size={20} />
+              {cartCount > 0 && (
+                <span className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold w-4 h-4 min-w-[16px] min-h-[16px] flex items-center justify-center rounded-full shadow">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
+
         </div>
       </header>
     </>
