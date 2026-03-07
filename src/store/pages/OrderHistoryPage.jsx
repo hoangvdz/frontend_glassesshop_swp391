@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiBox, FiTruck, FiCheckCircle, FiShoppingBag, FiAlertCircle } from "react-icons/fi";
 
-// Dữ liệu mẫu (Mock Data) để show UI lúc đi báo cáo/demo
+// Dữ liệu mẫu (Mock Data)
 const MOCK_ORDERS = [
   {
     id: "FALCON-8899",
@@ -43,17 +43,44 @@ function OrderHistoryPage() {
     // Lấy đơn hàng thật từ localStorage
     const savedOrders = JSON.parse(localStorage.getItem("orders")) || [];
     
-    // Format lại ID của đơn thật cho đẹp (ví dụ: FALCON-123456)
+    // Format lại ID của đơn thật cho đẹp
     const formattedSavedOrders = savedOrders.map(order => ({
       ...order,
       id: order.id.toString().startsWith("FALCON") ? order.id : `FALCON-${order.id.toString().slice(-4)}`
     }));
 
-    // Trộn đơn hàng thật với đơn hàng mẫu để show UI
+    // Trộn đơn hàng thật với đơn hàng mẫu
     const combinedOrders = [...formattedSavedOrders, ...MOCK_ORDERS];
     
     setOrders(combinedOrders);
   }, []);
+
+  // Hàm xử lý Hủy Đơn Hàng
+  const handleCancelOrder = (orderId) => {
+    const isConfirm = window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?");
+    if (isConfirm) {
+      // 1. Cập nhật State để UI thay đổi ngay lập tức
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? { ...order, status: "Cancelled" } : order
+        )
+      );
+
+      // 2. Cập nhật lại trong localStorage (để F5 không bị mất đối với đơn thật)
+      const savedOrders = JSON.parse(localStorage.getItem("orders")) || [];
+      const updatedSavedOrders = savedOrders.map(order => {
+        const formattedId = order.id.toString().startsWith("FALCON") 
+          ? order.id 
+          : `FALCON-${order.id.toString().slice(-4)}`;
+        
+        if (formattedId === orderId) {
+          return { ...order, status: "Cancelled" };
+        }
+        return order;
+      });
+      localStorage.setItem("orders", JSON.stringify(updatedSavedOrders));
+    }
+  };
 
   const getStatusInfo = (status) => {
     switch (status) {
@@ -68,7 +95,6 @@ function OrderHistoryPage() {
     }
   };
 
-  // Lọc đơn hàng theo Tab đang chọn
   const filteredOrders = orders.filter(
     (order) => activeTab === "All" || order.status === activeTab
   );
@@ -160,7 +186,10 @@ function OrderHistoryPage() {
                     
                     {/* Chờ xác nhận (Pending) */}
                     {statusInfo.code === 1 && (
-                      <button className="px-5 py-2.5 bg-white border border-stone-200 text-stone-600 font-medium rounded-xl hover:bg-stone-50 transition-colors text-sm flex items-center gap-2">
+                      <button 
+                        onClick={() => handleCancelOrder(order.id)}
+                        className="px-5 py-2.5 bg-white border border-stone-200 text-stone-600 font-medium rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors text-sm flex items-center gap-2"
+                      >
                         <FiAlertCircle /> Hủy đơn hàng
                       </button>
                     )}
