@@ -444,3 +444,161 @@ export const adminMock = {
     gmail: "mailto:admin@gmail.com",
   },
 };
+
+
+/* ===== PREORDER PIPELINE ===== */
+/*
+  Steps (in order):
+    1. placed       → Đã đặt trước
+    2. confirmed    → Xác nhận đơn
+    3. prescription → Kiểm tra toa mắt
+    4. production   → Đang sản xuất
+    5. qc           → Kiểm tra chất lượng
+    6. shipping     → Đang giao hàng
+    7. delivered    → Đã giao
+
+  cancelledAt: step index where it was cancelled (or null)
+*/
+
+const _d = (offset) => {
+  const d = new Date("2026-03-01");
+  d.setDate(d.getDate() + offset);
+  return d.toLocaleDateString("vi-VN");
+};
+
+export const preordersMock = [
+  {
+    id: "PRE-001",
+    customer: "Nguyễn Văn An",
+    email: "nguyenvanan@gmail.com",
+    phone: "0901234567",
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    createdAt: _d(0),
+    step: 3,
+    cancelled: false,
+    deposit: 500000,
+    note: "Khách muốn gọng màu đen, tròng chống UV400.",
+    items: [
+      { productId: 1, quantity: 1 },
+      { productId: 2, quantity: 1 },
+    ],
+    total: 2150000,
+    address: "12 Lê Lợi, Q.1, TP.HCM",
+    rxId: "RX-001",
+    history: [
+      { step: 0, date: _d(0),  note: "Khách đặt đơn trực tuyến." },
+      { step: 1, date: _d(1),  note: "Admin xác nhận đơn và liên hệ khách." },
+      { step: 2, date: _d(2),  note: "Toa mắt RX-001 được kiểm tra hợp lệ." },
+      { step: 3, date: _d(3),  note: "Chuyển sang xưởng sản xuất." },
+    ],
+  },
+  {
+    id: "PRE-002",
+    customer: "Trần Thị Bình",
+    email: "tranbinh@gmail.com",
+    phone: "0912345678",
+    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+    createdAt: _d(-3),
+    step: 5,
+    cancelled: false,
+    deposit: 300000,
+    note: "",
+    items: [{ productId: 4, quantity: 1 }],
+    total: 1350000,
+    address: "45 Nguyễn Trãi, Q.5, TP.HCM",
+    rxId: null,
+    history: [
+      { step: 0, date: _d(-3), note: "Khách đặt đơn." },
+      { step: 1, date: _d(-2), note: "Xác nhận." },
+      { step: 2, date: _d(-2), note: "Không cần toa mắt (kính mát)." },
+      { step: 3, date: _d(-1), note: "Sản xuất hoàn tất." },
+      { step: 4, date: _d(-1), note: "QC đạt yêu cầu." },
+      { step: 5, date: _d(0),  note: "Đã bàn giao cho đơn vị vận chuyển." },
+    ],
+  },
+  {
+    id: "PRE-003",
+    customer: "Lê Minh Cường",
+    email: "cuongle@gmail.com",
+    phone: "0923456789",
+    avatar: "https://randomuser.me/api/portraits/men/65.jpg",
+    createdAt: _d(-7),
+    step: 7,
+    cancelled: false,
+    deposit: 800000,
+    note: "Giao giờ hành chính.",
+    items: [{ productId: 6, quantity: 1 }],
+    total: 1650000,
+    address: "88 Bà Triệu, Hà Nội",
+    rxId: "RX-003",
+    history: [
+      { step: 0, date: _d(-7), note: "Khách đặt đơn." },
+      { step: 1, date: _d(-6), note: "Xác nhận." },
+      { step: 2, date: _d(-5), note: "Kiểm tra toa." },
+      { step: 3, date: _d(-4), note: "Sản xuất." },
+      { step: 4, date: _d(-3), note: "QC đạt." },
+      { step: 5, date: _d(-2), note: "Giao vận." },
+      { step: 6, date: _d(-1), note: "Đã giao thành công." },
+    ],
+  },
+  {
+    id: "PRE-004",
+    customer: "Phạm Thu Hà",
+    email: "thuhapham@gmail.com",
+    phone: "0934567890",
+    avatar: "https://randomuser.me/api/portraits/women/68.jpg",
+    createdAt: _d(-1),
+    step: 1,
+    cancelled: false,
+    deposit: 400000,
+    note: "Khách mới lần đầu đặt.",
+    items: [{ productId: 3, quantity: 1 }, { productId: 8, quantity: 1 }],
+    total: 2200000,
+    address: "22 Trần Phú, Đà Nẵng",
+    rxId: "RX-004",
+    history: [
+      { step: 0, date: _d(-1), note: "Khách đặt đơn trực tuyến." },
+      { step: 1, date: _d(0),  note: "Admin xác nhận đơn." },
+    ],
+  },
+  {
+    id: "PRE-005",
+    customer: "Võ Hoàng Nam",
+    email: "namvo@gmail.com",
+    phone: "0945678901",
+    avatar: "https://randomuser.me/api/portraits/men/71.jpg",
+    createdAt: _d(-2),
+    step: 2,
+    cancelled: true,
+    deposit: 500000,
+    note: "Khách huỷ vì toa không hợp lệ.",
+    items: [{ productId: 9, quantity: 1 }],
+    total: 1750000,
+    address: "5 Phan Đình Phùng, Huế",
+    rxId: "RX-003",
+    history: [
+      { step: 0, date: _d(-2), note: "Khách đặt đơn." },
+      { step: 1, date: _d(-1), note: "Xác nhận." },
+      { step: 2, date: _d(0),  note: "Toa mắt không hợp lệ — đơn bị huỷ." },
+    ],
+  },
+  {
+    id: "PRE-006",
+    customer: "Ngô Thuỳ Linh",
+    email: "linhngo@gmail.com",
+    phone: "0956789012",
+    avatar: "https://randomuser.me/api/portraits/women/22.jpg",
+    createdAt: _d(0),
+    step: 0,
+    cancelled: false,
+    deposit: 0,
+    note: "",
+    items: [{ productId: 5, quantity: 1 }],
+    total: 1850000,
+    address: "77 Điện Biên Phủ, Q.3, TP.HCM",
+    rxId: null,
+    history: [
+      { step: 0, date: _d(0), note: "Khách vừa đặt đơn." },
+    ],
+  },
+];
