@@ -181,6 +181,13 @@ function AdminSidebar({ collapsed }) {
             )}
           </div>
           <div className="relative">
+            {renderItem(
+              "/dashboard/discount",
+              <FiEye size={18} />,
+              "Giảm giá",
+            )}
+          </div>
+          <div className="relative">
             {renderItem("/dashboard/profile", <FiUser size={18} />, "Hồ sơ")}
           </div>
         </div>

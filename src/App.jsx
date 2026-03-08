@@ -22,6 +22,7 @@ import ShippingProgressPage from "./store/pages/ShippingProgressPage.jsx";
 import OrderFeedbackPage from "./store/pages/OrderFeedbackPage.jsx";
 import ReturnFormPage from "./store/pages/ReturnFormPage.jsx";
 import OrderHistoryPage from "./store/pages/OrderHistoryPage.jsx";
+import AdminDiscount from "./admin/pages/AdminDiscount.jsx";
 function App() {
   return (
     <div>
@@ -53,6 +54,7 @@ function App() {
           <Route path="/dashboard/products" element={<AdminProducts />} />
           <Route path="/dashboard/orders" element={<AdminOrders />} />
           <Route path="/dashboard/prescriptions" element={<AdminPrescription />} />
+          <Route path="/dashboard/discount" element={<AdminDiscount />} />
         </Route>
       </Routes>
     </div>
