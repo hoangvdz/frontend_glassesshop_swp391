@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { FiShoppingBag, FiClipboard } from "react-icons/fi"; // Thêm FiClipboard
+import { FiShoppingBag, FiClipboard } from "react-icons/fi"; 
 import { FaCopyright } from "react-icons/fa";
 
 function Header() {
@@ -50,10 +50,15 @@ function Header() {
     return () => document.removeEventListener("mousedown", fn);
   }, []);
 
+  // ĐÃ SỬA HÀM NÀY: Dọn dẹp giỏ hàng khi log out
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("cart"); // Xóa giỏ hàng trong storage
+    
     setCurrentUser(null);
+    setCart([]); // Reset giỏ hàng trên giao diện về 0 ngay lập tức
     setShowUserMenu(false);
+    
     navigate("/");
   };
 
