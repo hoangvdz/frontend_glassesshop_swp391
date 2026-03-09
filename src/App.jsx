@@ -22,6 +22,8 @@ import ShippingProgressPage from "./store/pages/ShippingProgressPage.jsx";
 import OrderFeedbackPage from "./store/pages/OrderFeedbackPage.jsx";
 import ReturnFormPage from "./store/pages/ReturnFormPage.jsx";
 import OrderHistoryPage from "./store/pages/OrderHistoryPage.jsx";
+import AdminDiscount from "./admin/pages/AdminDiscount.jsx";
+import AdminPreorder from "./admin/pages/AdminPreorder.jsx";
 function App() {
   return (
     <div>
@@ -45,14 +47,18 @@ function App() {
           <Route path="/order-feedback" element={<OrderFeedbackPage />} />
           <Route path="/return-request" element={<ReturnFormPage />} />
           <Route path="/my-orders" element={<OrderHistoryPage />} />
-
         </Route>
         <Route element={<AdminLayout />}>
           <Route path="/dashboard/" element={<AdminOverview />} />
           <Route path="/dashboard/profile" element={<AdminProfile />} />
           <Route path="/dashboard/products" element={<AdminProducts />} />
           <Route path="/dashboard/orders" element={<AdminOrders />} />
-          <Route path="/dashboard/prescriptions" element={<AdminPrescription />} />
+          <Route
+            path="/dashboard/prescriptions"
+            element={<AdminPrescription />}
+          />
+          <Route path="/dashboard/discount" element={<AdminDiscount />} />
+          <Route path="/dashboard/preoders" element={<AdminPreorder />} />
         </Route>
       </Routes>
     </div>

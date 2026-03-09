@@ -175,9 +175,23 @@ function AdminSidebar({ collapsed }) {
           </div>
           <div className="relative">
             {renderItem(
+              "/dashboard/preoders",
+              <FiShoppingCart size={18} />,
+              "Sản phẩm đặt trước",
+            )}
+          </div>
+          <div className="relative">
+            {renderItem(
               "/dashboard/prescriptions",
               <FiEye size={18} />,
               "Đơn thuốc",
+            )}
+          </div>
+          <div className="relative">
+            {renderItem(
+              "/dashboard/discount",
+              <FiEye size={18} />,
+              "Giảm giá",
             )}
           </div>
           <div className="relative">
