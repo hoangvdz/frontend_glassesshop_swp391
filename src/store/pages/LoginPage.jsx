@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"; // Thêm useLocation
-import { adminMock } from "../data/loginMock";
+import { getUserById, loginApi } from "../api/authApi";
+
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,8 +12,6 @@ function LoginPage() {
   // Ví dụ: từ Cart sang -> from sẽ là "/cart"
   const from = location.state?.from || "/";
 
-  const isAdminLoggin = adminMock;
-
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -20,34 +19,31 @@ function LoginPage() {
     };
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    const adminAccount = isAdminLoggin.find(
-      (admin) =>
-        admin.email === email.trim() &&
-        admin.password === password.trim() &&
-        admin.role_EN === "Admin"
-    );
+    try {
+      const { userId, status } = await loginApi(email, password);
 
-    // 1. Logic Admin
-    if (adminAccount) {
-      alert("Xin chào Admin!");
-      localStorage.setItem("currentUser", JSON.stringify(adminAccount));
+      if (!status) {
+        alert("Sai email hoặc mật khẩu");
+        return;
+      }
+      alert(from);
+      const user = await getUserById(userId);
+      localStorage.setItem("currentUser", JSON.stringify(user));
       window.dispatchEvent(new Event("storage"));
-      navigate("/dashboard");
-      return;
+      alert("Đăng nhập thành công!");
+
+      if (user.role === "ADMIN" || user.role === "OPERATIONAL_STAFF") {
+        navigate("/dashboard");
+      } else {
+        navigate(from);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error Server API");
     }
-
-    // 2. Logic Khách hàng
-    const userLink = { email: email, role: "customer", name: "Khách hàng" };
-    localStorage.setItem("currentUser", JSON.stringify(userLink));
-    window.dispatchEvent(new Event("storage")); // Bắn sự kiện cập nhật Header
-
-    alert("Đăng nhập thành công!");
-
-    // 3. QUAY VỀ TRANG TRƯỚC ĐÓ (Cart hoặc Home)
-    navigate(from);
   };
 
   const handleGoogleLogin = () => {
