@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
+import { createUser, checkEmail } from "../api/createApi";
 /* ── decorative eyewear SVG (identical to LoginPage) ── */
 function GlassesDecor({ className }) {
   return (
@@ -131,19 +131,42 @@ export default function RegisterPage() {
       setError("Mật khẩu nhập lại không khớp.");
       return;
     }
+
     if (formData.password.length < 6) {
       setError("Mật khẩu phải có ít nhất 6 ký tự.");
       return;
     }
 
     setLoading(true);
+
     try {
-      // TODO: call registerApi(formData) here
-      await new Promise((r) => setTimeout(r, 900)); // placeholder delay
+      const emailExists = await checkEmail(formData.email);
+
+      if (emailExists.data) {
+        setError("Email đã tồn tại.");
+        setLoading(false);
+        return;
+      }
+
+      const newUser = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: "",
+        role: "CUSTOMER",
+        accountStatus: "ACTIVE",
+      };
+
+      await createUser(newUser);
+
       setSuccess(true);
-      setTimeout(() => navigate("/login"), 1600);
-    } catch {
-      setError("Lỗi kết nối máy chủ. Vui lòng thử lại.");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1600);
+    } catch (err) {
+      console.error(err);
+      setError("Lỗi máy chủ. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
