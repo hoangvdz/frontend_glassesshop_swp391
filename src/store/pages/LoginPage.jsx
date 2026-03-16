@@ -193,8 +193,6 @@ export default function LoginPage() {
             }}
           />
 
-         
-
           {/* center: quote */}
           <div className="relative z-10 px-10 pb-2 flex-1 flex flex-col justify-center">
             <GlassesDecor className="w-44 text-amber-400 mb-8 opacity-60" />
@@ -273,22 +271,6 @@ export default function LoginPage() {
           className="flex-1 flex flex-col justify-center items-center px-8 md:px-14 overflow-y-auto"
           style={{ background: "#fafaf7" }}
         >
-          {/* mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-8 self-start">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{
-                background: "rgba(217,119,6,.1)",
-                border: "1px solid rgba(217,119,6,.25)",
-              }}
-            >
-              <GlassesDecor className="w-4 h-4 text-amber-500" />
-            </div>
-            <span className="font-semibold text-sm tracking-widest text-gray-800">
-              OPTIQUE
-            </span>
-          </div>
-
           <div className="w-full" style={{ maxWidth: 400 }}>
             {/* heading */}
             <div className="lp-anim-0 mb-8">
@@ -477,20 +459,15 @@ export default function LoginPage() {
 
             {/* google */}
             <div className="lp-anim-5 flex justify-center">
-              <div
-                className="w-full overflow-hidden rounded-xl"
-                style={{ border: "1.5px solid #e5e7eb" }}
-              >
-                <GoogleLogin
-                  onSuccess={handleGoogle}
-                  onError={() => setError("Đăng nhập Google thất bại.")}
-                  width="368"
-                  theme="outline"
-                  size="large"
-                  text="signin_with"
-                  shape="rectangular"
-                />
-              </div>
+              <GoogleLogin
+                onSuccess={handleGoogle}
+                onError={() => setError("Đăng nhập Google thất bại.")}
+                width="368"
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+              />
             </div>
 
             {/* register link */}
