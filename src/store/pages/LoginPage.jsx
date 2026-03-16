@@ -1,139 +1,477 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // Thêm useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getUserById, loginApi } from "../api/authApi";
-
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
-function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const location = useLocation(); // Hook lấy dữ liệu state truyền từ trang trước
-
-  // Tìm xem trang trước đó là trang nào? (nếu không có thì mặc định về Home '/')
-  // Ví dụ: từ Cart sang -> from sẽ là "/cart"
-  const from = location.state?.from || "/";
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-
-    try {
-      const { userId, status } = await loginApi(email, password);
-
-      if (!status) {
-        alert("Sai email hoặc mật khẩu");
-        return;
-      }
-      alert(from);
-      const user = await getUserById(userId);
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      window.dispatchEvent(new Event("storage"));
-      alert("Đăng nhập thành công!");
-
-      if (user.role === "ADMIN" || user.role === "OPERATIONAL_STAFF") {
-        navigate("/dashboard");
-      } else {
-        navigate(from);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Error Server API");
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    const googleUser = {
-      email: "google@gmail.com",
-      role: "customer",
-      name: "Google User",
-    };
-    localStorage.setItem("currentUser", JSON.stringify(googleUser));
-    window.dispatchEvent(new Event("storage"));
-
-    alert("Đăng nhập Google thành công!");
-    navigate(from); // Quay về trang trước
-  };
-
+/* ── decorative eyewear SVG lines ── */
+function GlassesDecor({ className }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 z-50">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900">
-            Chào mừng trở lại
-          </h2>
-        </div>
-        <form className="space-y-5" onSubmit={handleLogin}>
-          <input
-            type="email"
-            required
-            placeholder="Email"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            type="password"
-            required
-            placeholder="Mật khẩu"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="w-full py-3 rounded-lg bg-gray-900 text-white font-medium hover:bg-amber-600 transition"
-          >
-            Đăng nhập
-          </button>
-        </form>
-        <div className="flex items-center my-6">
-          <div className="flex-1 h-px bg-gray-300"></div>
-          <span className="px-4 text-sm text-gray-500">hoặc</span>
-          <div className="flex-1 h-px bg-gray-300"></div>
-        </div>
-        <GoogleLogin
-          onSuccess={(credentialResponse) => {
-            const decoded = jwtDecode(credentialResponse.credential);
-
-            console.log(decoded);
-
-            const googleUser = {
-              email: decoded.email,
-              name: decoded.name,
-              avatar: decoded.picture,
-              role: "CUSTOMER",
-            };
-
-            localStorage.setItem("currentUser", JSON.stringify(googleUser));
-            window.dispatchEvent(new Event("storage"));
-
-            alert("Đăng nhập Google thành công!");
-            navigate(from);
-          }}
-          onError={() => {
-            console.log("Login Failed");
-          }}
-        />
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Chưa có tài khoản?{" "}
-          <Link
-            to="/register"
-            className="text-amber-600 font-medium hover:underline"
-          >
-            Đăng ký ngay
-          </Link>
-        </p>
-      </div>
-    </div>
+    <svg
+      viewBox="0 0 220 80"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <rect
+        x="2"
+        y="20"
+        width="80"
+        height="44"
+        rx="22"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeOpacity=".4"
+      />
+      <rect
+        x="138"
+        y="20"
+        width="80"
+        height="44"
+        rx="22"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeOpacity=".4"
+      />
+      <path
+        d="M82 42 C95 36 125 36 138 42"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeOpacity=".35"
+        strokeLinecap="round"
+      />
+      <path
+        d="M2 42 L-28 34"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeOpacity=".3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M218 42 L248 34"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeOpacity=".3"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
-export default LoginPage;
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/";
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { userId, status } = await loginApi(email, password);
+      if (!status) {
+        setError("Email hoặc mật khẩu không đúng.");
+        setLoading(false);
+        return;
+      }
+      const user = await getUserById(userId);
+      localStorage.setItem("currentUser", JSON.stringify(user));
+      window.dispatchEvent(new Event("storage"));
+      if (user.role === "ADMIN" || user.role === "OPERATIONAL_STAFF")
+        navigate("/dashboard");
+      else navigate(from);
+    } catch {
+      setError("Lỗi kết nối máy chủ. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = (credentialResponse) => {
+    const decoded = jwtDecode(credentialResponse.credential);
+    const googleUser = {
+      email: decoded.email,
+      name: decoded.name,
+      avatar: decoded.picture,
+      role: "CUSTOMER",
+    };
+    localStorage.setItem("currentUser", JSON.stringify(googleUser));
+    window.dispatchEvent(new Event("storage"));
+    navigate(from);
+  };
+
+  return (
+    <>
+      <style>{`
+        @keyframes lp-fade-up { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes lp-fade-in  { from { opacity:0; } to { opacity:1; } }
+        @keyframes lp-shimmer  { 0%,100% { opacity:.07; } 50% { opacity:.13; } }
+        .lp-anim-0  { animation: lp-fade-up .55s cubic-bezier(.22,1,.36,1) both; }
+        .lp-anim-1  { animation: lp-fade-up .55s .08s cubic-bezier(.22,1,.36,1) both; }
+        .lp-anim-2  { animation: lp-fade-up .55s .16s cubic-bezier(.22,1,.36,1) both; }
+        .lp-anim-3  { animation: lp-fade-up .55s .24s cubic-bezier(.22,1,.36,1) both; }
+        .lp-anim-4  { animation: lp-fade-up .55s .32s cubic-bezier(.22,1,.36,1) both; }
+        .lp-anim-5  { animation: lp-fade-up .55s .40s cubic-bezier(.22,1,.36,1) both; }
+        .lp-panel   { animation: lp-fade-in .4s ease both; }
+        .lp-input   { transition: border-color .18s, box-shadow .18s, background .18s; }
+        .lp-input:focus { outline:none; border-color:#d97706; box-shadow:0 0 0 3px rgba(217,119,6,.13); background:#fff; }
+        .lp-btn     { transition: background .18s, transform .1s, box-shadow .18s; }
+        .lp-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+        .lp-btn:active { transform:translateY(0); }
+        .lp-shimmer { animation: lp-shimmer 3s ease-in-out infinite; }
+      `}</style>
+
+      <div
+        className="fixed inset-0 flex z-50"
+        style={{
+          fontFamily:
+            "system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+        }}
+      >
+        {/* ═══════════════════════════════
+            LEFT PANEL — dark visual
+        ═══════════════════════════════ */}
+        <div
+          className="lp-panel hidden lg:flex flex-col justify-between w-[52%] relative overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(145deg, #0a0a0a 0%, #141414 40%, #1a1208 100%)",
+          }}
+        >
+          {/* background image */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "url('https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=1200&q=80')",
+              backgroundSize: "cover",
+              backgroundPosition: "center 30%",
+              opacity: 0.28,
+            }}
+          />
+
+          {/* gradient overlay */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(10,10,10,.6) 0%, rgba(10,10,10,.25) 40%, rgba(10,10,10,.85) 100%)",
+            }}
+          />
+
+          {/* noise texture */}
+          <div
+            className="absolute inset-0 lp-shimmer"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+              opacity: 0.06,
+            }}
+          />
+
+          {/* center: quote */}
+          <div className="relative z-10 px-10 pb-2 flex-1 flex flex-col justify-center">
+            <GlassesDecor className="w-44 text-amber-400 mb-8 opacity-60" />
+            <h2
+              className="text-white leading-tight mb-5"
+              style={{
+                fontSize: "2.6rem",
+                fontWeight: 700,
+                lineHeight: 1.15,
+              }}
+            >
+              Tầm nhìn{" "}
+              <span className="not-italic" style={{ color: "#f59e0b" }}>
+                rõ ràng
+              </span>
+              ,<br />
+              phong cách <span style={{ color: "#f59e0b" }}>bất tận</span>.
+            </h2>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: "rgba(255,255,255,.5)", maxWidth: 340 }}
+            >
+              Kính được chế tác riêng theo số mắt và phong cách của bạn. Mỗi cặp
+              là một tuyên ngôn thẩm mỹ.
+            </p>
+
+            {/* stats row */}
+            <div className="flex gap-8 mt-10">
+              {[
+                ["500+", "Mẫu kính"],
+                ["10K+", "Khách hàng"],
+                ["5★", "Đánh giá"],
+              ].map(([v, l]) => (
+                <div key={l}>
+                  <p
+                    className="text-white font-bold text-xl"
+                    style={{
+                      color: "#f59e0b",
+                    }}
+                  >
+                    {v}
+                  </p>
+                  <p
+                    className="text-xs mt-0.5"
+                    style={{ color: "rgba(255,255,255,.4)" }}
+                  >
+                    {l}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* bottom: decorative line */}
+          <div className="relative z-10 px-10 pb-8">
+            <div
+              className="h-px w-full mb-5"
+              style={{
+                background:
+                  "linear-gradient(to right, transparent, rgba(217,119,6,.4), transparent)",
+              }}
+            />
+            <p
+              className="text-xs"
+              style={{ color: "rgba(255,255,255,.25)", letterSpacing: ".1em" }}
+            >
+              © 2026 Falcon · Eyewear
+            </p>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════
+            RIGHT PANEL — form
+        ═══════════════════════════════ */}
+        <div
+          className="flex-1 flex flex-col justify-center items-center px-8 md:px-14 overflow-y-auto"
+          style={{ background: "#fafaf7" }}
+        >
+          <div className="w-full" style={{ maxWidth: 400 }}>
+            {/* heading */}
+            <div className="lp-anim-0 mb-8">
+              <p
+                className="text-xs font-medium tracking-widest mb-2"
+                style={{ color: "#d97706", letterSpacing: ".18em" }}
+              >
+                CHÀO MỪNG TRỞ LẠI
+              </p>
+              <h1
+                className="text-gray-900 font-bold leading-tight"
+                style={{
+                  fontSize: "2rem",
+                }}
+              >
+                Đăng nhập
+                <br />
+                <span
+                  className="font-medium"
+                  style={{ color: "#6b7280", fontSize: "1.4rem" }}
+                >
+                  vào tài khoản của bạn
+                </span>
+              </h1>
+            </div>
+
+            {/* error */}
+            {error && (
+              <div
+                className="lp-anim-0 flex items-center gap-2.5 px-4 py-3 rounded-xl mb-5 text-sm"
+                style={{
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  color: "#dc2626",
+                }}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="flex-shrink-0"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4m0 4h.01" />
+                </svg>
+                {error}
+              </div>
+            )}
+
+            {/* form */}
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* email */}
+              <div className="lp-anim-1">
+                <label
+                  className="block text-xs font-medium mb-1.5"
+                  style={{ color: "#6b7280", letterSpacing: ".04em" }}
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="example@email.com"
+                  autoComplete="email"
+                  className="lp-input w-full px-4 py-3 rounded-xl text-sm border bg-gray-50"
+                  style={{ border: "1.5px solid #e5e7eb", color: "#111" }}
+                />
+              </div>
+
+              {/* password */}
+              <div className="lp-anim-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label
+                    className="block text-xs font-medium"
+                    style={{ color: "#6b7280", letterSpacing: ".04em" }}
+                  >
+                    Mật khẩu
+                  </label>
+                  <button
+                    type="button"
+                    className="text-xs font-medium transition-colors hover:opacity-80"
+                    style={{ color: "#d97706" }}
+                  >
+                    Quên mật khẩu?
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className="lp-input w-full px-4 py-3 pr-12 rounded-xl text-sm border bg-gray-50"
+                    style={{ border: "1.5px solid #e5e7eb", color: "#111" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass((v) => !v)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+                  >
+                    {showPass ? (
+                      <svg
+                        width="17"
+                        height="17"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="17"
+                        height="17"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* submit */}
+              <div className="lp-anim-3 pt-1">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="lp-btn w-full py-3.5 rounded-xl text-sm font-semibold text-white relative overflow-hidden"
+                  style={{
+                    background: loading ? "#9ca3af" : "#111111",
+                    letterSpacing: ".04em",
+                  }}
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2.5">
+                      <svg
+                        className="animate-spin"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path
+                          d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+                          strokeOpacity=".4"
+                        />
+                        <path d="M12 2v4" strokeOpacity="1" />
+                      </svg>
+                      Đang đăng nhập…
+                    </span>
+                  ) : (
+                    "Đăng nhập"
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* divider */}
+            <div className="lp-anim-4 flex items-center gap-4 my-6">
+              <div className="flex-1 h-px" style={{ background: "#e5e7eb" }} />
+              <span
+                className="text-xs font-medium"
+                style={{ color: "#9ca3af" }}
+              >
+                hoặc tiếp tục với
+              </span>
+              <div className="flex-1 h-px" style={{ background: "#e5e7eb" }} />
+            </div>
+
+            {/* google */}
+            <div className="lp-anim-5 flex justify-center">
+              <div
+                className="w-full overflow-hidden rounded-xl"
+                style={{ border: "1.5px solid #e5e7eb" }}
+              >
+                <GoogleLogin
+                  onSuccess={handleGoogle}
+                  onError={() => setError("Đăng nhập Google thất bại.")}
+                  width="368"
+                  theme="outline"
+                  size="large"
+                  text="signin_with"
+                  shape="rectangular"
+                />
+              </div>
+            </div>
+
+            {/* register link */}
+            <p
+              className="lp-anim-5 text-center text-sm mt-7"
+              style={{ color: "#9ca3af" }}
+            >
+              Chưa có tài khoản?{" "}
+              <Link
+                to="/register"
+                className="font-semibold transition-colors hover:opacity-80"
+                style={{ color: "#d97706" }}
+              >
+                Đăng ký ngay
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
