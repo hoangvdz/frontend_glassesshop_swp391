@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom"; // Thêm useLocation
 import { getUserById, loginApi } from "../api/authApi";
 
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -96,14 +99,29 @@ function LoginPage() {
           <span className="px-4 text-sm text-gray-500">hoặc</span>
           <div className="flex-1 h-px bg-gray-300"></div>
         </div>
-        <button
-          onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition"
-        >
-          <span className="text-sm font-medium text-gray-700">
-            Đăng nhập với Google
-          </span>
-        </button>
+        <GoogleLogin
+          onSuccess={(credentialResponse) => {
+            const decoded = jwtDecode(credentialResponse.credential);
+
+            console.log(decoded);
+
+            const googleUser = {
+              email: decoded.email,
+              name: decoded.name,
+              avatar: decoded.picture,
+              role: "CUSTOMER",
+            };
+
+            localStorage.setItem("currentUser", JSON.stringify(googleUser));
+            window.dispatchEvent(new Event("storage"));
+
+            alert("Đăng nhập Google thành công!");
+            navigate(from);
+          }}
+          onError={() => {
+            console.log("Login Failed");
+          }}
+        />
         <p className="text-center text-sm text-gray-600 mt-6">
           Chưa có tài khoản?{" "}
           <Link
