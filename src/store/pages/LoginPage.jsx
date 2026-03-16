@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getUserById, loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-
+import { checkEmail, createUser } from "../api/createApi";
+import { generateRandomPassword } from "../utils/passwordUtils";
 /* ── decorative eyewear SVG lines ── */
 function GlassesDecor({ className }) {
   return (
@@ -92,14 +93,33 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogle = (credentialResponse) => {
+  const handleGoogle = async (credentialResponse) => {
     const decoded = jwtDecode(credentialResponse.credential);
+
     const googleUser = {
       email: decoded.email,
       name: decoded.name,
-      avatar: decoded.picture,
+      phone: "",
       role: "CUSTOMER",
+      accountStatus: "ACTIVE",
     };
+
+    const emailExist = await checkEmail(googleUser.email);
+
+    if (!emailExist.data) {
+      const passRand = generateRandomPassword();
+      const newUser = {
+        email: decoded.email,
+        name: decoded.name,
+        phone: "",
+        password: passRand,
+        role: "CUSTOMER",
+        accountStatus: "ACTIVE",
+      };
+
+      await createUser(newUser);
+    }
+
     localStorage.setItem("currentUser", JSON.stringify(googleUser));
     window.dispatchEvent(new Event("storage"));
     navigate(from);
@@ -239,7 +259,7 @@ export default function LoginPage() {
               className="text-xs"
               style={{ color: "rgba(255,255,255,.25)", letterSpacing: ".1em" }}
             >
-              © 2026 Falcon · Eyewear
+              © 2026 OPTIQUE · Handcrafted eyewear
             </p>
           </div>
         </div>
@@ -439,20 +459,15 @@ export default function LoginPage() {
 
             {/* google */}
             <div className="lp-anim-5 flex justify-center">
-              <div
-                className="w-full overflow-hidden rounded-xl"
-                style={{ border: "1.5px solid #e5e7eb" }}
-              >
-                <GoogleLogin
-                  onSuccess={handleGoogle}
-                  onError={() => setError("Đăng nhập Google thất bại.")}
-                  width="368"
-                  theme="outline"
-                  size="large"
-                  text="signin_with"
-                  shape="rectangular"
-                />
-              </div>
+              <GoogleLogin
+                onSuccess={handleGoogle}
+                onError={() => setError("Đăng nhập Google thất bại.")}
+                width="368"
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+              />
             </div>
 
             {/* register link */}

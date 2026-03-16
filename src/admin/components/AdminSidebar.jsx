@@ -17,7 +17,7 @@ function AdminSidebar({ collapsed }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("currentUser");
     navigate("/login");
   };
 
@@ -203,7 +203,7 @@ function AdminSidebar({ collapsed }) {
       {/* ===== FOOTER LOGOUT ===== */}
       <div className="p-3 border-t border-slate-200">
         <motion.button
-          onClick={handleLogout}
+          onClick={(handleLogout)}
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
           className={`${navItem} w-full text-red-500 hover:bg-red-50 hover:text-red-600`}

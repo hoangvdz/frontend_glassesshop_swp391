@@ -24,11 +24,12 @@ import ReturnFormPage from "./store/pages/ReturnFormPage.jsx";
 import OrderHistoryPage from "./store/pages/OrderHistoryPage.jsx";
 import AdminDiscount from "./admin/pages/AdminDiscount.jsx";
 import AdminPreorder from "./admin/pages/AdminPreorder.jsx";
+
+import AdminRoute from "./shared/common/guard/AdminRoute.jsx";
 function App() {
   return (
     <div>
       <ScrollToTop />
-
       <Routes>
         <Route element={<StoreLayout />}>
           <Route path="/" element={<HomePage />} />
@@ -48,7 +49,13 @@ function App() {
           <Route path="/return-request" element={<ReturnFormPage />} />
           <Route path="/my-orders" element={<OrderHistoryPage />} />
         </Route>
-        <Route element={<AdminLayout />}>
+        <Route
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
           <Route path="/dashboard/" element={<AdminOverview />} />
           <Route path="/dashboard/profile" element={<AdminProfile />} />
           <Route path="/dashboard/products" element={<AdminProducts />} />

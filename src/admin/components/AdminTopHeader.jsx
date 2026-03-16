@@ -23,6 +23,12 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
 
   const admin = stored ? JSON.parse(stored) : adminMock;
 
+
+  const handleLogout = () => {
+    localStorage.removeItem("currentUser");
+    navigate("/login");
+  };
+
   // Mock notifications
   const notifications = [
     {
@@ -277,7 +283,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
 
                   <div className="py-1">
                     <button
-                      onClick={() => navigate("/login")}
+                      onClick={(handleLogout)}
                       className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 text-red-600 hover:bg-red-50 transition"
                     >
                       <FiLogOut size={15} />
