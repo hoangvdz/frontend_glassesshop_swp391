@@ -94,7 +94,7 @@ function LoginModal({ isOpen, onClose, productName }) {
             <button
               onClick={() => {
                 onClose();
-                navigate("/login");
+                navigate("/login", { state: { from: location.pathname } });
               }}
               className="w-full py-3 cursor-pointer bg-stone-900 hover:bg-amber-500 text-white font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
             >

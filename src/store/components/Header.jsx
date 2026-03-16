@@ -84,14 +84,19 @@ function Header() {
           {/* LOGO */}
           <Link
             to="/"
-            className="group flex items-end text-2xl font-extrabold tracking-widest"
+            className="group flex items-end text-2xl font-extrabold tracking-widest gap-4"
           >
-            <span className="text-stone-900 group-hover:text-amber-500 transition-colors duration-300">
+            <img
+              src="https://tse1.mm.bing.net/th/id/OIP.VNNzIRDW9nZsWGt1vmCCXwHaFL?rs=1&pid=ImgDetMain&o=7&rm=3"
+              alt="Falcon"
+              className="w-9 h-9 "
+            />
+            <span className="text-amber-500 group-hover:text-amber-500 transition-colors duration-300">
               FALCON
             </span>
-            <span className="text-amber-500 text-3xl ml-0.5 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
+            {/* <span className="text-amber-500 text-3xl ml-0.5 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
               <FaCopyright size={14}/>
-            </span>
+            </span> */}
           </Link>
 
           {/* DESKTOP NAV */}
