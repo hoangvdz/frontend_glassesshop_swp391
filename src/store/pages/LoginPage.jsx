@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getUserById, loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import { checkEmail } from "../api/createApi";
-
+import { checkEmail, createUser } from "../api/createApi";
+import { generateRandomPassword } from "../utils/passwordUtils";
 /* ── decorative eyewear SVG lines ── */
 function GlassesDecor({ className }) {
   return (
@@ -93,16 +93,32 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogle = async(credentialResponse) => {
+  const handleGoogle = async (credentialResponse) => {
     const decoded = jwtDecode(credentialResponse.credential);
+
     const googleUser = {
       email: decoded.email,
       name: decoded.name,
-      avatar: decoded.picture,
+      phone: "",
       role: "CUSTOMER",
+      accountStatus: "ACTIVE",
     };
 
-    const emailExist = await checkEmail(googleUser.checkEmail);
+    const emailExist = await checkEmail(googleUser.email);
+
+    if (!emailExist.data) {
+      const passRand = generateRandomPassword();
+      const newUser = {
+        email: decoded.email,
+        name: decoded.name,
+        phone: "",
+        password: passRand,
+        role: "CUSTOMER",
+        accountStatus: "ACTIVE",
+      };
+
+      await createUser(newUser);
+    }
 
     localStorage.setItem("currentUser", JSON.stringify(googleUser));
     window.dispatchEvent(new Event("storage"));
@@ -177,26 +193,7 @@ export default function LoginPage() {
             }}
           />
 
-          {/* top: logo */}
-          <div className="relative z-10 px-10 pt-10">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{
-                  background: "rgba(217,119,6,.15)",
-                  border: "1px solid rgba(217,119,6,.3)",
-                }}
-              >
-                <GlassesDecor className="w-5 h-5 text-amber-400" />
-              </div>
-              <span
-                className="text-white font-semibold text-sm tracking-wider"
-                style={{ letterSpacing: ".12em" }}
-              >
-                OPTIQUE
-              </span>
-            </div>
-          </div>
+         
 
           {/* center: quote */}
           <div className="relative z-10 px-10 pb-2 flex-1 flex flex-col justify-center">
