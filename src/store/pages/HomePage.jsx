@@ -28,7 +28,7 @@ const featuredProducts = products
     img: p.images[0],
   }));
 /* ===== DATA ===== */
-const sliderData = [
+const sliderData = [ 
   {
     id: 1,
     title: "Modern Eyewear",
