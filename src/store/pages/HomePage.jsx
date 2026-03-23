@@ -52,6 +52,7 @@ const sliderData = [
   },
 ];
 
+
 const services = [
   {
     icon: <FiSettings size={22} />,
