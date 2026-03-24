@@ -12,6 +12,8 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { createProduct } from "../services/productService";
+
 /* ── stepper ── */
 const STEPS = ["Danh mục", "Chi tiết", "Hoàn thành"];
 
@@ -20,7 +22,6 @@ function Stepper({ step }) {
   return (
     <div className="px-8 py-5 border-b border-gray-100">
       <div className="relative flex items-center justify-between">
-        {/* track */}
         <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-100 rounded-full">
           <div
             className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-in-out"
@@ -65,36 +66,35 @@ function Stepper({ step }) {
 /* ── category cards ── */
 const CATEGORIES = [
   {
-    value: "kinhmat",
-    label: "Kính mát",
-    desc: "Kính thời trang, chống UV",
-    icon: "🕶️",
-  },
-  {
-    value: "gongkinh",
+    value: "FRAME",
     label: "Gọng kính",
-    desc: "Gọng cận, viễn, loạn",
+    desc: "Gọng kính thời trang",
     icon: "👓",
   },
+  { value: "LENS", label: "Tròng kính", desc: "Tròng quang học", icon: "🔍" },
   {
-    value: "trongkinh",
-    label: "Tròng kính",
-    desc: "Tròng quang học các loại",
-    icon: "🔍",
+    value: "ACCESSORY",
+    label: "Phụ kiện",
+    desc: "Khăn lau, hộp kính...",
+    icon: "🧴",
   },
 ];
+
+const EMPTY_VARIANT = {
+  stock: "",
+  frameSize: "",
+  color: "",
+  material: "",
+  image: "",
+};
 
 const EMPTY_FORM = {
   type: "",
   name: "",
   brand: "",
-  gender: "unisex",
+  description: "",
   price: "",
-  salePrice: "",
-  stock: "",
-  sku: "",
-  image: "",
-  specs: {},
+  variants: [{ ...EMPTY_VARIANT }],
 };
 
 /* ── slide variants ── */
@@ -116,6 +116,14 @@ function AddProductModal({ onClose, onAdd }) {
     setStep(n);
   };
 
+  // FIX: added resetForm definition
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setCompleted(false);
+    setStep(1);
+    setDirection(1);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "type") {
@@ -125,91 +133,45 @@ function AddProductModal({ onClose, onAdd }) {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  const handleSpecChange = (e) => {
+  const handleVariantChange = (index, e) => {
     const { name, value } = e.target;
-    setForm((f) => ({ ...f, specs: { ...f.specs, [name]: value } }));
-  };
-
-  const handleSubmit = () => {
-    if (!form.name || !form.type || !form.price) return;
-    const categoryMap = {
-      kinhmat: "Kính mát",
-      gongkinh: "Gọng kính",
-      trongkinh: "Tròng kính",
-    };
-    onAdd({
-      id: Date.now(),
-      ...form,
-      category: categoryMap[form.type],
-      img: form.image,
-      price: Number(form.price),
-      salePrice: form.salePrice ? Number(form.salePrice) : null,
-      stock: Number(form.stock),
+    setForm((f) => {
+      const newVariants = [...f.variants];
+      newVariants[index] = { ...newVariants[index], [name]: value };
+      return { ...f, variants: newVariants };
     });
-    setDirection(1);
-    setCompleted(true);
-    setStep(3);
   };
 
-  const resetForm = () => {
-    setCompleted(false);
-    setDirection(1);
-    setStep(1);
-    setForm(EMPTY_FORM);
+  const addVariant = () => {
+    setForm((f) => ({
+      ...f,
+      variants: [...f.variants, { ...EMPTY_VARIANT }],
+    }));
   };
 
-  const typeFields = () => {
-    switch (form.type) {
-      case "kinhmat":
-        return (
-          <FieldGroup title="Thông số kính mát">
-            <Input
-              label="Màu tròng"
-              name="lensColor"
-              onChange={handleSpecChange}
-            />
-            <Input
-              label="Chống UV"
-              name="uvProtection"
-              onChange={handleSpecChange}
-            />
-            <Input
-              label="Polarized"
-              name="polarized"
-              onChange={handleSpecChange}
-            />
-          </FieldGroup>
-        );
-      case "gongkinh":
-        return (
-          <FieldGroup title="Thông số gọng kính">
-            <Input
-              label="Chất liệu gọng"
-              name="frameMaterial"
-              onChange={handleSpecChange}
-            />
-            <Input label="Kích thước" name="size" onChange={handleSpecChange} />
-            <Input label="Màu gọng" name="color" onChange={handleSpecChange} />
-          </FieldGroup>
-        );
-      case "trongkinh":
-        return (
-          <FieldGroup title="Thông số tròng kính">
-            <Input
-              label="Chiết suất"
-              name="lensIndex"
-              onChange={handleSpecChange}
-            />
-            <Input
-              label="Chống ánh sáng xanh"
-              name="blueLight"
-              onChange={handleSpecChange}
-            />
-            <Input label="Chống UV" name="uv" onChange={handleSpecChange} />
-          </FieldGroup>
-        );
-      default:
-        return null;
+  const removeVariant = (index) => {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      if (!form.name || !form.type || !form.price) {
+        alert("Nhập thiếu thông tin!");
+        return;
+      }
+
+      // FIX: pass form directly — productService.createProduct builds the payload
+      await createProduct(form);
+
+      setCompleted(true);
+      setStep(3);
+      onAdd?.();
+    } catch (err) {
+      console.error("Lỗi tạo sản phẩm:", err);
+      alert("Tạo sản phẩm thất bại!");
     }
   };
 
@@ -326,42 +288,74 @@ function AddProductModal({ onClose, onAdd }) {
                     onChange={handleChange}
                     placeholder="VD: Rayban"
                   />
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1.5 block font-medium">
-                      Giới tính
-                    </label>
-                    <div className="flex gap-2">
-                      {[
-                        { v: "unisex", l: "Unisex" },
-                        { v: "male", l: "Nam" },
-                        { v: "female", l: "Nữ" },
-                      ].map(({ v, l }) => (
-                        <button
-                          key={v}
-                          onClick={() =>
-                            handleChange({
-                              target: { name: "gender", value: v },
-                            })
-                          }
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors
-                            ${form.gender === v ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
-                        >
-                          {l}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                   <Input
-                    label="URL hình ảnh"
-                    name="image"
-                    value={form.image}
+                    label="Mô tả"
+                    name="description"
+                    value={form.description}
                     onChange={handleChange}
-                    placeholder="https://..."
-                    icon={<FiImage size={13} />}
                   />
                 </FieldGroup>
 
-                {typeFields()}
+                {/* Variants */}
+                <div>
+                  <h3 className="text-sm font-semibold mb-3">Variants</h3>
+                  {form.variants.map((v, index) => (
+                    <div key={index} className="border p-3 rounded-lg mb-3">
+                      <p className="text-xs mb-2 font-semibold">
+                        Variant {index + 1}
+                      </p>
+                      <Input
+                        label="Màu sắc"
+                        name="color"
+                        value={v.color}
+                        onChange={(e) => handleVariantChange(index, e)}
+                      />
+                      <Input
+                        label="Chất liệu"
+                        name="material"
+                        value={v.material}
+                        onChange={(e) => handleVariantChange(index, e)}
+                      />
+                      <Input
+                        label="Kích thước"
+                        name="frameSize"
+                        value={v.frameSize}
+                        onChange={(e) => handleVariantChange(index, e)}
+                      />
+                      <Input
+                        label="URL ảnh"
+                        name="image"
+                        value={v.image}
+                        onChange={(e) => handleVariantChange(index, e)}
+                        placeholder="https://..."
+                        icon={<FiImage size={13} />}
+                      />
+                      <Input
+                        label="Tồn kho"
+                        name="stock"
+                        type="number"
+                        value={v.stock}
+                        onChange={(e) => handleVariantChange(index, e)}
+                        placeholder="0"
+                        icon={<FiBox size={13} />}
+                      />
+                      {form.variants.length > 1 && (
+                        <button
+                          onClick={() => removeVariant(index)}
+                          className="text-red-500 text-xs mt-2"
+                        >
+                          Xoá variant
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={addVariant}
+                    className="text-blue-600 text-sm"
+                  >
+                    + Thêm variant
+                  </button>
+                </div>
 
                 <FieldGroup
                   title="Thông tin kinh doanh"
@@ -376,38 +370,13 @@ function AddProductModal({ onClose, onAdd }) {
                     placeholder="0"
                     suffix="₫"
                   />
-                  <Input
-                    label="Giá khuyến mãi"
-                    name="salePrice"
-                    type="number"
-                    value={form.salePrice}
-                    onChange={handleChange}
-                    placeholder="0"
-                    suffix="₫"
-                  />
-                  <Input
-                    label="Tồn kho"
-                    name="stock"
-                    type="number"
-                    value={form.stock}
-                    onChange={handleChange}
-                    placeholder="0"
-                    icon={<FiBox size={13} />}
-                  />
-                  <Input
-                    label="SKU"
-                    name="sku"
-                    value={form.sku}
-                    onChange={handleChange}
-                    placeholder="VD: RB-3025-001"
-                  />
                 </FieldGroup>
 
-                {/* Preview image */}
-                {form.image && (
+                {/* Preview — uses first variant image */}
+                {form.variants[0]?.image && (
                   <div className="rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center gap-4 px-4 py-3">
                     <img
-                      src={form.image}
+                      src={form.variants[0].image}
                       alt=""
                       className="w-14 h-14 object-cover rounded-lg border"
                       onError={(e) => (e.target.style.display = "none")}
@@ -483,7 +452,6 @@ function AddProductModal({ onClose, onAdd }) {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Step dots */}
               <div className="flex gap-1.5 mr-2">
                 {[1, 2].map((s) => (
                   <div
