@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState, memo } from "react";
-import { productsMock } from "../data/adminMock";
+import { useCallback, useMemo, useState, memo, useEffect } from "react";
 import {
   FiPlus,
   FiSearch,
@@ -15,6 +14,10 @@ import {
 import AddProductModal from "../modal/AddProductModal";
 import EditProductModal from "../modal/EditProductModal";
 import { motion, AnimatePresence } from "framer-motion";
+
+// API
+
+import { getAllProducts } from "../services/productService";
 
 /* ─────────────────────────────────────────
    Memoised row — only re-renders when its
@@ -80,7 +83,7 @@ const ProductRow = memo(
         {/* Category */}
         <td className="px-6 py-4">
           <span className="px-2.5 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-medium">
-            {product.category}
+            {product?.category || product?.type || "N/A"}
           </span>
         </td>
 
@@ -152,7 +155,7 @@ function AdminProducts() {
   const [priceFilter, setPriceFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("default");
 
-  const [products, setProducts] = useState(productsMock);
+  const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -161,15 +164,31 @@ function AdminProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getAllProducts();
+
+        setProducts(data.filter(Boolean));
+      } catch (error) {
+        console.error("Error Api Get All Product: ", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   /* ── categories ── */
   const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category));
+    const set = new Set(products.map((p) => p?.category));
     return ["all", ...Array.from(set)];
   }, [products]);
 
   /* ── filter + sort ── */
   const filteredProducts = useMemo(() => {
     let result = products.filter((p) => {
+      if (!p) return false;
+
       const matchName = p.name.toLowerCase().includes(search.toLowerCase());
       const matchCategory = category === "all" || p.category === category;
       let matchPrice = true;
@@ -358,7 +377,7 @@ function AdminProducts() {
               }}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 text-gray-700"
             >
-              {categories.map((c) => (
+              {categories.filter(Boolean).map((c) => (
                 <option key={c} value={c}>
                   {c === "all" ? "Tất cả danh mục" : c}
                 </option>
@@ -483,16 +502,18 @@ function AdminProducts() {
               )}
 
               {!isFilteredEmpty &&
-                paginatedProducts.map((product) => (
-                  <ProductRow
-                    key={product.id}
-                    product={product}
-                    isSelected={selectedSet.has(product.id)}
-                    onSelect={toggleSelect}
-                    onEdit={openEdit}
-                    onDelete={openDelete}
-                  />
-                ))}
+                paginatedProducts
+                  .filter(Boolean)
+                  .map((product) => (
+                    <ProductRow
+                      key={product.id}
+                      product={product}
+                      isSelected={selectedSet.has(product.id)}
+                      onSelect={toggleSelect}
+                      onEdit={openEdit}
+                      onDelete={openDelete}
+                    />
+                  ))}
             </tbody>
           </table>
         </div>
