@@ -1,4 +1,4 @@
-import { createProductApi, getAllProductsApi } from "../api/productApi";
+import { createProductApi, deleteProductApi, getAllProductsApi } from "../api/productApi";
 
 export const getAllProducts = async () => {
   const res = await getAllProductsApi();
@@ -42,5 +42,11 @@ export const createProduct = async (form) => {
 
   const res = await createProductApi(payload);
 
+  return res;
+};
+
+
+export const deleteProduct = async (id) => {
+  const res = await deleteProductApi(id);
   return res;
 };

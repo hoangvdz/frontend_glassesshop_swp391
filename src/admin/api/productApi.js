@@ -7,9 +7,12 @@ export const getAllProductsApi = async () => {
   return res.data.data;
 };
 
-
 export const createProductApi = async (productData) => {
-      const res = await axios.post(`${BASE_URL}/products`, productData);
-      return res.data.data;
+  const res = await axios.post(`${BASE_URL}/products`, productData);
+  return res.data.data;
 };
 
+export const deleteProductApi = async (id) => {
+  const res = await axios.delete(`${BASE_URL}/products/${id}`);
+  return res.data;
+};

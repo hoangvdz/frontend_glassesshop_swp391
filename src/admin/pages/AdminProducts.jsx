@@ -16,7 +16,7 @@ import EditProductModal from "../modal/EditProductModal";
 import { motion, AnimatePresence } from "framer-motion";
 
 // API
-
+import { deleteProduct } from "../services/productService";
 import { getAllProducts } from "../services/productService";
 
 /* ─────────────────────────────────────────
@@ -252,20 +252,33 @@ function AdminProducts() {
   }, [allPageSelected, pageIds]);
 
   /* ── delete ── */
-  const handleDelete = useCallback(() => {
-    if (confirmDelete === "bulk") {
-      setProducts((prev) => prev.filter((p) => !selectedSet.has(p.id)));
-      setSelected([]);
-    } else {
-      setProducts((prev) =>
-        prev.filter((p) => String(p.id) !== String(confirmDelete)),
-      );
-      setSelected((prev) =>
-        prev.filter((id) => String(id) !== String(confirmDelete)),
-      );
+  const handleDelete = useCallback(async () => {
+    try {
+      if (confirmDelete === "bulk") {
+        // gọi API từng cái
+        await Promise.all(selected.map((id) => deleteProduct(id)));
+
+        setProducts((prev) => prev.filter((p) => !selectedSet.has(p.id)));
+        setSelected([]);
+      } else {
+        await deleteProduct(confirmDelete);
+
+        setProducts((prev) =>
+          prev.filter((p) => String(p.id) !== String(confirmDelete)),
+        );
+        setSelected((prev) =>
+          prev.filter((id) => String(id) !== String(confirmDelete)),
+        );
+      }
+    } catch (err) {
+      console.error("Delete error: ", err);
+      const message = err.response?.data?.message || "Xoá thất bại!";
+
+      alert(message);
     }
+
     setConfirmDelete(null);
-  }, [confirmDelete, selectedSet]);
+  }, [confirmDelete, selected, selectedSet]);
 
   const handleAddProduct = useCallback(
     (p) => setProducts((prev) => [...prev, p]),
