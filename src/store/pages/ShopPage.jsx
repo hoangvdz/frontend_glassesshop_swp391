@@ -10,26 +10,16 @@ import {
   FiArrowRight,
   FiSliders,
 } from "react-icons/fi";
-//MOCK THAY BẰNG API SAU NÀY
-import { products, formatPrice } from "../data/shopMock";
-const allProducts = products.map((p) => ({
-  id:       p.id,
-  name:     p.name,
-  price:    formatPrice(p.price),
-  priceNum: p.price,
-  category: p.category,   // "frame" | "lens" | "sunglasses"
-  brand:    p.brand,
-  img:      p.images[0],
-}));
-
-const CATEGORIES = ["All", "frame", "lens", "sunglasses"];
+// API 
+import { getAllProducts } from "../services/productService";
+const CATEGORIES = ["All", "frame", "lens", "accessory"];
 
 // Label hiển thị đẹp hơn cho từng category
 const CATEGORY_LABELS = {
   All:         "Tất cả",
   frame:       "Gọng kính",
   lens:        "Tròng kính",
-  sunglasses:  "Kính mát",
+  accessory:  "Phụ kiện",
 };
 
 const SORT_OPTIONS = [
@@ -149,6 +139,32 @@ function ShopPage() {
   const [visible, setVisible] = useState({});
   const sortRef = useRef(null);
 
+  //STATE API
+  const [products, setProducts] = useState([]);
+  // CALL API 
+  useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const data = await getAllProducts();
+
+      const mapped = data.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: (p.price ?? 0).toLocaleString("vi-VN") + "đ",
+        priceNum: p.price ?? 0,
+        category: p.category?.toLowerCase(),
+        brand: p.brand, 
+        img: p.img,
+      }));
+
+      setProducts(mapped);
+    } catch (err) {
+      console.error("Fetch products error:", err);
+    }
+  };
+
+  fetchProducts();
+}, []);
   useEffect(() => {
     const fn = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target))
@@ -218,7 +234,7 @@ function ShopPage() {
     }
   };
 
-  const filtered = allProducts
+  const filtered = products
     .filter((p) => filter === "All" || p.category === filter)
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) =>
@@ -270,7 +286,7 @@ function ShopPage() {
                 Cửa hàng
               </h1>
               <p className="text-stone-400 text-sm">
-                {allProducts.length} sản phẩm
+                {products.length} sản phẩm
               </p>
             </div>
           </div>
@@ -431,7 +447,7 @@ function ShopPage() {
           {filtered.length > 0 && (
             <div className="mt-16 pt-10 border-t border-stone-100 flex items-center justify-between">
               <p className="text-stone-400 text-sm">
-                Hiển thị {filtered.length} / {allProducts.length} sản phẩm
+                Hiển thị {filtered.length} / {products.length} sản phẩm
               </p>
               <Link
                 to="/"
