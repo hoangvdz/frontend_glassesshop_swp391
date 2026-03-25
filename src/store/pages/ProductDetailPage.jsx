@@ -25,7 +25,6 @@ function Toast({ message, visible }) {
   );
 }
 
-
 /* ─── MAIN ─── */
 function ProductDetailPage() {
   const { id } = useParams();
@@ -37,10 +36,6 @@ function ProductDetailPage() {
   const [wished, setWished] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: "" });
 
-  useEffect(() => {
-    setActiveImg(0);
-  }, [activeColor]);
-
   // STATE API
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +44,6 @@ function ProductDetailPage() {
     const fetchProducts = async () => {
       try {
         const data = await getProductById(id);
-        console.log(data);
         setProductData(data);
       } catch (err) {
         console.error(err);
@@ -99,6 +93,23 @@ function ProductDetailPage() {
     ],
   };
 
+  const selectedVariantUI = productData.variants?.[activeColor];
+  let stockText = "";
+  let stockColor = "";
+  let isOutOfStock = false;
+
+  if (!selectedVariantUI || selectedVariantUI.stockQuantity === 0) {
+    stockText = "Hết hàng - Có thể đặt trước";
+    stockColor = "text-red-500";
+    isOutOfStock = true;
+  } else if (selectedVariantUI.stockQuantity <= 20) {
+    stockText = `Chỉ còn ${selectedVariantUI.stockQuantity} sản phẩm`;
+    stockColor = "text-red-500";
+  } else {
+    stockText = `Còn ${selectedVariantUI.stockQuantity} sản phẩm`;
+    stockColor = "text-green-600";
+  }
+
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
     setTimeout(() => setToast({ visible: false, message: "" }), 3000);
@@ -106,18 +117,43 @@ function ProductDetailPage() {
 
   const handleAddToCart = () => {
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    const idx = cart.findIndex((item) => item.id === product.id);
-    if (idx !== -1) cart[idx].quantity += quantity;
-    else
-      cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0],
-        quantity,
-      });
+
+    // LẤY ĐÚNG VARIANT NGƯỜI DÙNG CHỌN
+    const selectedVariant = productData.variants[activeColor];
+
+    if (!selectedVariant) {
+      showToast("Vui lòng chọn màu");
+      return;
+    }
+
+    const cartItem = {
+      productId: productData.id,
+      name: productData.name,
+      brand: productData.brand,
+      price: productData.price,
+
+      quantity,
+
+      // 🔥 LƯU NGUYÊN VARIANT
+      variant: selectedVariant,
+
+      isPreOrder: isOutOfStock,
+    };
+
+    // 🔥 check trùng theo variantId
+    const idx = cart.findIndex(
+      (item) => item.variant?.variantId === selectedVariant.variantId,
+    );
+
+    if (idx !== -1) {
+      cart[idx].quantity += quantity;
+    } else {
+      cart.push(cartItem);
+    }
+
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("storage"));
+
     showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
   };
 
@@ -256,20 +292,24 @@ function ProductDetailPage() {
                   </span>
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {product.colors.map((color, i) => (
+                  {productData.variants.map((v, i) => (
                     <button
-                      key={i}
+                      key={v.variantId}
                       onClick={() => setActiveColor(i)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                        i === activeColor
-                          ? "color-active"
-                          : "bg-white border-stone-200 text-stone-600 hover:border-stone-500"
+                      className={`px-4 py-2 rounded-full ${
+                        i === activeColor ? "color-active" : ""
                       }`}
                     >
-                      {color}
+                      {v.color}
                     </button>
                   ))}
                 </div>
+
+                {selectedVariantUI && (
+                  <p className={`mt-2 text-sm font-medium ${stockColor}`}>
+                    {stockText}
+                  </p>
+                )}
               </div>
 
               {/* Quantity */}
@@ -303,7 +343,7 @@ function ProductDetailPage() {
                   className="flex-1 flex items-center justify-center gap-2 bg-stone-900 hover:bg-amber-500 text-white py-3.5 rounded-full text-sm font-medium tracking-wide transition-all active:scale-95 shadow-lg shadow-stone-900/10"
                 >
                   <FiShoppingBag size={16} />
-                  Thêm vào giỏ hàng
+                  {isOutOfStock ? "Đặt trước" : "Thêm vào giỏ hàng"}
                 </button>
                 <button
                   onClick={() => setWished((p) => !p)}

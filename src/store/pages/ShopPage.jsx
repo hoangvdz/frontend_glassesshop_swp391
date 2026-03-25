@@ -69,11 +69,10 @@ function LoginModal({ isOpen, onClose, productName }) {
             <p className="text-sm text-stone-500 leading-relaxed">
               {productName ? (
                 <>
-                  Bạn cần đăng nhập để thêm{" "}
+                  Bạn cần đăng nhập để xem chi tiết sản phẩm{" "}
                   <span className="font-medium text-stone-700">
                     "{productName}"
                   </span>{" "}
-                  vào giỏ hàng.
                 </>
               ) : (
                 "Vui lòng đăng nhập để xem chi tiết sản phẩm."
@@ -135,9 +134,10 @@ function ShopPage() {
   const [sortOpen, setSortOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingProduct, setPendingProduct] = useState(null);
-  const [toast, setToast] = useState({ visible: false, message: "" });
   const [visible, setVisible] = useState({});
   const sortRef = useRef(null);
+
+  const navigate = useNavigate();
 
   //STATE API
   const [products, setProducts] = useState([]);
@@ -188,11 +188,6 @@ function ShopPage() {
     return () => obs.disconnect();
   });
 
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-    setTimeout(() => setToast({ visible: false, message: "" }), 3000);
-  };
-
   const handleAddToCart = (e, product) => {
     e.preventDefault();
     e.stopPropagation();
@@ -203,28 +198,7 @@ function ShopPage() {
       return;
     }
 
-    // Đọc cart → tăng qty nếu đã có, push mới nếu chưa
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    const idx = cart.findIndex(
-      (item) => String(item.id) === String(product.id),
-    );
-
-    if (idx !== -1) {
-      cart[idx].quantity += 1;
-    } else {
-      cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.img, // ShopPage dùng .img → map sang "image" cho cart
-        quantity: 1,
-      });
-    }
-
-    localStorage.setItem("cart", JSON.stringify(cart));
-    window.dispatchEvent(new Event("storage")); // Header badge cập nhật ngay
-
-    showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
+    navigate(`/product/${product.id}`);
   };
 
   const handleProductClick = (e) => {
@@ -274,7 +248,6 @@ function ShopPage() {
           }}
           productName={pendingProduct?.name}
         />
-        <Toast visible={toast.visible} message={toast.message} />
 
         {/* ── PAGE HEADER ── */}
         <div className="border-b border-stone-100">
@@ -406,7 +379,7 @@ function ShopPage() {
                         onClick={(e) => handleAddToCart(e, product)}
                         className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-8 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white hover:bg-amber-500 text-stone-800 hover:text-white px-4 py-2 rounded-full text-xs font-medium shadow-md whitespace-nowrap flex items-center gap-1.5"
                       >
-                        <FiShoppingBag size={12} /> Thêm giỏ hàng
+                        <FiShoppingBag size={12} /> Xem chi tiết
                       </button>
                     </div>
                     <div className="pl-4 pb-4">
