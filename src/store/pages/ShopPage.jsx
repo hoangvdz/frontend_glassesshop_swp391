@@ -10,22 +10,22 @@ import {
   FiArrowRight,
   FiSliders,
 } from "react-icons/fi";
-// API 
+// API
 import { getAllProducts } from "../services/productService";
 const CATEGORIES = ["All", "frame", "lens", "accessory"];
 
 // Label hiển thị đẹp hơn cho từng category
 const CATEGORY_LABELS = {
-  All:         "Tất cả",
-  frame:       "Gọng kính",
-  lens:        "Tròng kính",
-  accessory:  "Phụ kiện",
+  All: "Tất cả",
+  frame: "Gọng kính",
+  lens: "Tròng kính",
+  accessory: "Phụ kiện",
 };
 
 const SORT_OPTIONS = [
-  { label: "Mặc định",       value: "default" },
-  { label: "Giá thấp → cao", value: "asc"     },
-  { label: "Giá cao → thấp", value: "desc"    },
+  { label: "Mặc định", value: "default" },
+  { label: "Giá thấp → cao", value: "asc" },
+  { label: "Giá cao → thấp", value: "desc" },
 ];
 
 /* LoginModal — identical to HomePage */
@@ -141,30 +141,31 @@ function ShopPage() {
 
   //STATE API
   const [products, setProducts] = useState([]);
-  // CALL API 
+  // CALL API
   useEffect(() => {
-  const fetchProducts = async () => {
-    try {
-      const data = await getAllProducts();
+    const fetchProducts = async () => {
+      try {
+        const data = await getAllProducts();
 
-      const mapped = data.map((p) => ({
-        id: p.id,
-        name: p.name,
-        price: (p.price ?? 0).toLocaleString("vi-VN") + "đ",
-        priceNum: p.price ?? 0,
-        category: p.category?.toLowerCase(),
-        brand: p.brand, 
-        img: p.img,
-      }));
+        const mapped = data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: (p.price ?? 0).toLocaleString("vi-VN") + "đ",
+          priceNum: p.price ?? 0,
+          category: p.category?.toLowerCase(),
+          brand: p.brand,
+          img: p.img,
+        }));
+        setProducts(mapped);
+      } catch (err) {
+        console.error("Fetch products error:", err);
+      }
+    };
 
-      setProducts(mapped);
-    } catch (err) {
-      console.error("Fetch products error:", err);
-    }
-  };
+    fetchProducts();
+  }, []);
 
-  fetchProducts();
-}, []);
+  //API VIEW
   useEffect(() => {
     const fn = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target))

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FiShoppingBag,
   FiHeart,
@@ -8,10 +8,9 @@ import {
   FiChevronLeft,
   FiChevronRight,
 } from "react-icons/fi";
-
-/* ─── mock data (thay bằng API sau) ─── */
-
-import { products, formatPrice } from "../data/shopMock.js";
+import { formatPrice } from "../utils/formatPrice.js";
+// API
+import { getProductById } from "../services/productService.js";
 
 /* ─── Toast ─── */
 function Toast({ message, visible }) {
@@ -26,48 +25,79 @@ function Toast({ message, visible }) {
   );
 }
 
+
 /* ─── MAIN ─── */
 function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  // Tìm sản phẩm theo id từ URL, fallback về null nếu không tìm thấy
-  const raw = products.find((p) => String(p.id) === String(id));
-
-  // Nếu không tìm thấy → về trang shop
-  if (!raw) {
-    navigate("/shop");
-    return null;
-  }
-
-  const product = {
-    id: raw.id,
-    name: raw.name,
-    price: formatPrice(raw.price),
-    priceNum: raw.price,
-    category: raw.category,
-    badge: raw.featured ? "Best Seller" : null,
-    description:
-      raw.description ||
-      `${raw.name} — thương hiệu ${raw.brand}. Chất lượng cao, bảo hành chính hãng.`,
-    images: raw.images,
-    colors: ["Đen Nhám", "Bạc Silver", "Vàng Gold"], // mock, thay bằng raw.colors khi có API
-    specs: [
-      { label: "Thương hiệu", value: raw.brand },
-      { label: "Loại sản phẩm", value: raw.type },
-      {
-        label: "Tình trạng kho",
-        value: raw.stock > 0 ? `Còn ${raw.stock} sản phẩm` : "Hết hàng",
-      },
-      { label: "Bảo hành", value: "24 tháng" },
-    ],
-  };
 
   const [activeImg, setActiveImg] = useState(0);
   const [activeColor, setActiveColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [wished, setWished] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: "" });
+
+  useEffect(() => {
+    setActiveImg(0);
+  }, [activeColor]);
+
+  // STATE API
+  const [productData, setProductData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getProductById(id);
+        console.log(data);
+        setProductData(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchProducts();
+  }, [id]);
+
+  if (loading) return <p className="p-10">Loading...</p>;
+
+  if (!productData) {
+    navigate("/shop");
+    return null;
+  }
+
+  const product = {
+    id: productData.id,
+    name: productData.name || "No name",
+    price: formatPrice(productData.price || 0),
+    priceNum: productData.price || 0,
+    category: productData.category,
+    badge: null,
+    description: productData.description,
+
+    images: productData.variants?.map((v) => v.imageUrl) || [
+      "https://via.placeholder.com/500",
+    ],
+
+    colors: productData.variants?.map((v) => v.color) || [],
+
+    specs: [
+      { label: "Thương hiệu", value: productData.brand },
+      { label: "Loại sản phẩm", value: productData.category },
+      {
+        label: "Tồn kho",
+        value: productData.variants?.reduce(
+          (sum, v) => sum + v.stockQuantity,
+          0,
+        ),
+      },
+      {
+        label: "Hỗ trợ độ",
+        value: productData.isPrescriptionSupported ? "Có" : "Không",
+      },
+    ],
+  };
 
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
