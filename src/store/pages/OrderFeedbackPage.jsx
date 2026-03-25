@@ -17,7 +17,10 @@ function OrderFeedbackPage() {
         <h1 className="text-2xl font-bold text-stone-900 mb-2 tracking-tight">
           Đánh giá trải nghiệm
         </h1>
-        <p className="text-stone-500 mb-8">Đơn hàng: <span className="font-medium text-stone-900">#FALCON-8899</span></p>
+        <p className="text-stone-500 mb-8">
+          Đơn hàng:{" "}
+          <span className="font-medium text-stone-900">#FALCON-8899</span>
+        </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Rating Stars */}
@@ -37,9 +40,9 @@ function OrderFeedbackPage() {
                     onMouseEnter={() => setHover(indexPlusOne)}
                     onMouseLeave={() => setHover(rating)}
                   >
-                    <FiStar 
-                      size={32} 
-                      className={`${indexPlusOne <= (hover || rating) ? "fill-amber-500 text-amber-500" : "text-stone-300"}`} 
+                    <FiStar
+                      size={32}
+                      className={`${indexPlusOne <= (hover || rating) ? "fill-amber-500 text-amber-500" : "text-stone-300"}`}
                     />
                   </button>
                 );
@@ -66,7 +69,9 @@ function OrderFeedbackPage() {
             type="submit"
             disabled={!rating}
             className={`w-full py-3.5 mt-2 rounded-xl font-bold transition-colors ${
-              rating ? "bg-stone-900 hover:bg-stone-800 text-white" : "bg-stone-200 text-stone-400 cursor-not-allowed"
+              rating
+                ? "bg-stone-900 hover:bg-stone-800 text-white"
+                : "bg-stone-200 text-stone-400 cursor-not-allowed"
             }`}
           >
             Gửi đánh giá

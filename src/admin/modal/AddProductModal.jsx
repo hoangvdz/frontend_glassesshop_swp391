@@ -1,7 +1,17 @@
 import { useState } from "react";
 import {
-  FiX, FiPackage, FiCheck, FiArrowRight, FiArrowLeft,
-  FiImage, FiTag, FiDollarSign, FiBox, FiPlus, FiTrash2, FiEdit2,
+  FiX,
+  FiPackage,
+  FiCheck,
+  FiArrowRight,
+  FiArrowLeft,
+  FiImage,
+  FiTag,
+  FiDollarSign,
+  FiBox,
+  FiPlus,
+  FiTrash2,
+  FiEdit2,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { createProduct } from "../services/productService";
@@ -27,17 +37,26 @@ function Stepper({ step }) {
           const done = step > s;
           const active = step === s;
           return (
-            <div key={s} className="relative z-10 flex flex-col items-center gap-2">
+            <div
+              key={s}
+              className="relative z-10 flex flex-col items-center gap-2"
+            >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 border-2
-                  ${done   ? "bg-gradient-to-br from-blue-500 to-indigo-500 border-transparent text-white shadow-lg shadow-blue-200"
-                  : active ? "bg-white border-blue-500 text-blue-600 shadow-lg shadow-blue-100 ring-4 ring-blue-50"
-                           : "bg-white border-slate-200 text-slate-300"}`}
+                  ${
+                    done
+                      ? "bg-gradient-to-br from-blue-500 to-indigo-500 border-transparent text-white shadow-lg shadow-blue-200"
+                      : active
+                        ? "bg-white border-blue-500 text-blue-600 shadow-lg shadow-blue-100 ring-4 ring-blue-50"
+                        : "bg-white border-slate-200 text-slate-300"
+                  }`}
               >
                 {done ? <FiCheck size={15} strokeWidth={3} /> : s}
               </div>
-              <span className={`text-[11px] font-semibold tracking-wide uppercase
-                ${active ? "text-blue-600" : done ? "text-slate-400" : "text-slate-300"}`}>
+              <span
+                className={`text-[11px] font-semibold tracking-wide uppercase
+                ${active ? "text-blue-600" : done ? "text-slate-400" : "text-slate-300"}`}
+              >
                 {label}
               </span>
             </div>
@@ -59,11 +78,24 @@ const CATEGORIES = [
     emoji: "👓",
     color: "blue",
     variantFields: [
-      { name: "color",     label: "Màu sắc",    placeholder: "VD: Đen bóng, Vàng gold…" },
-      { name: "material",  label: "Chất liệu",  placeholder: "VD: Titanium, Acetate…"   },
-      { name: "frameSize", label: "Kích thước", placeholder: "VD: 52-18-140"            },
-      { name: "image",     label: "URL ảnh",    placeholder: "https://…", isImage: true  },
-      { name: "stock",     label: "Tồn kho",    placeholder: "0", isNumber: true         },
+      {
+        name: "color",
+        label: "Màu sắc",
+        placeholder: "VD: Đen bóng, Vàng gold…",
+      },
+      {
+        name: "material",
+        label: "Chất liệu",
+        placeholder: "VD: Titanium, Acetate…",
+      },
+      { name: "frameSize", label: "Kích thước", placeholder: "VD: 52-18-140" },
+      {
+        name: "image",
+        label: "URL ảnh",
+        placeholder: "https://…",
+        isImage: true,
+      },
+      { name: "stock", label: "Tồn kho", placeholder: "0", isNumber: true },
     ],
   },
   {
@@ -73,11 +105,28 @@ const CATEGORIES = [
     emoji: "🔍",
     color: "violet",
     variantFields: [
-      { name: "material",  label: "Chất liệu",  placeholder: "VD: CR-39, Polycarbonate…" },
-      { name: "color",     label: "Màu / phủ",  placeholder: "VD: Chống UV, Đổi màu…"   },
-      { name: "frameSize", label: "Chỉ số",     placeholder: "VD: SPH -2.00 CYL -0.50"  },
-      { name: "image",     label: "URL ảnh",    placeholder: "https://…", isImage: true  },
-      { name: "stock",     label: "Tồn kho",    placeholder: "0", isNumber: true         },
+      {
+        name: "material",
+        label: "Chất liệu",
+        placeholder: "VD: CR-39, Polycarbonate…",
+      },
+      {
+        name: "color",
+        label: "Màu / phủ",
+        placeholder: "VD: Chống UV, Đổi màu…",
+      },
+      {
+        name: "frameSize",
+        label: "Chỉ số",
+        placeholder: "VD: SPH -2.00 CYL -0.50",
+      },
+      {
+        name: "image",
+        label: "URL ảnh",
+        placeholder: "https://…",
+        isImage: true,
+      },
+      { name: "stock", label: "Tồn kho", placeholder: "0", isNumber: true },
     ],
   },
   {
@@ -87,10 +136,19 @@ const CATEGORIES = [
     emoji: "🧴",
     color: "emerald",
     variantFields: [
-      { name: "color",    label: "Màu sắc",   placeholder: "VD: Xanh navy, Hồng…"      },
-      { name: "material", label: "Chất liệu", placeholder: "VD: Da, Vải microfiber…"    },
-      { name: "image",    label: "URL ảnh",   placeholder: "https://…", isImage: true   },
-      { name: "stock",    label: "Tồn kho",   placeholder: "0", isNumber: true          },
+      { name: "color", label: "Màu sắc", placeholder: "VD: Xanh navy, Hồng…" },
+      {
+        name: "material",
+        label: "Chất liệu",
+        placeholder: "VD: Da, Vải microfiber…",
+      },
+      {
+        name: "image",
+        label: "URL ảnh",
+        placeholder: "https://…",
+        isImage: true,
+      },
+      { name: "stock", label: "Tồn kho", placeholder: "0", isNumber: true },
     ],
   },
 ];
@@ -100,27 +158,27 @@ const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.value, c]));
 /* colour tokens per category */
 const CC = {
   blue: {
-    bg:     "bg-blue-50",
+    bg: "bg-blue-50",
     border: "border-blue-400",
-    text:   "text-blue-700",
-    badge:  "bg-blue-100 text-blue-700",
-    btn:    "bg-blue-600 hover:bg-blue-700",
+    text: "text-blue-700",
+    badge: "bg-blue-100 text-blue-700",
+    btn: "bg-blue-600 hover:bg-blue-700",
     dashed: "border-blue-300 text-blue-500 hover:bg-blue-50",
   },
   violet: {
-    bg:     "bg-violet-50",
+    bg: "bg-violet-50",
     border: "border-violet-400",
-    text:   "text-violet-700",
-    badge:  "bg-violet-100 text-violet-700",
-    btn:    "bg-violet-600 hover:bg-violet-700",
+    text: "text-violet-700",
+    badge: "bg-violet-100 text-violet-700",
+    btn: "bg-violet-600 hover:bg-violet-700",
     dashed: "border-violet-300 text-violet-500 hover:bg-violet-50",
   },
   emerald: {
-    bg:     "bg-emerald-50",
+    bg: "bg-emerald-50",
     border: "border-emerald-400",
-    text:   "text-emerald-700",
-    badge:  "bg-emerald-100 text-emerald-700",
-    btn:    "bg-emerald-600 hover:bg-emerald-700",
+    text: "text-emerald-700",
+    badge: "bg-emerald-100 text-emerald-700",
+    btn: "bg-emerald-600 hover:bg-emerald-700",
     dashed: "border-emerald-300 text-emerald-500 hover:bg-emerald-50",
   },
 };
@@ -128,48 +186,76 @@ const CC = {
 /* ─────────────────────────────────────────────
    HELPERS
 ───────────────────────────────────────────── */
-const makeVariant = () => ({ stock: "", frameSize: "", color: "", material: "", image: "", _done: false });
+const makeVariant = () => ({
+  stock: "",
+  frameSize: "",
+  color: "",
+  material: "",
+  image: "",
+  _done: false,
+});
 
 const EMPTY_FORM = {
-  type: "", name: "", brand: "", description: "", price: "",
+  type: "",
+  name: "",
+  brand: "",
+  description: "",
+  price: "",
   variants: [makeVariant()],
 };
 
 const slide = (dir) => ({
-  initial:    { opacity: 0, x: dir * 32 },
-  animate:    { opacity: 1, x: 0 },
-  exit:       { opacity: 0, x: dir * -32 },
+  initial: { opacity: 0, x: dir * 32 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: dir * -32 },
   transition: { duration: 0.22, ease: "easeOut" },
 });
 
 /* ─────────────────────────────────────────────
    VARIANT CARD
 ───────────────────────────────────────────── */
-function VariantCard({ variant, index, cat, onChange, onMarkDone, onEdit, onDelete }) {
-  const cc     = CC[cat.color];
+function VariantCard({
+  variant,
+  index,
+  cat,
+  onChange,
+  onMarkDone,
+  onEdit,
+  onDelete,
+}) {
+  const cc = CC[cat.color];
   const isDone = variant._done;
 
   /* ── collapsed (done) ── */
   if (isDone) {
     return (
       <motion.div
-        layout
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.97 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.12 }}
         className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 ${cc.border} ${cc.bg}`}
       >
-        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-white ${cc.btn.split(" ")[0]}`}>
+        <div
+          className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-white ${cc.btn.split(" ")[0]}`}
+        >
           <FiCheck size={13} strokeWidth={3} />
         </div>
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold truncate ${cc.text}`}>
             Variant {index + 1}
-            {variant.color && <span className="font-normal"> — {variant.color}</span>}
+            {variant.color && (
+              <span className="font-normal"> — {variant.color}</span>
+            )}
           </p>
           <p className="text-xs text-slate-400 truncate mt-0.5">
-            {[variant.material, variant.frameSize, variant.stock && `${variant.stock} cái`]
-              .filter(Boolean).join(" · ")}
+            {[
+              variant.material,
+              variant.frameSize,
+              variant.stock && `${variant.stock} cái`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
         <div className="flex gap-1">
@@ -197,15 +283,17 @@ function VariantCard({ variant, index, cat, onChange, onMarkDone, onEdit, onDele
   /* ── expanded (editing) ── */
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.12 }}
       className={`rounded-2xl border-2 overflow-hidden ${cc.border}`}
     >
       {/* card header */}
       <div className={`flex items-center justify-between px-4 py-2.5 ${cc.bg}`}>
-        <span className={`text-xs font-extrabold uppercase tracking-widest ${cc.text}`}>
+        <span
+          className={`text-xs font-extrabold uppercase tracking-widest ${cc.text}`}
+        >
           Variant {index + 1}
         </span>
         {onDelete && (
@@ -251,20 +339,31 @@ function VariantCard({ variant, index, cat, onChange, onMarkDone, onEdit, onDele
    MAIN MODAL
 ───────────────────────────────────────────── */
 function AddProductModal({ onClose, onAdd }) {
-  const [step, setStep]           = useState(1);
+  const [step, setStep] = useState(1);
   const [completed, setCompleted] = useState(false);
   const [direction, setDirection] = useState(1);
-  const [form, setForm]           = useState(EMPTY_FORM);
+  const [form, setForm] = useState(EMPTY_FORM);
 
-  const cat    = CATEGORY_MAP[form.type];
+  const cat = CATEGORY_MAP[form.type];
   const accent = cat ? CC[cat.color] : CC.blue;
 
-  const go        = (n) => { setDirection(n > step ? 1 : -1); setStep(n); };
-  const resetForm = () =>  { setForm(EMPTY_FORM); setCompleted(false); setStep(1); setDirection(1); };
+  const go = (n) => {
+    setDirection(n > step ? 1 : -1);
+    setStep(n);
+  };
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setCompleted(false);
+    setStep(1);
+    setDirection(1);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "type") { setForm({ ...EMPTY_FORM, type: value }); return; }
+    if (name === "type") {
+      setForm({ ...EMPTY_FORM, type: value });
+      return;
+    }
     setForm((f) => ({ ...f, [name]: value }));
   };
 
@@ -291,11 +390,19 @@ function AddProductModal({ onClose, onAdd }) {
       return { ...f, variants: v };
     });
 
-  const addVariant    = () => setForm((f) => ({ ...f, variants: [...f.variants, makeVariant()] }));
-  const removeVariant = (i) => setForm((f) => ({ ...f, variants: f.variants.filter((_, idx) => idx !== i) }));
+  const addVariant = () =>
+    setForm((f) => ({ ...f, variants: [...f.variants, makeVariant()] }));
+  const removeVariant = (i) =>
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.filter((_, idx) => idx !== i),
+    }));
 
   const handleSubmit = async () => {
-    if (!form.name || !form.type || !form.price) { alert("Nhập thiếu thông tin!"); return; }
+    if (!form.name || !form.type || !form.price) {
+      alert("Nhập thiếu thông tin!");
+      return;
+    }
     try {
       await createProduct(form);
       setCompleted(true);
@@ -318,7 +425,10 @@ function AddProductModal({ onClose, onAdd }) {
         exit={{ opacity: 0, scale: 0.96, y: 10 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         className="bg-white w-full max-w-2xl rounded-3xl flex flex-col max-h-[92vh] overflow-hidden"
-        style={{ boxShadow: "0 30px 70px -15px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.05)" }}
+        style={{
+          boxShadow:
+            "0 30px 70px -15px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.05)",
+        }}
       >
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4">
@@ -327,8 +437,12 @@ function AddProductModal({ onClose, onAdd }) {
               <FiPackage size={17} className="text-white" />
             </div>
             <div>
-              <h2 className="font-extrabold text-slate-800 text-[15px] leading-tight">Thêm sản phẩm mới</h2>
-              <p className="text-[11px] text-slate-400 font-medium">Bước {step} / {STEPS.length}</p>
+              <h2 className="font-extrabold text-slate-800 text-[15px] leading-tight">
+                Thêm sản phẩm mới
+              </h2>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Bước {step} / {STEPS.length}
+              </p>
             </div>
           </div>
           <button
@@ -344,35 +458,58 @@ function AddProductModal({ onClose, onAdd }) {
         {/* ── Content ── */}
         <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait" initial={false}>
-
             {/* STEP 1 */}
             {step === 1 && !completed && (
-              <motion.div key="step1" {...slide(direction)} className="px-6 py-6">
+              <motion.div
+                key="step1"
+                {...slide(direction)}
+                className="px-6 py-6"
+              >
                 <p className="text-sm text-slate-500 mb-5 leading-relaxed">
                   Chọn loại sản phẩm bạn muốn thêm vào hệ thống.
                 </p>
                 <div className="flex flex-col gap-3">
                   {CATEGORIES.map((c) => {
-                    const cc  = CC[c.color];
+                    const cc = CC[c.color];
                     const sel = form.type === c.value;
                     return (
                       <button
                         key={c.value}
-                        onClick={() => handleChange({ target: { name: "type", value: c.value } })}
+                        onClick={() =>
+                          handleChange({
+                            target: { name: "type", value: c.value },
+                          })
+                        }
                         className={`flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all duration-200 group
                           ${sel ? `${cc.bg} ${cc.border}` : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"}`}
                       >
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all
-                          ${sel ? "bg-white shadow-md" : "bg-slate-100 group-hover:bg-white group-hover:shadow-sm"}`}>
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all
+                          ${sel ? "bg-white shadow-md" : "bg-slate-100 group-hover:bg-white group-hover:shadow-sm"}`}
+                        >
                           {c.emoji}
                         </div>
                         <div className="flex-1">
-                          <p className={`font-bold text-sm ${sel ? cc.text : "text-slate-700"}`}>{c.label}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{c.desc}</p>
+                          <p
+                            className={`font-bold text-sm ${sel ? cc.text : "text-slate-700"}`}
+                          >
+                            {c.label}
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {c.desc}
+                          </p>
                         </div>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
-                          ${sel ? `${cc.btn.split(" ")[0]} border-transparent` : "border-slate-200"}`}>
-                          {sel && <FiCheck size={11} strokeWidth={3} className="text-white" />}
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
+                          ${sel ? `${cc.btn.split(" ")[0]} border-transparent` : "border-slate-200"}`}
+                        >
+                          {sel && (
+                            <FiCheck
+                              size={11}
+                              strokeWidth={3}
+                              className="text-white"
+                            />
+                          )}
                         </div>
                       </button>
                     );
@@ -383,23 +520,44 @@ function AddProductModal({ onClose, onAdd }) {
 
             {/* STEP 2 */}
             {step === 2 && !completed && cat && (
-              <motion.div key="step2" {...slide(direction)} className="px-6 py-6 space-y-7">
-
+              <motion.div
+                key="step2"
+                {...slide(direction)}
+                className="px-6 py-6 space-y-7"
+              >
                 {/* category badge */}
-                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${accent.badge}`}>
+                <span
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${accent.badge}`}
+                >
                   {cat.emoji} {cat.label}
                 </span>
 
                 {/* basic info */}
                 <Section title="Thông tin sản phẩm" icon={<FiTag size={13} />}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FieldInput label="Tên sản phẩm" name="name" value={form.name}
-                      onChange={handleChange} placeholder="VD: Kính Rayban RB3025" required />
-                    <FieldInput label="Thương hiệu" name="brand" value={form.brand}
-                      onChange={handleChange} placeholder="VD: Rayban, Oakley…" />
+                    <FieldInput
+                      label="Tên sản phẩm"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder="VD: Kính Rayban RB3025"
+                      required
+                    />
+                    <FieldInput
+                      label="Thương hiệu"
+                      name="brand"
+                      value={form.brand}
+                      onChange={handleChange}
+                      placeholder="VD: Rayban, Oakley…"
+                    />
                     <div className="sm:col-span-2">
-                      <FieldInput label="Mô tả" name="description" value={form.description}
-                        onChange={handleChange} placeholder="Mô tả ngắn về sản phẩm…" />
+                      <FieldInput
+                        label="Mô tả"
+                        name="description"
+                        value={form.description}
+                        onChange={handleChange}
+                        placeholder="Mô tả ngắn về sản phẩm…"
+                      />
                     </div>
                   </div>
                 </Section>
@@ -407,8 +565,16 @@ function AddProductModal({ onClose, onAdd }) {
                 {/* price */}
                 <Section title="Giá bán" icon={<FiDollarSign size={13} />}>
                   <div className="max-w-xs">
-                    <FieldInput label="Giá bán (₫)" name="price" type="number"
-                      value={form.price} onChange={handleChange} placeholder="0" suffix="₫" required />
+                    <FieldInput
+                      label="Giá bán (₫)"
+                      name="price"
+                      type="number"
+                      value={form.price}
+                      onChange={handleChange}
+                      placeholder="0"
+                      suffix="₫"
+                      required
+                    />
                   </div>
                 </Section>
 
@@ -429,7 +595,11 @@ function AddProductModal({ onClose, onAdd }) {
                           onChange={handleVariantChange}
                           onMarkDone={markVariantDone}
                           onEdit={() => editVariant(i)}
-                          onDelete={form.variants.length > 1 ? () => removeVariant(i) : null}
+                          onDelete={
+                            form.variants.length > 1
+                              ? () => removeVariant(i)
+                              : null
+                          }
                         />
                       ))}
                     </AnimatePresence>
@@ -444,23 +614,37 @@ function AddProductModal({ onClose, onAdd }) {
                 </Section>
 
                 {/* preview */}
-                {form.variants[0]?.image && (
+                {form.variants.some((v) => v.image) && (
                   <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200"
                   >
-                    <img
-                      src={form.variants[0].image}
-                      alt=""
-                      className="w-16 h-16 object-cover rounded-xl border border-slate-200 shadow-sm"
-                      onError={(e) => (e.target.style.display = "none")}
-                    />
+                    <div className="flex gap-3 overflow-x-auto mb-3">
+                      {form.variants.map((v, i) =>
+                        v.image ? (
+                          <img
+                            key={i}
+                            src={v.image}
+                            alt=""
+                            className="w-16 h-16 object-cover rounded-xl border border-slate-200 shadow-sm flex-shrink-0"
+                            onError={(e) => (e.target.style.display = "none")}
+                          />
+                        ) : null,
+                      )}
+                    </div>
+
                     <div>
-                      <p className="text-sm font-bold text-slate-700">{form.name || "Tên sản phẩm"}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{cat.label}</p>
+                      <p className="text-sm font-bold text-slate-700">
+                        {form.name || "Tên sản phẩm"}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {cat.label}
+                      </p>
                       <p className={`text-sm font-bold mt-1 ${accent.text}`}>
-                        {form.price ? Number(form.price).toLocaleString("vi-VN") + " ₫" : "—"}
+                        {form.price
+                          ? Number(form.price).toLocaleString("vi-VN") + " ₫"
+                          : "—"}
                       </p>
                     </div>
                   </motion.div>
@@ -479,15 +663,22 @@ function AddProductModal({ onClose, onAdd }) {
               >
                 <div className="relative mb-6">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-200">
-                    <FiCheck size={34} className="text-white" strokeWidth={2.5} />
+                    <FiCheck
+                      size={34}
+                      className="text-white"
+                      strokeWidth={2.5}
+                    />
                   </div>
                   <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center shadow-md text-sm">
                     ✨
                   </div>
                 </div>
-                <h3 className="text-xl font-extrabold text-slate-800 mb-2">Thêm thành công!</h3>
+                <h3 className="text-xl font-extrabold text-slate-800 mb-2">
+                  Thêm thành công!
+                </h3>
                 <p className="text-sm text-slate-400 mb-8 max-w-xs leading-relaxed">
-                  Sản phẩm đã được lưu vào hệ thống. Bạn có thể tiếp tục thêm sản phẩm khác.
+                  Sản phẩm đã được lưu vào hệ thống. Bạn có thể tiếp tục thêm
+                  sản phẩm khác.
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -566,9 +757,13 @@ function Section({ title, icon, hint, children }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-slate-400">{icon}</span>
-          <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wide">{title}</h3>
+          <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wide">
+            {title}
+          </h3>
         </div>
-        {hint && <span className="text-xs text-slate-400 font-semibold">{hint}</span>}
+        {hint && (
+          <span className="text-xs text-slate-400 font-semibold">{hint}</span>
+        )}
       </div>
       {children}
     </div>
@@ -583,7 +778,11 @@ function FieldInput({ label, icon, suffix, required, ...props }) {
     <div className="group">
       <label className="flex items-center gap-1 text-[11px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest">
         {label}
-        {required && <span className="text-blue-400 normal-case tracking-normal font-semibold">*</span>}
+        {required && (
+          <span className="text-blue-400 normal-case tracking-normal font-semibold">
+            *
+          </span>
+        )}
       </label>
       <div className="relative">
         {icon && (
