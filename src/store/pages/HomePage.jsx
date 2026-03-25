@@ -11,7 +11,10 @@ import {
   FiX,
   FiChevronLeft,
   FiChevronRight,
-  FiArrowRight, FiShoppingBag, FiLock, FiCheck
+  FiArrowRight,
+  FiShoppingBag,
+  FiLock,
+  FiCheck,
 } from "react-icons/fi";
 
 //mock data thay bằng api sau này
@@ -59,17 +62,17 @@ const services = [
     desc: "Vệ sinh và nắn chỉnh kính miễn phí trọn đời.",
   },
   {
-    icon: <FiTruck  size={22} />,
+    icon: <FiTruck size={22} />,
     title: "Giao Hàng Nhanh",
     desc: "Miễn phí vận chuyển cho đơn hàng trên 1 triệu.",
   },
   {
-    icon: <FiRepeat  size={22} />,
+    icon: <FiRepeat size={22} />,
     title: "Thu Cũ Đổi Mới",
     desc: "Trợ giá lên đời kính mới cực hấp dẫn.",
   },
   {
-    icon: <FiEye  size={22} />,
+    icon: <FiEye size={22} />,
     title: "Đo Mắt Miễn Phí",
     desc: "Kỹ thuật viên chuyên nghiệp, máy móc hiện đại.",
   },
@@ -189,9 +192,7 @@ function HomePage() {
   const [current, setCurrent] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingProduct, setPendingProduct] = useState(null);
-  const [toast, setToast] = useState({ visible: false, message: "" });
   const [visibleSections, setVisibleSections] = useState({});
-  const navigate = useNavigate();
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -215,58 +216,6 @@ function HomePage() {
       .forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
-
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-    setTimeout(() => setToast({ visible: false, message: "" }), 3000);
-  };
-
-  const handleAddToCart = (e, product) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // 1. Chưa login → mở modal
-    if (!localStorage.getItem("currentUser")) {
-      setPendingProduct(product);
-      setModalOpen(true);
-      return;
-    }
-
-    // 2. Đọc cart hiện tại
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-    // 3. Đã tồn tại → tăng qty, chưa có → thêm mới
-    const idx = cart.findIndex(
-      (item) => String(item.id) === String(product.id),
-    );
-    if (idx !== -1) {
-      cart[idx].quantity += 1;
-    } else {
-      cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.img, // homepage dùng .img → map sang "image" cho cart
-        quantity: 1,
-      });
-    }
-
-    // 4. Lưu & báo Header cập nhật badge
-    localStorage.setItem("cart", JSON.stringify(cart));
-    window.dispatchEvent(new Event("storage"));
-
-    // 5. Toast
-    showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
-  };
-
-  const handleProductClick = (productId) => {
-    if (!localStorage.getItem("currentUser")) {
-      setPendingProduct(null);
-      setModalOpen(true);
-      return;
-    }
-    navigate(`/product/${productId}`);
-  };
 
   const prevSlide = () => {
     clearInterval(intervalRef.current);
@@ -314,7 +263,6 @@ function HomePage() {
           }}
           productName={pendingProduct?.name}
         />
-        <Toast visible={toast.visible} message={toast.message} />
 
         {/* ── HERO ── */}
         <section className="relative w-full h-screen max-h-[720px] min-h-[520px] overflow-hidden bg-stone-900">
@@ -403,78 +351,6 @@ function HomePage() {
               >
                 {brand}
               </span>
-            ))}
-          </div>
-        </section>
-
-        {/* ── FEATURED PRODUCTS ── */}
-        <section className="max-w-6xl mx-auto px-6 py-24">
-          <div
-            id="products-header"
-            data-reveal
-            className={`mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-4 transition-all duration-700 ${rv("products-header")}`}
-          >
-            <div>
-              <p className="text-stone-600 text-[11px] tracking-[0.25em] uppercase font-medium mb-3">
-                Được yêu thích nhất
-              </p>
-              <h2 className="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight">
-                Sản phẩm nổi bật
-              </h2>
-            </div>
-            <Link
-              to="/shop"
-              className="text-stone-400 hover:text-stone-900 text-sm flex items-center gap-1.5 transition-colors group"
-            >
-              Xem tất cả
-              <FiArrowRight
-                size={14}
-                className="group-hover:translate-x-0.5 transition-transform"
-              />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-            {featuredProducts.map((product, i) => (
-              <div
-                key={product.id}
-                id={`product-${product.id}`}
-                data-reveal
-                className={`product-card group cursor-pointer transition-all duration-700 rounded-xl overflow-hidden  ${rv(`product-${product.id}`)}`}
-                style={{ transitionDelay: `${i * 0.07}s` }}
-              >
-                <div
-                  className="relative aspect-[3/4] overflow-hidden rounded-xl bg-stone-100 mb-3"
-                  onClick={() => handleProductClick(product.id)}
-                >
-                  <img
-                    src={product.img}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                  <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm text-stone-600 text-[10px] font-medium tracking-wider uppercase px-2.5 py-1 rounded-full">
-                    {product.category}
-                  </span>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/8 transition-all duration-300" />
-                  <button
-                    onClick={(e) => handleAddToCart(e, product)}
-                    className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-8 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white hover:bg-amber-500 text-stone-800 hover:text-white px-4 py-2 rounded-full text-xs font-medium shadow-md whitespace-nowrap flex items-center gap-1.5"
-                  >
-                    <FiShoppingBag size={12} /> Thêm giỏ hàng
-                  </button>
-                </div>
-                <div className="pl-4 pb-4">
-                  <p
-                    className="text-stone-800 text-sm font-medium mb-0.5 cursor-pointer hover:text-stone-500 transition-colors leading-tight"
-                    onClick={() => handleProductClick(product.id)}
-                  >
-                    {product.name}
-                  </p>
-                  <p className="text-stone-900 text-sm font-semibold">
-                    {product.price}
-                  </p>
-                </div>
-              </div>
             ))}
           </div>
         </section>
