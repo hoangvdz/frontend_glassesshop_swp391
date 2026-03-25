@@ -13,8 +13,8 @@ export default function PrescriptionTable({ form, errors, updateEye }) {
       </thead>
 
       <tbody>
-        <EyeRow label="OD (Right)" eye="right" {...{form,errors,updateEye}} />
-        <EyeRow label="OS (Left)"  eye="left"  {...{form,errors,updateEye}} />
+        <EyeRow label="OD (Phải)" eye="right" {...{form,errors,updateEye}} />
+        <EyeRow label="OS (Trái)"  eye="left"  {...{form,errors,updateEye}} />
       </tbody>
 
     </table>

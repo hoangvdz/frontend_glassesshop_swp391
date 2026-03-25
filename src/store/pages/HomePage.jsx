@@ -21,7 +21,7 @@ import {
 import { products } from "../data/shopMock";
 
 /* ===== DATA ===== */
-const sliderData = [
+const sliderData = [ 
   {
     id: 1,
     title: "Modern Eyewear",
@@ -44,6 +44,7 @@ const sliderData = [
     image: glassesImg3,
   },
 ];
+
 
 const services = [
   {

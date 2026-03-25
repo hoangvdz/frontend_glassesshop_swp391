@@ -8,7 +8,7 @@ export default function PDSection({ form, errors, updateField }) {
           onChange={e=>updateField("pd", e.target.value)}
           className="border rounded px-3 py-2"
         >
-          <option value="">Select PD</option>
+          <option value="">Chọn PD</option>
           <option>60</option>
           <option>61</option>
           <option>62</option>
@@ -21,7 +21,7 @@ export default function PDSection({ form, errors, updateField }) {
             checked={form.twoPD}
             onChange={e=>updateField("twoPD", e.target.checked)}
           />
-          2 PD numbers
+          2 số PD
         </label>
       </div>
 

@@ -8,15 +8,15 @@ export default function FrameSummary() {
         className="w-full mb-6"
       />
 
-      <p className="text-sm text-gray-500">Frame</p>
+      <p className="text-sm text-gray-500">Gọng kính</p>
       <p className="font-medium">Braidsby</p>
       <p className="mb-4">Clear</p>
 
-      <p className="text-sm text-gray-500">Prescription</p>
+      <p className="text-sm text-gray-500">Đơn thuốc</p>
       <p className="mb-6">Progressive</p>
 
       <div className="flex justify-between font-semibold text-lg">
-        <span>Subtotal</span>
+        <span>Tổng phụ</span>
         <span>$35.95</span>
       </div>
 

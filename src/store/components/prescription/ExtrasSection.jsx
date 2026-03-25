@@ -8,7 +8,7 @@ export default function ExtrasSection({ form, updateField }) {
           checked={form.prism}
           onChange={e=>updateField("prism", e.target.checked)}
         />
-        Add Prism
+        Thêm Prism
       </label>
 
       <label className="flex items-center gap-2">
@@ -17,7 +17,7 @@ export default function ExtrasSection({ form, updateField }) {
           checked={form.savePrescription}
           onChange={e=>updateField("savePrescription", e.target.checked)}
         />
-        Save my prescription
+        Lưu đơn thuốc của tôi
       </label>
 
     </div>

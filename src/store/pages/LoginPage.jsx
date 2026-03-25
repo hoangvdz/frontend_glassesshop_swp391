@@ -68,7 +68,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
-
+ 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");

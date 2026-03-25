@@ -336,6 +336,16 @@ function ProductDetailPage() {
                 </div>
               </div>
 
+            <div> 
+              {product.category === "frame" && (
+                <FramePurchaseOptions product={product} />
+              )} 
+              {product.category === "lens" && (
+                <LensPurchaseOptions product={product} />
+              )} 
+
+            </div>
+
               {/* CTA buttons — đồng bộ rounded-full với HomePage/ShopPage */}
               <div className="flex gap-3 pt-1">
                 <button
