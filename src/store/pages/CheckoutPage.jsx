@@ -61,6 +61,7 @@ function CheckoutPage() {
       navigate("/shop");
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCartItems(stored);
 
     const user = JSON.parse(localStorage.getItem("currentUser"));

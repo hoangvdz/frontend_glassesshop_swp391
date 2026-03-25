@@ -18,18 +18,8 @@ import {
 } from "react-icons/fi";
 
 //mock data thay bằng api sau này
-import { products, formatPrice } from "../data/shopMock";
+import { products } from "../data/shopMock";
 
-// Lấy các sản phẩm có featured: true từ mock data
-const featuredProducts = products
-  .filter((p) => p.featured)
-  .map((p) => ({
-    id: p.id,
-    name: p.name,
-    price: formatPrice(p.price),
-    category: p.brand, // dùng brand làm badge (Ray-Ban, Zeiss...)
-    img: p.images[0],
-  }));
 /* ===== DATA ===== */
 const sliderData = [
   {
