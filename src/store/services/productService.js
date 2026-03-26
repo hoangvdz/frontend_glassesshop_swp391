@@ -7,7 +7,7 @@ export const getAllProducts = async () => {
   const mapped = res.map((p) => {
     const totalStock =
       p.variants?.reduce((sum, v) => sum + v.stockQuantity, 0) ?? 0;
-
+      
     return {
       id: p.productId,
       name: p.name,
@@ -41,3 +41,6 @@ export const getProductById = async (id) => {
 
   return mapped;
 };
+
+
+
