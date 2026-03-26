@@ -53,7 +53,9 @@ function Header() {
   // ĐÃ SỬA HÀM NÀY: Dọn dẹp giỏ hàng khi log out
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
-    localStorage.removeItem("cart"); // Xóa giỏ hàng trong storage
+    localStorage.removeItem("cart"); 
+    localStorage.removeItem("token"); 
+
 
     setCurrentUser(null);
     setCart([]); // Reset giỏ hàng trên giao diện về 0 ngay lập tức

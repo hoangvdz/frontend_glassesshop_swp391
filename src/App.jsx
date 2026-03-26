@@ -12,7 +12,6 @@ import AdminProducts from "./admin/pages/AdminProducts.jsx";
 import AdminOrders from "./admin/pages/AdminOrder.jsx";
 import FrameSelectionPage from "./store/pages/FrameSelectionPage";
 import PrescriptionPage from "./store/pages/PrescriptionPage";
-import CartPage from "./store/pages/CartPage";
 import CheckoutPage from "./store/pages/CheckoutPage";
 import OrderSuccessPage from "./store/pages/OrderSuccessPage";
 import AdminProfile from "./admin/pages/AdminProfile.jsx";
@@ -41,7 +40,6 @@ function App() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/frames" element={<FrameSelectionPage />} />
           <Route path="/prescription/:id" element={<PrescriptionPage />} />
-          <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/shipping-progress" element={<ShippingProgressPage />} />
