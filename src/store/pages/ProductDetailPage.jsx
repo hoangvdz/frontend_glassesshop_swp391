@@ -130,11 +130,27 @@ function ProductDetailPage() {
     }
   };
 
-  if (loading) return <p className="p-10">Loading...</p>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900"></div>
+      </div>
+    );
+  }
 
   if (!productData) {
-    navigate("/shop");
-    return null;
+    return (
+      <div className="min-h-screen bg-white text-stone-800 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-stone-50 flex items-center justify-center mb-6">
+          <FiShoppingBag size={32} className="text-stone-300" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-2">Không tìm thấy sản phẩm</h2>
+        <p className="text-stone-500 mb-8 max-w-sm">Sản phẩm có thể đã bị gỡ bỏ hoặc ID không chính xác.</p>
+        <button onClick={() => navigate("/shop")} className="px-8 py-3 bg-stone-900 text-white rounded-full text-sm font-medium hover:bg-stone-800 transition-all">
+          Quay lại cửa hàng
+        </button>
+      </div>
+    );
   }
 
   const product = {
@@ -227,16 +243,22 @@ function ProductDetailPage() {
 
     // ✅ API (thêm mới)
     try {
-      await addToCartService({
+      const apiRes = await addToCartService({
         productId: productData.id,
         variantId: selectedVariant.variantId,
         quantity: quantity,
       });
+      
+      if (apiRes && apiRes.success) {
+        showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
+      } else {
+        showToast(apiRes?.message || "Lỗi khi thêm vào giỏ hàng");
+      }
     } catch (error) {
       console.error("Add to cart API error:", error);
+      // Vẫn toast vì local đã thêm
+      showToast("Đã lưu vào giỏ hàng cục bộ!");
     }
-
-    showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
   };
 
   const prevImg = () =>

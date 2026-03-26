@@ -19,6 +19,18 @@ const STATUS_CONFIG = {
     badge: "bg-yellow-50 text-yellow-700 border border-yellow-200",
     dot: "bg-yellow-400",
   },
+  processing: {
+    label: "Đang đóng gói",
+    icon: <FiPackage size={13} />,
+    badge: "bg-orange-50 text-orange-700 border border-orange-200",
+    dot: "bg-orange-400",
+  },
+  shipped: {
+    label: "Đang giao",
+    icon: <FiTruck size={13} />,
+    badge: "bg-blue-50 text-blue-700 border border-blue-200",
+    dot: "bg-blue-400",
+  },
   completed: {
     label: "Hoàn thành",
     icon: <FiCheckCircle size={13} />,
@@ -51,11 +63,8 @@ function ViewOrderDetailsModal({
 
   if (!order) return null;
 
-  const getProduct = (id) => products.find((p) => String(p.id) === String(id));
-
   const subtotal = order.items.reduce((sum, item) => {
-    const p = getProduct(item.productId);
-    return p ? sum + p.price * item.quantity : sum;
+    return sum + (item.unitPrice || 0) * item.quantity;
   }, 0);
 
   const total = order.total || subtotal;
@@ -132,40 +141,39 @@ function ViewOrderDetailsModal({
 
                 <div className="space-y-4">
                   {order.items.map((item, i) => {
-                    const product = getProduct(item.productId);
-                    if (!product) return null;
                     return (
                       <div
                         key={i}
                         className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                       >
                         <img
-                          src={product.img}
-                          alt={product.name}
+                          src={item.imageUrl || item.img}
+                          alt={item.productName}
                           className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
                           loading="lazy"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-800 text-sm truncate">
-                            {product.name}
+                            {item.productName}
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {product.category}
+                            {item.color || ""}
                           </p>
                           <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
                               x{item.quantity}
                             </span>
                             <span className="text-xs text-gray-400">
-                              {product.price.toLocaleString("vi-VN")} ₫ / sp
+                              {(item.unitPrice || 0).toLocaleString("vi-VN")} ₫
+                              / sp
                             </span>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-semibold text-gray-800 text-sm">
-                            {(product.price * item.quantity).toLocaleString(
-                              "vi-VN",
-                            )}{" "}
+                            {(
+                              (item.unitPrice || 0) * item.quantity
+                            ).toLocaleString("vi-VN")}{" "}
                             ₫
                           </p>
                         </div>

@@ -42,7 +42,7 @@ function App() {
           <Route path="/prescription/:id" element={<PrescriptionPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />
-          <Route path="/shipping-progress" element={<ShippingProgressPage />} />
+          <Route path="/shipping-progress/:id" element={<ShippingProgressPage />} />
           <Route path="/order-feedback" element={<OrderFeedbackPage />} />
           <Route path="/return-request" element={<ReturnFormPage />} />
           <Route path="/my-orders" element={<OrderHistoryPage />} />

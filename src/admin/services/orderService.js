@@ -1,4 +1,7 @@
-import { getAllOrders as getAllOrdersApi } from "../api/orderApi";
+import {
+  getAllOrders as getAllOrdersApi,
+  updateOrderStatusApi,
+} from "../api/orderApi";
 
 export const getAllOrders = async () => {
   const res = await getAllOrdersApi();
@@ -21,14 +24,33 @@ export const getAllOrders = async () => {
   }));
 };
 
+export const updateOrderStatus = async (orderId, status) => {
+  // mapping status UI (lowercase) → backend (UPPERCASE)
+  let backendStatus = status.toUpperCase();
+
+  // Ánh xạ sang từ điển của Backend
+  if (backendStatus === "SHIPPED") backendStatus = "DELIVERING";
+  if (backendStatus === "COMPLETED") backendStatus = "DELIVERED";
+  if (backendStatus === "CANCELLED") backendStatus = "CANCELED";
+  if (backendStatus === "PROCESSING") backendStatus = "PROCESSING";
+
+  const res = await updateOrderStatusApi(orderId, backendStatus);
+  return res.data;
+};
+
 const mapStatus = (status) => {
   switch (status) {
     case "PENDING":
       return "pending";
-    case "SHIPPED":
-      return "shipped"; // ✅ FIX
+    case "PROCESSING":
+      return "processing";
+    case "DELIVERING":
+    case "SHIPPING":
+      return "shipped";
+    case "DELIVERED":
     case "COMPLETED":
       return "completed";
+    case "CANCELED":
     case "CANCELLED":
       return "cancelled";
     default:

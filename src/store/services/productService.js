@@ -1,10 +1,11 @@
-import { MdDescription } from "react-icons/md";
 import { getAllProductStoreApi, getProductByIdApi } from "../api/productApi";
 
 export const getAllProducts = async () => {
   const res = await getAllProductStoreApi();
+  // res.data is the ApiResponse, res.data.data is the List<Product>
+  const products = res || [];
 
-  const mapped = res.map((p) => {
+  return products.map((p) => {
     const totalStock =
       p.variants?.reduce((sum, v) => sum + v.stockQuantity, 0) ?? 0;
       
@@ -17,29 +18,28 @@ export const getAllProducts = async () => {
       brand: p.brand,
       img:
         p.variants?.[0]?.imageUrl ||
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTj1_Gp9JZ246p0IK04AFBLjWqfTwYWt-nD9w&s",
+        "https://via.placeholder.com/500",
     };
   });
-
-  return mapped;
 };
-
-
 
 export const getProductById = async (id) => {
   const res = await getProductByIdApi(id);
-  const mapped =  {
-      id: res.productId,
-      category: res.productType,
-      name: res.name,
-      brand: res.brand,
-      description: res.description,
-      isPrescriptionSupported: res.isPrescriptionSupported,
-      price: res.price ?? 0,
-      variants: res.variants
-  };
+  // res.data.data is the Product object
+  const p = res;
+  
+  if (!p) return null;
 
-  return mapped;
+  return {
+      id: p.productId,
+      category: p.productType,
+      name: p.name,
+      brand: p.brand,
+      description: p.description,
+      isPrescriptionSupported: p.isPrescriptionSupported,
+      price: p.price ?? 0,
+      variants: p.variants || []
+  };
 };
 
 
