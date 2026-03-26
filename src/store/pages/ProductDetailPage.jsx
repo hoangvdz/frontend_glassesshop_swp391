@@ -11,7 +11,7 @@ import {
 import { formatPrice } from "../utils/formatPrice.js";
 // API
 import { getProductById } from "../services/productService.js";
-
+import { addToCartService } from "../services/cartService";
 /* ─── Toast ─── */
 function Toast({ message, visible }) {
   if (!visible) return null;
@@ -115,10 +115,9 @@ function ProductDetailPage() {
     setTimeout(() => setToast({ visible: false, message: "" }), 3000);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-    // LẤY ĐÚNG VARIANT NGƯỜI DÙNG CHỌN
     const selectedVariant = productData.variants[activeColor];
 
     if (!selectedVariant) {
@@ -131,16 +130,12 @@ function ProductDetailPage() {
       name: productData.name,
       brand: productData.brand,
       price: productData.price,
-
       quantity,
-
-      // 🔥 LƯU NGUYÊN VARIANT
       variant: selectedVariant,
-
       isPreOrder: isOutOfStock,
     };
 
-    // 🔥 check trùng theo variantId
+    // ✅ LOCAL (giữ nguyên)
     const idx = cart.findIndex(
       (item) => item.variant?.variantId === selectedVariant.variantId,
     );
@@ -153,6 +148,17 @@ function ProductDetailPage() {
 
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("storage"));
+
+    // ✅ API (thêm mới)
+    try {
+      await addToCartService({
+        productId: productData.id,
+        variantId: selectedVariant.variantId,
+        quantity: quantity,
+      });
+    } catch (error) {
+      console.error("Add to cart API error:", error);
+    }
 
     showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
   };
@@ -336,15 +342,14 @@ function ProductDetailPage() {
                 </div>
               </div>
 
-            <div> 
-              {product.category === "frame" && (
-                <FramePurchaseOptions product={product} />
-              )} 
-              {product.category === "lens" && (
-                <LensPurchaseOptions product={product} />
-              )} 
-
-            </div>
+              <div>
+                {product.category === "frame" && (
+                  <FramePurchaseOptions product={product} />
+                )}
+                {product.category === "lens" && (
+                  <LensPurchaseOptions product={product} />
+                )}
+              </div>
 
               {/* CTA buttons — đồng bộ rounded-full với HomePage/ShopPage */}
               <div className="flex gap-3 pt-1">

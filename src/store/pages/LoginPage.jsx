@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { getUserById, loginApi } from "../api/authApi";
+import { loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { checkEmail, createUser } from "../api/createApi";
-import { generateRandomPassword } from "../utils/passwordUtils";
 /* ── decorative eyewear SVG lines ── */
 function GlassesDecor({ className }) {
   return (
@@ -68,22 +67,19 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
- 
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const { userId, status } = await loginApi(email, password);
-      if (!status) {
-        setError("Email hoặc mật khẩu không đúng.");
-        setLoading(false);
-        return;
-      }
-      const user = await getUserById(userId);
-      localStorage.setItem("currentUser", JSON.stringify(user));
+      const token = await loginApi(email, password);
+
+      const decoded = jwtDecode(token);
+
+      localStorage.setItem("currentUser", JSON.stringify(decoded));
       window.dispatchEvent(new Event("storage"));
-      if (user.role === "ADMIN" || user.role === "OPERATIONAL_STAFF")
+      if (decoded.role === "ADMIN" || decoded.role === "OPERATIONAL_STAFF")
         navigate("/dashboard");
       else navigate(from);
     } catch {
@@ -105,9 +101,9 @@ export default function LoginPage() {
     };
 
     const emailExist = await checkEmail(googleUser.email);
+    const passRand = "123456";
 
     if (!emailExist.data) {
-      const passRand = generateRandomPassword();
       const newUser = {
         email: decoded.email,
         name: decoded.name,
@@ -119,6 +115,9 @@ export default function LoginPage() {
 
       await createUser(newUser);
     }
+
+    const token = await loginApi(googleUser.email, "123456");
+    localStorage.setItem("token", JSON.stringify(token));
 
     localStorage.setItem("currentUser", JSON.stringify(googleUser));
     window.dispatchEvent(new Event("storage"));

@@ -14,6 +14,11 @@ import {
   FiX, // Đã thêm các icon cần thiết
 } from "react-icons/fi";
 
+import {
+  deleteCartItemService,
+  getCartByUserService,
+  updateCartItemService,
+} from "../services/cartService";
 /* ── Toast ── */
 function Toast({ message, visible }) {
   if (!visible) return null;
@@ -44,6 +49,37 @@ function Field({ label, required, icon: Icon, children }) {
 function CheckoutPage() {
   const navigate = useNavigate();
 
+  // giả lập các tỉnh thành để tính phí ship theo khoảng cách ( nội tỉnh và ngoại tỉnh)
+  const southernCities = [
+    { name: "Hồ Chí Minh", distance: 1 },
+    { name: "Bình Dương", distance: 5 },
+    { name: "Đồng Nai", distance: 6 },
+    { name: "Bà Rịa - Vũng Tàu", distance: 7 },
+    { name: "Long An", distance: 8 },
+    { name: "Tiền Giang", distance: 9 },
+    { name: "Vĩnh Long", distance: 10 },
+    { name: "Cần Thơ", distance: 12 },
+    { name: "An Giang", distance: 13 },
+    { name: "Sóc Trăng", distance: 14 },
+    { name: "Bạc Liêu", distance: 15 },
+    { name: "Cà Mau", distance: 16 },
+    { name: "Kiên Giang", distance: 18 },
+    { name: "Trà Vinh", distance: 11 },
+  ];
+  // tính phí ship
+  const calculateShippingFee = (city, total) => {
+    if (!city) return 0;
+
+    if (total > 1000000) return 0;
+
+    const selected = southernCities.find((c) => c.name === city);
+
+    if (!selected) return 0;
+
+    if (city === "Hồ Chí Minh") return 10000; // nội tỉnh
+    return selected.distance * 10000; // ngoại tỉnh
+  };
+
   const [cartItems, setCartItems] = useState([]);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -56,22 +92,66 @@ function CheckoutPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("cart")) || [];
-    if (stored.length === 0) {
-      navigate("/shop");
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+
+    if (!user) {
+      navigate("/login");
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCartItems(stored);
+    // ✅ 1. Load nhanh từ localStorage trước (UX mượt)
+    const stored = JSON.parse(localStorage.getItem("cart")) || [];
+    if (stored.length > 0) {
+      setCartItems(stored);
+    }
 
-    const user = JSON.parse(localStorage.getItem("currentUser"));
-    if (user) setFormData((p) => ({ ...p, fullName: user.name || "" }));
+    // ✅ 2. Sau đó gọi API để sync lại
+    const fetchCart = async () => {
+      try {
+        const data = await getCartByUserService(user.userId);
+
+        const mapped = data.map((item) => ({
+          cartItemId: item.cartItemId,
+          productId: item.productId,
+          name: item.productName,
+          image: item.imageUrl || "https://via.placeholder.com/100",
+          price: item.unitPrice,
+          quantity: item.quantity,
+          variant: {
+            variantId: item.variantId,
+            color: item.variantColor,
+            frameSize: item.variantSize,
+          },
+        }));
+
+        // ✅ update UI
+        setCartItems(mapped);
+        // ✅ update localStorage (GIỮ cache)
+        localStorage.setItem("cart", JSON.stringify(mapped));
+        window.dispatchEvent(new Event("storage"));
+
+        if (mapped.length === 0) {
+          navigate("/shop");
+        }
+      } catch (error) {
+        console.error("Fetch cart error:", error);
+      }
+    };
+
+    fetchCart();
+
+    // autofill name
+    setFormData((prev) => ({
+      ...prev,
+      fullName: user.name || "",
+    }));
   }, [navigate]);
-
   const total = cartItems.reduce(
     (acc, item) => acc + Number(item.price) * item.quantity,
     0,
   );
+
+  const shippingFee = calculateShippingFee(formData.city, total);
+  const totalWithShipping = total + shippingFee;
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -93,32 +173,55 @@ function CheckoutPage() {
     }
   };
 
-  const updateQty = (productId, variantId, delta) => {
-    const updated = cartItems
-      .map((i) => {
-        if (
-          String(i.productId) === String(productId) &&
-          String(i.variant?.variantId) === String(variantId)
-        ) {
-          return { ...i, quantity: i.quantity + delta };
-        }
-        return i;
-      })
-      .filter((i) => i.quantity > 0);
-
-    updateCartAndStorage(updated);
-  };
-
-  const removeItem = (productId, variantId) => {
-    const updated = cartItems.filter(
+  const updateQty = async (productId, variantId, delta, cartItemId) => {
+    // Tìm item hiện tại
+    const item = cartItems.find(
       (i) =>
-        !(
-          String(i.productId) === String(productId) &&
-          String(i.variant?.variantId) === String(variantId)
-        ),
+        String(i.productId) === String(productId) &&
+        String(i.variant?.variantId) === String(variantId),
     );
 
-    updateCartAndStorage(updated);
+    if (!item) return;
+
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+      // Nếu giảm xuống 0 → xóa
+      await removeItem(productId, variantId, cartItemId);
+      return;
+    }
+
+    try {
+      // ✅ Cập nhật DB
+      await updateCartItemService(cartItemId, newQty);
+
+      // ✅ Cập nhật UI & localStorage
+      const updated = cartItems.map((i) => {
+        if (String(i.cartItemId) === String(cartItemId)) {
+          return { ...i, quantity: newQty };
+        }
+        return i;
+      });
+      updateCartAndStorage(updated);
+    } catch (error) {
+      console.error("Update quantity failed:", error);
+      showToast("Cập nhật số lượng thất bại!");
+    }
+  };
+
+  const removeItem = async (productId, variantId, cartItemId) => {
+    try {
+      // ✅ Xóa trên DB
+      await deleteCartItemService(cartItemId);
+
+      // ✅ Update UI & localStorage
+      const updated = cartItems.filter(
+        (i) => String(i.cartItemId) !== String(cartItemId),
+      );
+      updateCartAndStorage(updated);
+    } catch (error) {
+      console.error("Remove item failed:", error);
+      showToast("Xóa sản phẩm thất bại!");
+    }
   };
   /* ── KẾT THÚC HÀM XỬ LÝ ── */
 
@@ -287,15 +390,34 @@ function CheckoutPage() {
                     />
                   </Field>
 
-                  <Field label="Địa chỉ nhận hàng" required icon={FiMapPin}>
-                    <textarea
+                  <Field label="Tỉnh / Thành phố" required icon={FiMapPin}>
+                    <select
+                      name="city"
+                      required
+                      value={formData.city || ""}
+                      onChange={handleChange}
+                      className={inputCls}
+                    >
+                      <option value="" disabled>
+                        Chọn tỉnh/thành phố
+                      </option>
+                      {southernCities.map((c) => (
+                        <option key={c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field label="Địa chỉ chi tiết" required icon={FiMapPin}>
+                    <input
+                      type="text"
                       name="address"
                       required
-                      rows={3}
                       value={formData.address}
                       onChange={handleChange}
                       className={inputCls}
-                      placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành..."
+                      placeholder="Số nhà, đường, phường/xã, quận/huyện..."
                     />
                   </Field>
 
@@ -366,7 +488,7 @@ function CheckoutPage() {
                 <div className="space-y-5 max-h-[320px] overflow-y-auto pr-2 mb-5">
                   {cartItems.map((item) => (
                     <div
-                      key={`${item.id}-${item.variant?.variantId}`}
+                      key={item.cartItemId}
                       className="flex gap-4 relative group"
                     >
                       {/* Image */}
@@ -402,6 +524,7 @@ function CheckoutPage() {
                                 item.productId,
                                 item.variant?.variantId,
                                 -1,
+                                item.cartItemId,
                               )
                             }
                             className="w-7 h-7 flex items-center justify-center text-stone-500 hover:bg-stone-100 transition-colors"
@@ -418,6 +541,7 @@ function CheckoutPage() {
                                 item.productId,
                                 item.variant?.variantId,
                                 +1,
+                                item.cartItemId,
                               )
                             }
                             className="w-7 h-7 flex items-center justify-center text-stone-500 hover:bg-stone-100 transition-colors"
@@ -431,7 +555,11 @@ function CheckoutPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          removeItem(item.productId, item.variant?.variantId)
+                          removeItem(
+                            item.productId,
+                            item.variant?.variantId,
+                            item.cartItemId,
+                          )
                         }
                         className="absolute top-0 right-0 p-1 text-stone-300 hover:text-red-400 transition-colors bg-white rounded-full"
                       >
@@ -448,7 +576,9 @@ function CheckoutPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-stone-500">Phí vận chuyển</span>
-                    <span className="text-green-600 font-medium">Miễn phí</span>
+                    <span className="text-green-600 font-medium">
+                      {shippingFee.toLocaleString("vi-VN")}₫
+                    </span>
                   </div>
                 </div>
 
@@ -457,18 +587,20 @@ function CheckoutPage() {
                     Tổng cộng
                   </span>
                   <span className="text-xl font-semibold text-amber-500">
-                    {total.toLocaleString("vi-VN")}₫
+                    {totalWithShipping.toLocaleString("vi-VN")}₫
                   </span>
                 </div>
               </div>
 
               {/* Free shipping badge */}
-              <div className="flex items-center gap-2.5 px-4 py-3 bg-green-50 border border-green-100 rounded-xl">
-                <FiTruck size={14} className="text-green-600 flex-shrink-0" />
-                <p className="text-xs text-green-700 font-medium">
-                  Miễn phí vận chuyển cho đơn hàng của bạn
-                </p>
-              </div>
+              {shippingFee === 0 && (
+                <div className="flex items-center gap-2.5 px-4 py-3 bg-green-50 border border-green-100 rounded-xl">
+                  <FiTruck size={14} className="text-green-600 flex-shrink-0" />
+                  <p className="text-xs text-green-700 font-medium">
+                    Miễn phí vận chuyển cho đơn hàng của bạn
+                  </p>
+                </div>
+              )}
 
               {/* Submit */}
               <button

@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { FiShoppingBag, FiClipboard } from "react-icons/fi"; 
+import { FiShoppingBag, FiClipboard } from "react-icons/fi";
 import { FaCopyright } from "react-icons/fa";
 
 function Header() {
@@ -54,11 +54,11 @@ function Header() {
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
     localStorage.removeItem("cart"); // Xóa giỏ hàng trong storage
-    
+
     setCurrentUser(null);
     setCart([]); // Reset giỏ hàng trên giao diện về 0 ngay lập tức
     setShowUserMenu(false);
-    
+
     navigate("/");
   };
 
@@ -122,14 +122,16 @@ function Header() {
 
             {/* CỤM NÚT BÊN PHẢI (Lịch sử đơn hàng + Giỏ hàng) */}
             <div className="flex items-center gap-5 ml-2 border-l border-stone-200 pl-6">
-              
               {/* ── NÚT LỊCH SỬ ĐƠN HÀNG ── */}
-              <Link 
-                to="/my-orders" 
+              <Link
+                to="/my-orders"
                 className="flex items-center gap-1.5 text-stone-500 hover:text-amber-500 transition-colors group"
                 title="Đơn hàng của bạn"
               >
-                <FiClipboard size={18} className="group-hover:-translate-y-0.5 transition-transform" />
+                <FiClipboard
+                  size={18}
+                  className="group-hover:-translate-y-0.5 transition-transform"
+                />
                 <span className="mt-0.5">Đơn hàng</span>
               </Link>
 
@@ -176,7 +178,7 @@ function Header() {
                         {currentUser.email}
                       </p>
                     </div>
-                    
+
                     {/* Link đơn hàng trong dropdown cho chắc ăn */}
                     <Link
                       to="/my-orders"
@@ -207,15 +209,15 @@ function Header() {
 
           {/* MOBILE NAV */}
           <div className="md:hidden flex items-center gap-3">
-            <Link 
-              to="/my-orders" 
+            <Link
+              to="/my-orders"
               className="text-stone-600 hover:text-amber-500 p-2"
             >
               <FiClipboard size={20} />
             </Link>
 
-            <button 
-              onClick={() => navigate("/checkout")} 
+            <button
+              onClick={() => navigate("/checkout")}
               className="text-stone-700 p-2 relative"
             >
               <FiShoppingBag size={20} />
@@ -226,7 +228,6 @@ function Header() {
               )}
             </button>
           </div>
-
         </div>
       </header>
     </>
