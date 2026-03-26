@@ -66,7 +66,11 @@ const ProductRow = memo(
         <td className="px-6 py-4">
           <div className="flex items-center gap-3">
             <img
-              src={product.img}
+              src={
+                product.img
+                  ? product.img
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=0f172a&color=fff&bold=true`
+              }
               className="w-10 h-10 rounded-xl border border-gray-100 object-cover shadow-sm flex-shrink-0"
               alt={product.name}
               loading="lazy"
@@ -168,7 +172,7 @@ function AdminProducts() {
     const fetchProducts = async () => {
       try {
         const data = await getAllProducts();
-
+        console.log(data);
         setProducts(data.filter(Boolean));
       } catch (error) {
         console.error("Error Api Get All Product: ", error);
@@ -178,8 +182,6 @@ function AdminProducts() {
     fetchProducts();
   }, []);
 
-
-  
   /* ── categories ── */
   const categories = useMemo(() => {
     const set = new Set(products.map((p) => p?.category));

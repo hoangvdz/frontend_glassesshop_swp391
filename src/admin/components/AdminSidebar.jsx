@@ -9,6 +9,8 @@ import {
   FiMoreHorizontal,
   FiEye,
 } from "react-icons/fi";
+import { CiDeliveryTruck } from "react-icons/ci";
+import { GiMicroscopeLens } from "react-icons/gi";
 
 const navItem =
   "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200";
@@ -153,7 +155,7 @@ function AdminSidebar({ collapsed }) {
               className="overflow-hidden whitespace-nowrap"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em]">
-                Quản lý
+                Admin Management
               </p>
             </motion.div>
           )}
@@ -162,41 +164,35 @@ function AdminSidebar({ collapsed }) {
         {/* Nav items */}
         <div className="space-y-1.5 mt-1">
           <div className="relative">
-            {renderItem("/dashboard", <FiGrid size={18} />, "Tổng quan", true)}
+            {renderItem("/dashboard", <FiGrid size={18} />, "Dashboard", true)}
           </div>
           <div className="relative">
-            {renderItem("/dashboard/products", <FiBox size={18} />, "Sản phẩm")}
+            {renderItem("/dashboard/products", <FiBox size={18} />, "Products")}
           </div>
           <div className="relative">
             {renderItem(
               "/dashboard/orders",
               <FiShoppingCart size={18} />,
-              "Đơn hàng",
+              "Orders",
             )}
           </div>
           <div className="relative">
             {renderItem(
               "/dashboard/preoders",
-              <FiShoppingCart size={18} />,
-              "Sản phẩm đặt trước",
+              <CiDeliveryTruck size={18} />,
+              "Delivery",
             )}
           </div>
           <div className="relative">
             {renderItem(
               "/dashboard/prescriptions",
-              <FiEye size={18} />,
-              "Đơn thuốc",
+              <GiMicroscopeLens size={18} />,
+              "Prescription",
             )}
           </div>
+
           <div className="relative">
-            {renderItem(
-              "/dashboard/discount",
-              <FiEye size={18} />,
-              "Giảm giá",
-            )}
-          </div>
-          <div className="relative">
-            {renderItem("/dashboard/profile", <FiUser size={18} />, "Hồ sơ")}
+            {renderItem("/dashboard/profile", <FiUser size={18} />, "Profile")}
           </div>
         </div>
       </div>
@@ -204,7 +200,7 @@ function AdminSidebar({ collapsed }) {
       {/* ===== FOOTER LOGOUT ===== */}
       <div className="p-3 border-t border-slate-200">
         <motion.button
-          onClick={(handleLogout)}
+          onClick={handleLogout}
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
           className={`${navItem} w-full text-red-500 hover:bg-red-50 hover:text-red-600`}
@@ -222,7 +218,7 @@ function AdminSidebar({ collapsed }) {
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="overflow-hidden whitespace-nowrap"
           >
-            <span className="truncate">Đăng xuất</span>
+            <span className="truncate">Logout</span>
           </motion.div>
 
           {/* Tooltip when collapsed */}
@@ -234,7 +230,7 @@ function AdminSidebar({ collapsed }) {
                 opacity-0 group-hover:opacity-100
                 transition-opacity duration-150"
             >
-              Đăng xuất
+              Logout
               <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
             </span>
           )}
