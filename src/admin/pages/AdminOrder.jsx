@@ -11,7 +11,7 @@ import {
 import ViewOrderDetailsModal from "../modal/ViewOrderDetailModel";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { getAllOrders } from "../services/orderService";
+import { getAllOrders, getOrderById } from "../services/orderService";
 
 /* ── status config ── */
 const statusMap = {
@@ -64,7 +64,7 @@ const OrderRow = memo(({ order, onView }) => {
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <img
-            src={order.avatar}
+            src={`https://ui-avatars.com/api/?name=${order.customer || order.email}&background=1c1917&color=fff&bold=true`}
             alt={order.customer}
             className="w-9 h-9 rounded-full object-cover border border-gray-100 shadow-sm flex-shrink-0"
             loading="lazy"
@@ -128,21 +128,19 @@ function AdminOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
- useEffect(() => {
-  const fetchOrders = async () => {
-    try {
-      const data = await getAllOrders();
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await getAllOrders();
+        console.log(data);
+        setOrders(data);
+      } catch (err) {
+        console.error("Lỗi lấy orders:", err);
+      }
+    };
 
-      console.log("orders:", data);
-
-      setOrders(data); // ✅ KHÔNG MAP LẠI
-    } catch (err) {
-      console.error("Lỗi lấy orders:", err);
-    }
-  };
-
-  fetchOrders();
-}, []);
+    fetchOrders();
+  }, []);
 
   const itemsPerPage = 5;
 
@@ -187,21 +185,17 @@ function AdminOrders() {
   };
 
   /* ── callbacks ── */
-  const handleView = useCallback((order) => setSelectedOrder(order), []);
+  const handleView = useCallback(async (order) => {
+    try {
+      const data = await getOrderById(order.id);
+      setSelectedOrder(data);
+    } catch (err) {
+      console.error("Lỗi lấy chi tiết order:", err);
+    }
+  }, []);
   const handleClose = useCallback(() => setSelectedOrder(null), []);
 
-  const handleUpdateStatus = useCallback(
-    (newStatus) => {
-      if (!selectedOrder) return;
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === selectedOrder.id ? { ...o, status: newStatus } : o,
-        ),
-      );
-      setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
-    },
-    [selectedOrder],
-  );
+ 
 
   /* ── stats ── */
   const stats = useMemo(
@@ -478,7 +472,6 @@ function AdminOrders() {
         order={selectedOrder}
         products={[]}
         onClose={handleClose}
-        onUpdateStatus={handleUpdateStatus}
       />
     </div>
   );
