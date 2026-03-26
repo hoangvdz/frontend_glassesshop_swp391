@@ -470,7 +470,7 @@ function AdminOrders() {
       {/* ── MODAL ── */}
       <ViewOrderDetailsModal
         order={selectedOrder}
-        products={[]}
+        
         onClose={handleClose}
       />
     </div>

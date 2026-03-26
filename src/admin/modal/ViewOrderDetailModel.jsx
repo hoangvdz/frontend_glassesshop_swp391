@@ -38,11 +38,9 @@ const STATUS_CONFIG = {
   },
 };
 
-function ViewOrderDetailsModal({ order, products = [], onClose }) {
+function ViewOrderDetailsModal({ order,  onClose }) {
   if (!order) return null;
   console.log(order);
-
-  
 
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
 
