@@ -7,11 +7,14 @@ import {
   FiCheck,
   FiChevronLeft,
   FiChevronRight,
+  FiStar,
 } from "react-icons/fi";
 import { formatPrice } from "../utils/formatPrice.js";
 // API
 import { getProductById } from "../services/productService.js";
 import { addToCartService } from "../services/cartService";
+import { getReviewsByProduct, createReview } from "../api/reviewApi";
+import { historyOrderApi } from "../api/orderApi";
 /* ─── Toast ─── */
 function Toast({ message, visible }) {
   if (!visible) return null;
@@ -35,24 +38,97 @@ function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [wished, setWished] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: "" });
+  const [token] = useState(localStorage.getItem("token"));
+
+  // FORM REVIEW STATE
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
+  const [eligibleOrderId, setEligibleOrderId] = useState(null); // ✅ Auto-ID
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [checkingEligibility, setCheckingEligibility] = useState(true);
 
   // STATE API
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchInitialData = async () => {
       try {
-        const data = await getProductById(id);
-        setProductData(data);
+        const [pData] = await Promise.all([getProductById(id)]);
+        setProductData(pData);
+        await Promise.all([reloadReviews(), checkReviewEligibility()]);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    if (id) fetchProducts();
+    if (id) fetchInitialData();
   }, [id]);
+
+  const checkReviewEligibility = async () => {
+    if (!token) {
+      setCheckingEligibility(false);
+      return;
+    }
+    try {
+      const res = await historyOrderApi();
+      const orders = res?.data?.data || [];
+      // Tìm đơn hàng có status DELIVERED và chứa sản phẩm này
+      const match = orders.find(
+        (o) =>
+          o?.status?.toUpperCase() === "DELIVERED" &&
+          o?.orderItems?.some((item) => item.productId === parseInt(id)),
+      );
+      if (match) {
+        setEligibleOrderId(match.orderId);
+      }
+    } catch (err) {
+      console.error("Eligibility check error:", err);
+    } finally {
+      setCheckingEligibility(false);
+    }
+  };
+
+  const reloadReviews = async () => {
+    try {
+      const rData = await getReviewsByProduct(id);
+      setReviews(rData?.data?.data || []);
+    } catch (err) {
+      console.error("Lỗi lấy reviews:", err);
+      setReviews([]);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!eligibleOrderId || !newComment.trim()) {
+      showToast("Vui lòng nhập nhận xét");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      await createReview({
+        orderId: eligibleOrderId,
+        productId: parseInt(id),
+        rating: newRating,
+        comment: newComment,
+      });
+
+      showToast("Gửi đánh giá thành công!");
+      setNewComment("");
+      setNewRating(5);
+      await reloadReviews();
+      setEligibleOrderId(null); // Đánh giá xong 1 lần
+    } catch (err) {
+      console.error("Submit review error:", err);
+      showToast(err.response?.data?.message || "Lỗi khi gửi đánh giá");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   if (loading) return <p className="p-10">Loading...</p>;
 
@@ -302,9 +378,8 @@ function ProductDetailPage() {
                     <button
                       key={v.variantId}
                       onClick={() => setActiveColor(i)}
-                      className={`px-4 py-2 rounded-full ${
-                        i === activeColor ? "color-active" : ""
-                      }`}
+                      className={`px-4 py-2 rounded-full ${i === activeColor ? "color-active" : ""
+                        }`}
                     >
                       {v.color}
                     </button>
@@ -362,11 +437,10 @@ function ProductDetailPage() {
                 </button>
                 <button
                   onClick={() => setWished((p) => !p)}
-                  className={`w-12 h-12 flex items-center justify-center rounded-full border transition-all active:scale-95 ${
-                    wished
+                  className={`w-12 h-12 flex items-center justify-center rounded-full border transition-all active:scale-95 ${wished
                       ? "bg-red-50 border-red-200 text-red-500"
                       : "bg-white border-stone-200 text-stone-400 hover:border-stone-400"
-                  }`}
+                    }`}
                 >
                   <FiHeart
                     size={16}
@@ -393,6 +467,139 @@ function ProductDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ── Reviews ── */}
+        <div className="max-w-6xl mx-auto px-6 py-12 border-t border-stone-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <div>
+              <h2 className="text-2xl font-semibold text-stone-900">
+                Đánh giá sản phẩm
+              </h2>
+              <p className="text-stone-400 text-sm mt-1">
+                {reviews?.length || 0} nhận xét từ khách hàng
+              </p>
+            </div>
+
+            {token ? (
+              eligibleOrderId ? (
+                <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100 max-w-sm w-full">
+                  <h3 className="text-sm font-semibold text-stone-800 mb-4 inline-flex items-center gap-2">
+                    <FiStar
+                      className="text-amber-500 fill-amber-500"
+                      size={14}
+                    />
+                    Viết đánh giá của bạn
+                  </h3>
+                  <form onSubmit={handleReviewSubmit} className="space-y-3">
+                    <div className="flex gap-1.5 mb-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setNewRating(star)}
+                          className="transition-transform active:scale-90"
+                        >
+                          <FiStar
+                            size={18}
+                            fill={star <= newRating ? "#f59e0b" : "none"}
+                            className={
+                              star <= newRating
+                                ? "text-amber-500"
+                                : "text-stone-300"
+                            }
+                          />
+                        </button>
+                      ))}
+                    </div>
+
+                    <textarea
+                      placeholder="Nhận xét của bạn..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="w-full px-4 py-2 text-xs border border-stone-200 rounded-xl focus:ring-1 focus:ring-stone-400 focus:outline-none min-h-[80px]"
+                      required
+                    />
+                    <button
+                      disabled={submittingReview}
+                      type="submit"
+                      className="w-full bg-stone-900 text-white text-xs font-medium py-2.5 rounded-xl hover:bg-stone-800 transition-colors disabled:opacity-50"
+                    >
+                      {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                    </button>
+                  </form>
+                </div>
+              ) : checkingEligibility ? (
+                <div className="bg-stone-50 rounded-2xl px-6 py-4 flex items-center justify-center">
+                  <p className="text-xs text-stone-400 font-medium">
+                    Đang kiểm tra quyền đánh giá...
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-stone-50 rounded-2xl p-6 border border-stone-100 text-center max-w-xs transition-all hover:bg-stone-100/50">
+                  <p className="text-xs text-stone-500 italic leading-relaxed">
+                    "Bạn chỉ có thể đánh giá những sản phẩm đã mua và nhận hàng
+                    thành công."
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="bg-stone-50 rounded-2xl p-6 border border-stone-100 text-center max-w-xs">
+                <p className="text-xs text-stone-500 mb-3">
+                  Vui lòng đăng nhập để đánh giá sản phẩm
+                </p>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="text-white bg-stone-900 px-4 py-2 rounded-lg text-xs font-medium"
+                >
+                  Đăng nhập
+                </button>
+              </div>
+            )}
+          </div>
+
+          {reviews && reviews.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {reviews.map((review) => (
+                <div
+                  key={review.reviewId}
+                  className="bg-stone-50 border border-stone-100 rounded-2xl p-6 transition-all hover:shadow-md"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="font-semibold text-stone-800">
+                        {review.userName}
+                      </p>
+                      <div className="flex text-amber-500 mt-1">
+                        {[...Array(5)].map((_, i) => (
+                          <FiStar
+                            key={i}
+                            size={14}
+                            fill={i < review.rating ? "currentColor" : "none"}
+                            className={
+                              i < review.rating ? "" : "text-stone-200"
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-stone-400 uppercase tracking-wider">
+                      {new Date(review.reviewDate).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
+                  <p className="text-sm text-stone-600 leading-relaxed italic">
+                    "{review.comment}"
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-stone-50 rounded-2xl p-10 text-center border-2 border-dashed border-stone-100 mt-4">
+              <p className="text-stone-400 text-sm">
+                Chưa có đánh giá nào cho sản phẩm này
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── CTA strip — đồng bộ với HomePage & ShopPage ── */}

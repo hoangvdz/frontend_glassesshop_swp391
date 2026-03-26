@@ -1,4 +1,4 @@
-import { getAllOrdersApi } from "../api/orderApi";
+import { getAllOrders as getAllOrdersApi } from "../api/orderApi";
 
 export const getAllOrders = async () => {
   const res = await getAllOrdersApi();

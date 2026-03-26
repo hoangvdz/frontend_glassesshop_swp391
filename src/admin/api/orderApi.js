@@ -1,5 +1,5 @@
 import axiosClient from "./axiosClient";
 
-export const getAllOrdersApi = () => {
+export const getAllOrders = async () => {
   return axiosClient.get("/orders");
 };
