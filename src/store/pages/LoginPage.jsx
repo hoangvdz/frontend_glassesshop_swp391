@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { loginApi } from "../api/authApi";
+import { getUserById, loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { checkEmail, createUser } from "../api/createApi";
@@ -76,8 +76,8 @@ export default function LoginPage() {
       const token = await loginApi(email, password);
 
       const decoded = jwtDecode(token);
-
-      localStorage.setItem("currentUser", JSON.stringify(decoded));
+      const getUserRaw = await getUserById(decoded.userId);
+      localStorage.setItem("currentUser", JSON.stringify(getUserRaw));
       window.dispatchEvent(new Event("storage"));
       if (decoded.role === "ADMIN" || decoded.role === "OPERATIONAL_STAFF")
         navigate("/dashboard");
@@ -118,8 +118,11 @@ export default function LoginPage() {
 
     const token = await loginApi(googleUser.email, "123456");
     localStorage.setItem("token", JSON.stringify(token));
-
-    localStorage.setItem("currentUser", JSON.stringify(googleUser));
+    const userDecode = jwtDecode(token);
+    console.log(userDecode)
+    const getUserFE = await getUserById(userDecode.userId);
+    console.log(getUserFE);
+    localStorage.setItem("currentUser", JSON.stringify(getUserFE));
     window.dispatchEvent(new Event("storage"));
     navigate(from);
   };

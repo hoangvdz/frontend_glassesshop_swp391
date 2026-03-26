@@ -19,6 +19,8 @@ import {
   getCartByUserService,
   updateCartItemService,
 } from "../services/cartService";
+
+import { checkoutOrder } from "../services/checkoutService";
 /* ── Toast ── */
 function Toast({ message, visible }) {
   if (!visible) return null;
@@ -225,34 +227,37 @@ function CheckoutPage() {
   };
   /* ── KẾT THÚC HÀM XỬ LÝ ── */
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.phone || !formData.address) {
+
+    if (
+      !formData.fullName ||
+      !formData.phone ||
+      !formData.address ||
+      !formData.city
+    ) {
       showToast("Vui lòng điền đầy đủ thông tin!");
       return;
     }
+
     setPlacing(true);
 
-    /* simulate short processing */
-    setTimeout(() => {
-      const order = {
-        id: Date.now(),
-        customer: formData,
-        items: cartItems,
-        total,
-        date: new Date().toLocaleString(),
-        status: "Pending",
-      };
-      const orders = JSON.parse(localStorage.getItem("orders")) || [];
-      orders.push(order);
-      localStorage.setItem("orders", JSON.stringify(orders));
+    try {
+      await checkoutOrder(formData, shippingFee);
+
+      setSuccess(true);
+
+      // clear cart
       localStorage.setItem("cart", JSON.stringify([]));
       window.dispatchEvent(new Event("storage"));
 
-      setPlacing(false);
-      setSuccess(true);
       setTimeout(() => navigate("/"), 2200);
-    }, 900);
+    } catch (error) {
+      console.error(error);
+      showToast(error.message);
+    } finally {
+      setPlacing(false);
+    }
   };
 
   /* ── SUCCESS SCREEN ── */
