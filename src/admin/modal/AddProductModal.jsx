@@ -404,10 +404,10 @@ function AddProductModal({ onClose, onAdd }) {
       return;
     }
     try {
-      await createProduct(form);
+      const newProduct = await createProduct(form);
       setCompleted(true);
       setStep(3);
-      onAdd?.();
+      onAdd?.(newProduct);
     } catch (err) {
       console.error(err);
       alert("Tạo sản phẩm thất bại!");

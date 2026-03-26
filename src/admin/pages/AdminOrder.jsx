@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, memo } from "react";
+import { useCallback, useMemo, useState, memo, useEffect } from "react";
 import {
   FiSearch,
   FiEye,
@@ -7,9 +7,11 @@ import {
   FiChevronDown,
   FiFilter,
 } from "react-icons/fi";
-import { ordersMock, productsMock } from "../data/adminMock";
+
 import ViewOrderDetailsModal from "../modal/ViewOrderDetailModel";
 import { motion, AnimatePresence } from "framer-motion";
+
+import { getAllOrders } from "../services/orderService";
 
 /* ── status config ── */
 const statusMap = {
@@ -125,7 +127,22 @@ function AdminOrders() {
   const [sortOrder, setSortOrder] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [orders, setOrders] = useState(ordersMock);
+  const [orders, setOrders] = useState([]);
+ useEffect(() => {
+  const fetchOrders = async () => {
+    try {
+      const data = await getAllOrders();
+
+      console.log("orders:", data);
+
+      setOrders(data); // ✅ KHÔNG MAP LẠI
+    } catch (err) {
+      console.error("Lỗi lấy orders:", err);
+    }
+  };
+
+  fetchOrders();
+}, []);
 
   const itemsPerPage = 5;
 
@@ -133,15 +150,16 @@ function AdminOrders() {
   const filteredOrders = useMemo(() => {
     let result = orders.filter((o) => {
       const matchText =
-        o.code.toLowerCase().includes(search.toLowerCase()) ||
-        o.customer.toLowerCase().includes(search.toLowerCase());
+        (o.code?.toLowerCase() || "").includes(search.toLowerCase()) ||
+        (o.customer?.toLowerCase() || "").includes(search.toLowerCase());
       const matchStatus = status === "all" || o.status === status;
       return matchText && matchStatus;
     });
     if (sortOrder === "asc")
-      result = [...result].sort((a, b) => a.total - b.total);
+      result = [...result].sort((a, b) => (a.total || 0) - (b.total || 0));
+
     if (sortOrder === "desc")
-      result = [...result].sort((a, b) => b.total - a.total);
+      result = [...result].sort((a, b) => (b.total || 0) - (a.total || 0));
     return result;
   }, [orders, search, status, sortOrder]);
 
@@ -458,7 +476,7 @@ function AdminOrders() {
       {/* ── MODAL ── */}
       <ViewOrderDetailsModal
         order={selectedOrder}
-        products={productsMock}
+        products={[]}
         onClose={handleClose}
         onUpdateStatus={handleUpdateStatus}
       />

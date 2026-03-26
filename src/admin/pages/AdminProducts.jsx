@@ -178,6 +178,8 @@ function AdminProducts() {
     fetchProducts();
   }, []);
 
+
+  
   /* ── categories ── */
   const categories = useMemo(() => {
     const set = new Set(products.map((p) => p?.category));

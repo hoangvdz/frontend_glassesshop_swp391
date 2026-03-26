@@ -1,18 +1,16 @@
-import axios from "axios";
-
-const BASE_URL = "http://localhost:8081/api";
+import axiosClient from "../api/axiosClient";
 
 export const getAllProductsApi = async () => {
-  const res = await axios.get(`${BASE_URL}/products`);
+  const res = await axiosClient.get(`/products`);
   return res.data.data;
 };
 
 export const createProductApi = async (productData) => {
-  const res = await axios.post(`${BASE_URL}/products`, productData);
+  const res = await axiosClient.post(`/products`, productData);
   return res.data.data;
 };
 
 export const deleteProductApi = async (id) => {
-  const res = await axios.delete(`${BASE_URL}/products/${id}`);
+  const res = await axiosClient.delete(`/products/${id}`);
   return res.data;
 };

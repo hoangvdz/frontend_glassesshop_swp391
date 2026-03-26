@@ -26,6 +26,8 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
+
     navigate("/login");
   };
 

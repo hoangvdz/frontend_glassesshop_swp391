@@ -4,7 +4,6 @@ import { getUserById, loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { checkEmail, createUser } from "../api/createApi";
-import { generateRandomPassword } from "../utils/passwordUtils";
 /* ── decorative eyewear SVG lines ── */
 function GlassesDecor({ className }) {
   return (
@@ -68,22 +67,19 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
- 
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const { userId, status } = await loginApi(email, password);
-      if (!status) {
-        setError("Email hoặc mật khẩu không đúng.");
-        setLoading(false);
-        return;
-      }
-      const user = await getUserById(userId);
-      localStorage.setItem("currentUser", JSON.stringify(user));
+      const token = await loginApi(email, password);
+
+      const decoded = jwtDecode(token);
+      const getUserRaw = await getUserById(decoded.userId);
+      localStorage.setItem("currentUser", JSON.stringify(getUserRaw));
       window.dispatchEvent(new Event("storage"));
-      if (user.role === "ADMIN" || user.role === "OPERATIONAL_STAFF")
+      if (decoded.role === "ADMIN" || decoded.role === "OPERATIONAL_STAFF")
         navigate("/dashboard");
       else navigate(from);
     } catch {
@@ -94,35 +90,46 @@ export default function LoginPage() {
   };
 
   const handleGoogle = async (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
+    try {
+      const decoded = jwtDecode(credentialResponse.credential);
 
-    const googleUser = {
-      email: decoded.email,
-      name: decoded.name,
-      phone: "",
-      role: "CUSTOMER",
-      accountStatus: "ACTIVE",
-    };
+      const email = decoded.email;
+      const password = "123456";
 
-    const emailExist = await checkEmail(googleUser.email);
+      // 1. check email
+      const emailExist = await checkEmail(email);
 
-    if (!emailExist.data) {
-      const passRand = generateRandomPassword();
-      const newUser = {
-        email: decoded.email,
-        name: decoded.name,
-        phone: "",
-        password: passRand,
-        role: "CUSTOMER",
-        accountStatus: "ACTIVE",
-      };
+      // 2. nếu chưa có → create
+      if (!emailExist?.data) {
+        await createUser({
+          email,
+          name: decoded.name,
+          phone: "",
+          password,
+          role: "CUSTOMER",
+          accountStatus: "ACTIVE",
+        });
+      }
 
-      await createUser(newUser);
+      // 3. login
+      const token = await loginApi(email, password);
+      localStorage.setItem("token", token);
+
+      // 4. decode token
+      const userDecode = jwtDecode(token);
+
+      // 5. get user
+      const res = await getUserById(userDecode.userId);
+
+      // ❗ fix chỗ này
+      localStorage.setItem("currentUser", JSON.stringify(res));
+
+      window.dispatchEvent(new Event("storage"));
+      navigate(from);
+    } catch (err) {
+      console.error("Google login error:", err); // ❗ thêm log
+      setError("Đăng nhập Google thất bại.");
     }
-
-    localStorage.setItem("currentUser", JSON.stringify(googleUser));
-    window.dispatchEvent(new Event("storage"));
-    navigate(from);
   };
 
   return (
