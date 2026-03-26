@@ -90,41 +90,46 @@ export default function LoginPage() {
   };
 
   const handleGoogle = async (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
+    try {
+      const decoded = jwtDecode(credentialResponse.credential);
 
-    const googleUser = {
-      email: decoded.email,
-      name: decoded.name,
-      phone: "",
-      role: "CUSTOMER",
-      accountStatus: "ACTIVE",
-    };
+      const email = decoded.email;
+      const password = "123456";
 
-    const emailExist = await checkEmail(googleUser.email);
-    const passRand = "123456";
+      // 1. check email
+      const emailExist = await checkEmail(email);
 
-    if (!emailExist.data) {
-      const newUser = {
-        email: decoded.email,
-        name: decoded.name,
-        phone: "",
-        password: passRand,
-        role: "CUSTOMER",
-        accountStatus: "ACTIVE",
-      };
+      // 2. nếu chưa có → create
+      if (!emailExist?.data) {
+        await createUser({
+          email,
+          name: decoded.name,
+          phone: "",
+          password,
+          role: "CUSTOMER",
+          accountStatus: "ACTIVE",
+        });
+      }
 
-      await createUser(newUser);
+      // 3. login
+      const token = await loginApi(email, password);
+      localStorage.setItem("token", token);
+
+      // 4. decode token
+      const userDecode = jwtDecode(token);
+
+      // 5. get user
+      const res = await getUserById(userDecode.userId);
+
+      // ❗ fix chỗ này
+      localStorage.setItem("currentUser", JSON.stringify(res));
+
+      window.dispatchEvent(new Event("storage"));
+      navigate(from);
+    } catch (err) {
+      console.error("Google login error:", err); // ❗ thêm log
+      setError("Đăng nhập Google thất bại.");
     }
-
-    const token = await loginApi(googleUser.email, "123456");
-    localStorage.setItem("token", JSON.stringify(token));
-    const userDecode = jwtDecode(token);
-    console.log(userDecode)
-    const getUserFE = await getUserById(userDecode.userId);
-    console.log(getUserFE);
-    localStorage.setItem("currentUser", JSON.stringify(getUserFE));
-    window.dispatchEvent(new Event("storage"));
-    navigate(from);
   };
 
   return (
