@@ -24,12 +24,6 @@ const STATUS_CONFIG = {
     badge: "bg-orange-50 text-orange-700 border border-orange-200",
     dot: "bg-orange-400",
   },
-  shipped: {
-    label: "Đang giao",
-    icon: <FiTruck size={13} />,
-    badge: "bg-blue-50 text-blue-700 border border-blue-200",
-    dot: "bg-blue-400",
-  },
   completed: {
     label: "Hoàn thành",
     icon: <FiCheckCircle size={13} />,
