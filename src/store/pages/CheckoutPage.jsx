@@ -406,8 +406,8 @@ function CheckoutPage() {
                       <option value="" disabled>
                         Chọn tỉnh/thành phố
                       </option>
-                      {southernCities.map((c) => (
-                        <option key={c.name} value={c.name}>
+                      {southernCities.map((c, index) => (
+                        <option key={index} value={c.name}>
                           {c.name}
                         </option>
                       ))}
@@ -493,7 +493,7 @@ function CheckoutPage() {
                 <div className="space-y-5 max-h-[320px] overflow-y-auto pr-2 mb-5">
                   {cartItems.map((item) => (
                     <div
-                      key={item.cartItemId}
+                      key={item.cartItemId || item.productId}
                       className="flex gap-4 relative group"
                     >
                       {/* Image */}

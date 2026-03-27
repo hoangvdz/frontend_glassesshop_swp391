@@ -1,31 +1,43 @@
-<<<<<<< HEAD
 import {
-  getAllOrders as getAllOrdersApi,
+  getAllOrdersApi,
   updateOrderStatusApi,
+  getOrderByIdApi,
 } from "../api/orderApi";
-=======
-import { getAllOrdersApi, getOrderByIdApi } from "../api/orderApi";
->>>>>>> main
 
 export const getAllOrders = async () => {
   const res = await getAllOrdersApi();
+  // Backend trả về ApiResponse { data: [...] }
+  const orders = res.data?.data || [];
 
-  return res.data.data.map((o) => ({
+  return orders.map((o) => ({
     id: o.orderId,
     code: o.orderCode,
     customer: o.userName,
     email: o.userEmail,
-    avatar: "https://i.pravatar.cc/40",
-
+    avatar: `https://ui-avatars.com/api/?name=${o.userName}&background=random`,
     // ưu tiên finalPrice
     total: o.finalPrice ?? o.totalPrice ?? 0,
-
     status: mapStatus(o.status),
-
-    createdAt: new Date(o.orderDate).toLocaleDateString("vi-VN"),
-
-    items: o.orderItems, // để modal dùng sau
+    createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
+    orderItems: o.orderItems || o.items || [], // để modal dùng sau
   }));
+};
+
+export const getOrderById = async (id) => {
+  const res = await getOrderByIdApi(id);
+  // Backend trả về ApiResponse { data: {...} }
+  const o = res.data?.data || res.data; 
+  return {
+    ...o,
+    id: o.orderId,
+    code: o.orderCode,
+    customer: o.userName,
+    email: o.userEmail,
+    total: o.finalPrice ?? o.totalPrice ?? 0,
+    status: mapStatus(o.status),
+    createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
+    orderItems: o.orderItems || o.items || [], // Đảm bảo luôn có orderItems cho Modal
+  };
 };
 
 export const updateOrderStatus = async (orderId, status) => {
@@ -33,17 +45,18 @@ export const updateOrderStatus = async (orderId, status) => {
   let backendStatus = status.toUpperCase();
 
   // Ánh xạ sang từ điển của Backend
-  if (backendStatus === "SHIPPED") backendStatus = "DELIVERING";
+  if (backendStatus === "SHIPPING" || backendStatus === "SHIPPED") backendStatus = "DELIVERING";
   if (backendStatus === "COMPLETED") backendStatus = "DELIVERED";
   if (backendStatus === "CANCELLED") backendStatus = "CANCELED";
-  if (backendStatus === "PROCESSING") backendStatus = "PROCESSING";
 
   const res = await updateOrderStatusApi(orderId, backendStatus);
   return res.data;
 };
 
 const mapStatus = (status) => {
-  switch (status) {
+  if (!status) return "pending";
+  const s = status.toUpperCase();
+  switch (s) {
     case "PENDING":
       return "pending";
     case "PROCESSING":
@@ -58,22 +71,6 @@ const mapStatus = (status) => {
     case "CANCELLED":
       return "cancelled";
     default:
-      return "pending";
+      return s.toLowerCase();
   }
-};
-
-
-export const getOrderById = async (id) => {
-  const res = await getOrderByIdApi(id);
-  const o = res.data;
-  return {
-    id: o.orderId,
-    code: o.orderCode,
-    customer: o.userName,
-    email: o.userEmail,
-    total: o.totalPrice,
-    status: o.status?.toLowerCase(),
-    createdAt: o.orderDate,
-    items: o.orderItems,
-  };
 };
