@@ -4,10 +4,10 @@ export const checkoutOrder = async (formData, shippingFee) => {
   const payload = {
     fullName: formData.fullName,
     phone: formData.phone,
-    address: formData.address,
-    note: formData.note,
+    address: `${formData.address}, ${formData.city || ""}`.trim(),
+    note: formData.note || "",
     paymentMethod: "COD",
-    shippingFee,
+    shippingFee: parseFloat(shippingFee) || 0,
     voucherDiscount: 0,
     idempotencyKey: String(Date.now())
   };

@@ -1,10 +1,10 @@
 import axiosClient from "./axiosClient";
 
-export const getAllOrders = async () => {
+export const getAllOrdersApi = async () => {
   return axiosClient.get("/orders");
 };
 
-export const getOrderById = async (id) => {
+export const getOrderByIdApi = async (id) => {
   return axiosClient.get(`/orders/${id}`);
 };
 

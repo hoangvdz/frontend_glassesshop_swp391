@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState, memo } from "react";
-import { preordersMock, productsMock } from "../data/adminMock";
+import { useCallback, useMemo, useState, memo, useEffect } from "react";
+// import { preordersMock, productsMock } from "../data/adminMock";
+import { getAllPreOrderItems } from "../services/preOrderService";
 import {
   FiPackage,
   FiUser,
@@ -157,11 +158,10 @@ const STEP_COLORS = {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const getProduct = (id) => productsMock.find((p) => p.id === id);
 
-const calcTotal = (items) =>
-  items.reduce((s, i) => {
-    const p = getProduct(i.productId);
-    return p ? s + p.price * i.quantity : s;
-  }, 0);
+const calcTotal = (items) => {
+  if (!items) return 0;
+  return items.reduce((s, i) => s + (i.unitPrice || 0) * (i.quantity || 1), 0);
+};
 
 const stepOf = (id) => STEPS.find((s) => s.id === id) || STEPS[0];
 const colorOf = (step) => STEP_COLORS[step.color] || STEP_COLORS.gray;
@@ -447,33 +447,29 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                     Sản phẩm ({order.items.length})
                   </p>
                   <div className="space-y-3">
-                    {order.items.map((item, i) => {
-                      const p = getProduct(item.productId);
-                      if (!p) return null;
-                      return (
+                    {order.items.map((item, i) => (
                         <div
                           key={i}
                           className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
                         >
                           <img
-                            src={p.img}
-                            alt={p.name}
+                            src={item.img}
+                            alt={item.name}
                             className="w-12 h-12 rounded-xl object-cover border border-gray-100 flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-800 truncate">
-                              {p.name}
+                              {item.name}
                             </p>
                             <p className="text-xs text-gray-400 mt-0.5">
-                              {p.category} · ×{item.quantity}
+                              ×{item.quantity}
                             </p>
                           </div>
                           <p className="text-sm font-bold text-gray-800 flex-shrink-0">
-                            {(p.price * item.quantity).toLocaleString("vi-VN")}đ
+                            {(item.unitPrice * item.quantity).toLocaleString("vi-VN")}đ
                           </p>
                         </div>
-                      );
-                    })}
+                    ))}
                     <div className="flex justify-between pt-2 border-t border-gray-100 text-sm">
                       <span className="font-semibold text-gray-600">
                         Tổng cộng
@@ -665,13 +661,50 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
    MAIN PAGE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 export default function AdminPreorders() {
-  const [orders, setOrders] = useState(preordersMock);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [stepFilter, setStepFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewing, setViewing] = useState(null);
   const [toast, setToast] = useState(null);
   const itemsPerPage = 7;
+
+  useEffect(() => {
+    const fetchPreOrders = async () => {
+      try {
+        const data = await getAllPreOrderItems();
+        // Ánh xạ dữ liệu backend (OrderItemDTO) sang format của PreorderRow
+        const mapped = data.map(item => ({
+          id: `ITEM-${item.orderItemId}`,
+          orderId: item.orderId,
+          customer: item.userName || "Khách lẻ",
+          email: item.userEmail || "N/A",
+          avatar: item.imageUrl || `https://ui-avatars.com/api/?name=${item.userName}&background=random`,
+          items: [{
+            productId: item.productId,
+            name: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            img: item.imageUrl
+          }],
+          step: item.preOrder?.step || 0,
+          cancelled: false, // Tạm thời
+          createdAt: item.createdAt || "Vừa xong",
+          phone: item.phone,
+          address: item.address,
+          rxId: item.prescription?.prescriptionId,
+          note: item.note
+        }));
+        setOrders(mapped);
+      } catch (err) {
+        console.error("Lỗi fetch preorders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPreOrders();
+  }, []);
 
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });

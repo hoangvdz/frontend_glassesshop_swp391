@@ -11,7 +11,7 @@ import {
 import ViewOrderDetailsModal from "../modal/ViewOrderDetailModel";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { getAllOrders, getOrderById } from "../services/orderService";
+import { getAllOrders, getOrderById, updateOrderStatus } from "../services/orderService";
 
 /* ── status config ── */
 const statusMap = {
@@ -91,11 +91,18 @@ const OrderRow = memo(({ order, onView }) => {
 
       {/* Status */}
       <td className="px-6 py-4 text-center">
-        <span
-          className={`px-3 py-1 text-xs rounded-full font-medium ${statusUI.className}`}
-        >
-          {statusUI.label}
-        </span>
+        <div className="flex flex-col items-center gap-1.5">
+          <span
+            className={`px-3 py-1 text-xs rounded-full font-medium ${statusUI.className}`}
+          >
+            {statusUI.label}
+          </span>
+          {order.orderItems?.some((item) => item.isPreorder) && (
+            <span className="px-2 py-0.5 text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded-md font-bold uppercase tracking-tight">
+              Pre-order
+            </span>
+          )}
+        </div>
       </td>
 
       {/* Date */}
@@ -199,12 +206,35 @@ function AdminOrders() {
   }, []);
   const handleClose = useCallback(() => setSelectedOrder(null), []);
 
+  const handleUpdateStatus = useCallback(
+    async (newStatus) => {
+      if (!selectedOrder) return;
+      try {
+        const res = await updateOrderStatus(selectedOrder.id, newStatus);
+        if (res.success) {
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === selectedOrder.id ? { ...o, status: newStatus } : o,
+            ),
+          );
+          setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+        }
+      } catch (err) {
+        console.error("Lỗi cập nhật status:", err);
+        alert("Lỗi khi cập nhật trạng thái đơn hàng");
+      }
+    },
+    [selectedOrder],
+  );
+
   /* ── stats ── */
   const stats = useMemo(
     () => ({
       total: orders.length,
-      completed: orders.filter((o) => o.status === "completed").length,
       pending: orders.filter((o) => o.status === "pending").length,
+      processing: orders.filter((o) => o.status === "processing").length,
+      shipped: orders.filter((o) => o.status === "shipped").length,
+      completed: orders.filter((o) => o.status === "completed").length,
       cancelled: orders.filter((o) => o.status === "cancelled").length,
     }),
     [orders],
@@ -228,7 +258,7 @@ function AdminOrders() {
       </div>
 
       {/* ── STAT PILLS ── */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {[
           {
             label: "Tất cả",
@@ -238,13 +268,6 @@ function AdminOrders() {
             key: "all",
           },
           {
-            label: "Hoàn thành",
-            value: stats.completed,
-            color: "bg-green-50 text-green-700",
-            active: status === "completed",
-            key: "completed",
-          },
-          {
             label: "Chờ xử lý",
             value: stats.pending,
             color: "bg-yellow-50 text-yellow-700",
@@ -252,7 +275,28 @@ function AdminOrders() {
             key: "pending",
           },
           {
-            label: "Đã huỷ",
+            label: "Đóng gói",
+            value: stats.processing,
+            color: "bg-orange-50 text-orange-700",
+            active: status === "processing",
+            key: "processing",
+          },
+          {
+            label: "Đang giao",
+            value: stats.shipped,
+            color: "bg-blue-50 text-blue-700",
+            active: status === "shipped",
+            key: "shipped",
+          },
+          {
+            label: "Hoàn thành",
+            value: stats.completed,
+            color: "bg-green-50 text-green-700",
+            active: status === "completed",
+            key: "completed",
+          },
+          {
+            label: "Đã hủy",
             value: stats.cancelled,
             color: "bg-red-50 text-red-700",
             active: status === "cancelled",
@@ -472,8 +516,8 @@ function AdminOrders() {
       {/* ── MODAL ── */}
       <ViewOrderDetailsModal
         order={selectedOrder}
-        
         onClose={handleClose}
+        onUpdateStatus={handleUpdateStatus}
       />
     </div>
   );

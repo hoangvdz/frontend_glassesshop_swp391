@@ -69,24 +69,28 @@ function ProductDetailPage() {
   }, [id]);
 
   const checkReviewEligibility = async () => {
-    if (!token) {
+    const currentToken = localStorage.getItem("token");
+    if (!currentToken) {
       setCheckingEligibility(false);
       return;
     }
     try {
       const res = await historyOrderApi();
-      const orders = res?.data?.data || [];
-      // Tìm đơn hàng có status DELIVERED và chứa sản phẩm này
+      const orders = res?.data?.data || res?.data || [];
+      
       const match = orders.find(
         (o) =>
-          o?.status?.toUpperCase() === "DELIVERED" &&
-          o?.orderItems?.some((item) => item.productId === parseInt(id)),
+          (o?.status?.toUpperCase() === "DELIVERED" || o?.status?.toUpperCase() === "COMPLETED") &&
+          (o?.orderItems || o?.items)?.some((item) => (item.productId || item.product?.productId) === parseInt(id)),
       );
       if (match) {
-        setEligibleOrderId(match.orderId);
+        setEligibleOrderId(match.orderId || match.id);
       }
     } catch (err) {
-      console.error("Eligibility check error:", err);
+      // Bọc hoàn toàn lỗi 403 để không hiện đỏ ở console làm phiền người dùng
+      if (err.response?.status !== 403) {
+        console.error("Eligibility check error:", err);
+      }
     } finally {
       setCheckingEligibility(false);
     }
@@ -157,8 +161,8 @@ function ProductDetailPage() {
   const product = {
     id: productData.id,
     name: productData.name || "No name",
-    price: formatPrice(productData.price || 0),
-    priceNum: productData.price || 0,
+    price: formatPrice(productData.price || productData.variants?.[0]?.price || 0),
+    priceNum: productData.price || productData.variants?.[0]?.price || 0,
     category: productData.category,
     badge: null,
     description: productData.description,
@@ -209,7 +213,12 @@ function ProductDetailPage() {
   };
 
   const handleAddToCart = async () => {
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let cart;
+    try {
+      cart = JSON.parse(localStorage.getItem("cart")) || [];
+    } catch (e) {
+      cart = [];
+    }
 
     const selectedVariant = productData.variants[activeColor];
 

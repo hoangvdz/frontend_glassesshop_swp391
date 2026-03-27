@@ -38,11 +38,16 @@ const STATUS_CONFIG = {
   },
 };
 
-function ViewOrderDetailsModal({ order,  onClose }) {
+function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
   if (!order) return null;
-  console.log(order);
 
-  const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+  // Tính toán lại subtotal từ items nếu cần
+  const calculatedSubtotal = order.orderItems?.reduce((sum, item) => {
+    return sum + (item.unitPrice || 0) * (item.quantity || 1);
+  }, 0) || 0;
+
+  const currentStatus = (order.status || "pending").toLowerCase();
+  const status = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending;
 
   return (
     <AnimatePresence>
@@ -81,10 +86,10 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                 </div>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="flex items-center gap-1 text-xs text-gray-400">
-                    <FiHash size={11} /> {order.code}
+                    <FiHash size={11} /> {order.orderCode || order.code}
                   </span>
                   <span className="flex items-center gap-1 text-xs text-gray-400">
-                    <FiCalendar size={11} /> {order.createdAt}
+                    <FiCalendar size={11} /> {order.orderDate || order.createdAt}
                   </span>
                 </div>
               </div>
@@ -103,28 +108,40 @@ function ViewOrderDetailsModal({ order,  onClose }) {
               {/* Left — items */}
               <div className="col-span-3 px-6 py-5">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                  <FiPackage size={12} /> Sản phẩm ({order.items.length})
+                  <FiPackage size={12} /> Sản phẩm ({order.orderItems?.length || 0})
                 </p>
 
                 <div className="space-y-4">
-                  {order.items.map((item, i) => {
+                  {order.orderItems?.map((item, i) => {
+                    const itemName = item.productName || item.product?.name || "Sản phẩm không tên";
+                    const itemImage = item.imageUrl || item.product?.imageUrl || `https://placehold.co/100x100?text=${itemName}`;
+                    const itemColor = item.variantColor || item.variant?.color;
+                    const itemSize = item.variantSize || item.variant?.frameSize;
+                    const itemPrice = item.unitPrice || 0;
+                    
                     return (
                       <div
                         key={i}
                         className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                       >
                         <img
-                          src={item.imageUrl || item.img}
-                          alt={item.productName}
+                          src={itemImage}
+                          alt={itemName}
                           className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
                           loading="lazy"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-800 text-sm truncate">
-                            {item.productName}
+                            {itemName}
                           </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {item.color || ""}
+                          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                            {itemColor && <span>Màu: {itemColor}</span>}
+                            {itemSize && <span>Size: {itemSize}</span>}
+                            {(item.isPreorder || item.type === "PRE_ORDER") && (
+                              <span className="text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md font-bold text-[9px]">
+                                PRE-ORDER
+                              </span>
+                            )}
                           </p>
 
                           <div className="flex items-center gap-2 mt-1.5">
@@ -132,17 +149,13 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                               x{item.quantity}
                             </span>
                             <span className="text-xs text-gray-400">
-                              {(item.unitPrice || 0).toLocaleString("vi-VN")} ₫
-                              / sp
+                              {itemPrice.toLocaleString("vi-VN")} ₫ / sp
                             </span>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-semibold text-gray-800 text-sm">
-                            {(
-                              (item.unitPrice || 0) * item.quantity
-                            ).toLocaleString("vi-VN")}{" "}
-                            ₫
+                            {(itemPrice * (item.quantity || 1)).toLocaleString("vi-VN")} ₫
                           </p>
                         </div>
                       </div>
@@ -160,19 +173,21 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                   </p>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                     <img
-                      src={`https://ui-avatars.com/api/?name=${order.customer || order.email}&background=1c1917&color=fff&bold=true`}
-                      alt={order.customer}
+                        src={`https://ui-avatars.com/api/?name=${order.userName || order.customer || order.userEmail || "Guest"}&background=1c1917&color=fff&bold=true`}
+                        alt={order.userName}
                       className="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">
-                        {order.customer}
+                        {order.userName || order.customer || "Khách lẻ"}
                       </p>
                       <p className="text-xs text-gray-400 truncate">
-                        {order.email}
+                        {order.userEmail || order.email || "N/A"}
                       </p>
                     </div>
                   </div>
+                  {order.phone && <p className="text-xs text-gray-500 mt-2">SĐT: {order.phone}</p>}
+                  {order.address && <p className="text-xs text-gray-500 mt-1">Đ/C: {order.address}</p>}
                 </div>
 
                 {/* Payment */}
@@ -184,31 +199,81 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                     <div className="flex justify-between">
                       <span className="text-gray-500">Tạm tính</span>
                       <span className="text-gray-700 font-medium">
-                        {order.total} ₫
+                        {(order.totalPrice || calculatedSubtotal).toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Phí vận chuyển</span>
                       <span className="text-green-600 font-medium">
-                        Miễn phí
+                        {order.shippingFee > 0 ? `${order.shippingFee.toLocaleString("vi-VN")} ₫` : "Miễn phí"}
                       </span>
                     </div>
+                    {order.voucherDiscount > 0 && (
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Giảm giá</span>
+                            <span className="text-red-500 font-medium">
+                                -{order.voucherDiscount.toLocaleString("vi-VN")} ₫
+                            </span>
+                        </div>
+                    )}
                     <div className="border-t border-gray-200 pt-2.5 flex justify-between">
                       <span className="font-semibold text-gray-700">
                         Tổng cộng
                       </span>
                       <span className="font-bold text-blue-600 text-base">
-                        {order.total.toLocaleString("vi-VN")} ₫
+                        {(order.finalPrice || order.totalPrice || calculatedSubtotal).toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl border border-gray-200 bg-gray-50 flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${status.dot}`} />
-                  <span className="text-sm font-medium text-gray-700">
-                    {status.label}
-                  </span>
+                <div className="p-3 rounded-xl border border-gray-200 bg-gray-50 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2.5 h-2.5 rounded-full ${status.dot}`} />
+                    <span className="text-sm font-medium text-gray-700">
+                      Trạng thái: {status.label}
+                    </span>
+                  </div>
+
+                  {/* Actions based on status */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                    {currentStatus === "pending" && (
+                      <button
+                        onClick={() => onUpdateStatus("processing")}
+                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                      >
+                        Xác nhận & Đóng gói
+                      </button>
+                    )}
+                    {currentStatus === "processing" && (
+                      <button
+                        onClick={() => onUpdateStatus("shipped")}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                      >
+                        Giao hàng ngay
+                      </button>
+                    )}
+                    {currentStatus === "shipped" && (
+                      <button
+                        onClick={() => onUpdateStatus("completed")}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                      >
+                        Giao hàng thành công
+                      </button>
+                    )}
+                    {["pending", "processing"].includes(currentStatus) && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
+                            onUpdateStatus("cancelled");
+                          }
+                        }}
+                        className="px-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors"
+                      >
+                        Hủy đơn
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

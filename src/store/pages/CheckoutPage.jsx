@@ -94,14 +94,26 @@ function CheckoutPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("currentUser"));
+    let user;
+    try {
+      user = JSON.parse(localStorage.getItem("currentUser"));
+    } catch (e) {
+      user = null;
+    }
 
     if (!user) {
       navigate("/login");
       return;
     }
+
     // ✅ 1. Load nhanh từ localStorage trước (UX mượt)
-    const stored = JSON.parse(localStorage.getItem("cart")) || [];
+    let stored = [];
+    try {
+      stored = JSON.parse(localStorage.getItem("cart")) || [];
+    } catch (e) {
+      stored = [];
+    }
+
     if (stored.length > 0) {
       setCartItems(stored);
     }
@@ -110,13 +122,16 @@ function CheckoutPage() {
     const fetchCart = async () => {
       try {
         const data = await getCartByUserService(user.userId);
+        
+        // Safety check for array
+        const cartData = Array.isArray(data) ? data : (data?.data || []);
 
-        const mapped = data.map((item) => ({
+        const mapped = cartData.map((item) => ({
           cartItemId: item.cartItemId,
           productId: item.productId,
-          name: item.productName,
-          image: item.imageUrl || "https://via.placeholder.com/100",
-          price: item.unitPrice,
+          name: item.productName || item.product?.name,
+          image: item.imageUrl || item.product?.imageUrl || "https://placehold.co/100",
+          price: item.unitPrice || 0,
           quantity: item.quantity,
           variant: {
             variantId: item.variantId,
@@ -406,8 +421,8 @@ function CheckoutPage() {
                       <option value="" disabled>
                         Chọn tỉnh/thành phố
                       </option>
-                      {southernCities.map((c) => (
-                        <option key={c.name} value={c.name}>
+                      {southernCities.map((c, index) => (
+                        <option key={index} value={c.name}>
                           {c.name}
                         </option>
                       ))}
@@ -493,7 +508,7 @@ function CheckoutPage() {
                 <div className="space-y-5 max-h-[320px] overflow-y-auto pr-2 mb-5">
                   {cartItems.map((item) => (
                     <div
-                      key={item.cartItemId}
+                      key={item.cartItemId || item.productId}
                       className="flex gap-4 relative group"
                     >
                       {/* Image */}
