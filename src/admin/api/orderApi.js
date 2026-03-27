@@ -1,10 +1,13 @@
 import axiosClient from "./axiosClient";
 
-export const getAllOrdersApi = async () => {
+export const getAllOrders = async () => {
   return axiosClient.get("/orders");
 };
 
-export const getOrderByIdApi = async (id) => {
-  const res =  await axiosClient.get(`/orders/${id}`);
-  return res.data;
+export const getOrderById = async (id) => {
+  return axiosClient.get(`/orders/${id}`);
+};
+
+export const updateOrderStatusApi = async (orderId, status) => {
+  return axiosClient.patch(`/orders/${orderId}/status?status=${status}`);
 };

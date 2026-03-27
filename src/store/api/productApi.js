@@ -1,13 +1,11 @@
-import axios from "axios";
-
-const BASE_URL = "http://localhost:8081/api";
+import axiosClient from "./axiosClient";
 
 export const getAllProductStoreApi = async () => {
-  const res = await axios.get(`${BASE_URL}/products`);
+  const res = await axiosClient.get("/products");
   return res.data.data;
 };
 
 export const getProductByIdApi = async (id) => {
-  const res = await axios.get(`${BASE_URL}/products/${id}`);
+  const res = await axiosClient.get(`/products/${id}`);
   return res.data.data;
 };

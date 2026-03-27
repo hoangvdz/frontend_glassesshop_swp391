@@ -27,6 +27,10 @@ const statusMap = {
     label: "Đã huỷ",
     className: "bg-red-50 text-red-700 border border-red-200",
   },
+  shipped: {
+    label: "Đang giao",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
+  },
 };
 
 /* ── sort icon ── */
@@ -194,8 +198,6 @@ function AdminOrders() {
     }
   }, []);
   const handleClose = useCallback(() => setSelectedOrder(null), []);
-
- 
 
   /* ── stats ── */
   const stats = useMemo(

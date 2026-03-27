@@ -18,6 +18,12 @@ const STATUS_CONFIG = {
     badge: "bg-yellow-50 text-yellow-700 border border-yellow-200",
     dot: "bg-yellow-400",
   },
+  processing: {
+    label: "Đang đóng gói",
+    icon: <FiPackage size={13} />,
+    badge: "bg-orange-50 text-orange-700 border border-orange-200",
+    dot: "bg-orange-400",
+  },
   completed: {
     label: "Hoàn thành",
     icon: <FiCheckCircle size={13} />,
@@ -29,12 +35,6 @@ const STATUS_CONFIG = {
     icon: <FiXCircle size={13} />,
     badge: "bg-red-50 text-red-700 border border-red-200",
     dot: "bg-red-400",
-  },
-  shipped: {
-    label: "Đang giao",
-    icon: <FiTruck size={13} />,
-    badge: "bg-blue-50 text-blue-700 border border-blue-200",
-    dot: "bg-blue-500",
   },
 };
 
@@ -114,7 +114,7 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                         className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                       >
                         <img
-                          src={item.imageUrl}
+                          src={item.imageUrl || item.img}
                           alt={item.productName}
                           className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
                           loading="lazy"
@@ -123,19 +123,26 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                           <p className="font-medium text-gray-800 text-sm truncate">
                             {item.productName}
                           </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {item.color || ""}
+                          </p>
 
                           <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
                               x{item.quantity}
                             </span>
                             <span className="text-xs text-gray-400">
-                              {item.unitPrice.toLocaleString("vi-VN")} ₫ / sp
+                              {(item.unitPrice || 0).toLocaleString("vi-VN")} ₫
+                              / sp
                             </span>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-semibold text-gray-800 text-sm">
-                            {order.total.toLocaleString("vi-VN")} ₫
+                            {(
+                              (item.unitPrice || 0) * item.quantity
+                            ).toLocaleString("vi-VN")}{" "}
+                            ₫
                           </p>
                         </div>
                       </div>
