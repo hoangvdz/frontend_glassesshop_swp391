@@ -15,12 +15,8 @@ import {
 
 import { useEffect, useState, useMemo } from "react";
 import { getAllOrders } from "../services/orderService";
-
-import {
-  revenueData,
-  orderStatusData,
-  overviewStats,
-} from "../data/adminMock";
+import { getCustomerCount, getOrdersCount } from "../services/dashboardService";
+import { revenueData, orderStatusData } from "../data/adminMock";
 
 /* ── animation helpers ── */
 const fadeUp = (delay = 0) => ({
@@ -38,28 +34,25 @@ const revenueCategories = revenueData.map((i) => i.day);
 /* ── stat card config ── */
 const statCards = [
   {
+    key: "revenue",
     label: "Tổng doanh thu",
     icon: FiDollarSign,
     color: "blue",
     bg: "bg-blue-50",
     text: "text-blue-600",
     ring: "ring-blue-100",
-    change: "+12.5%",
-    up: true,
-    note: "so với tháng trước",
   },
   {
+    key: "orders",
     label: "Đơn hàng",
     icon: FiShoppingCart,
     color: "green",
     bg: "bg-green-50",
     text: "text-green-600",
     ring: "ring-green-100",
-    change: "+8.2%",
-    up: true,
-    note: "so với tháng trước",
   },
   {
+    key: "customers",
     label: "Khách hàng",
     icon: FiUsers,
     color: "yellow",
@@ -67,19 +60,15 @@ const statCards = [
     text: "text-yellow-600",
     ring: "ring-yellow-100",
     change: "-2.1%",
-    up: false,
-    note: "so với tháng trước",
   },
   {
+    key: "growth",
     label: "Tăng trưởng",
     icon: FiTrendingUp,
     color: "purple",
     bg: "bg-purple-50",
     text: "text-purple-600",
     ring: "ring-purple-100",
-    change: "+5.4%",
-    up: true,
-    note: "so với tháng trước",
   },
 ];
 
@@ -105,12 +94,19 @@ const parseDateVN = (dateStr) => {
 
 function AdminOverview() {
   const [orders, setOrders] = useState([]);
+  const [orderCount, setOrderCount] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
   const [filter, setFilter] = useState("7days"); // mặc định 7 ngày
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const data = await getAllOrders();
-        console.log(data);
+
+        const orderCountData = await getOrdersCount();
+        const customerCountData = await getCustomerCount();
+
+        setOrderCount(orderCountData);
+        setCustomerCount(customerCountData);
         setOrders(data);
       } catch (err) {
         console.error("Lỗi lấy orders:", err);
@@ -188,23 +184,16 @@ function AdminOverview() {
               </div>
 
               <p className="text-2xl font-semibold mt-5 text-gray-800">
-                {overviewStats[i]?.value ?? "—"}
+                {card.key === "orders"
+                  ? orderCount
+                  : card.key === "customers"
+                    ? customerCount
+                    : card.key === "revenue"
+                      ? "—" // sau này gọi API revenue
+                      : card.key === "growth"
+                        ? "—"
+                        : "—"}
               </p>
-
-              {/* Change badge */}
-              <div className="flex items-center gap-1.5 mt-3">
-                <span
-                  className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    card.up
-                      ? "bg-green-50 text-green-600"
-                      : "bg-red-50 text-red-500"
-                  }`}
-                >
-                  <ChangeIcon size={11} />
-                  {card.change}
-                </span>
-                <span className="text-xs text-gray-400">{card.note}</span>
-              </div>
             </motion.div>
           );
         })}
@@ -338,7 +327,7 @@ function AdminOverview() {
                     <span
                       className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusStyle[order.status] ?? "bg-gray-50 text-gray-500"}`}
                     >
-                       {statusText[order.status]}
+                      {statusText[order.status]}
                     </span>
                   )}
                 </div>
