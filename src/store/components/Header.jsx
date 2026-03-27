@@ -12,12 +12,21 @@ function Header() {
     { label: "Liên hệ", path: "/contact" },
   ];
 
-  const [cart, setCart] = useState(
-    () => JSON.parse(localStorage.getItem("cart")) || [],
-  );
-  const [currentUser, setCurrentUser] = useState(() =>
-    JSON.parse(localStorage.getItem("currentUser")),
-  );
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("cart")) || [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("currentUser"));
+    } catch (e) {
+      return null;
+    }
+  });
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -28,8 +37,17 @@ function Header() {
   /* sync storage events */
   useEffect(() => {
     const onStorage = () => {
-      setCart(JSON.parse(localStorage.getItem("cart")) || []);
-      setCurrentUser(JSON.parse(localStorage.getItem("currentUser")));
+      try {
+        setCart(JSON.parse(localStorage.getItem("cart")) || []);
+      } catch (e) {
+        setCart([]);
+      }
+      
+      try {
+        setCurrentUser(JSON.parse(localStorage.getItem("currentUser")));
+      } catch (e) {
+        setCurrentUser(null);
+      }
     };
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("storage", onStorage);

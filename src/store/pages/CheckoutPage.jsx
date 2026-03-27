@@ -94,14 +94,26 @@ function CheckoutPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("currentUser"));
+    let user;
+    try {
+      user = JSON.parse(localStorage.getItem("currentUser"));
+    } catch (e) {
+      user = null;
+    }
 
     if (!user) {
       navigate("/login");
       return;
     }
+
     // ✅ 1. Load nhanh từ localStorage trước (UX mượt)
-    const stored = JSON.parse(localStorage.getItem("cart")) || [];
+    let stored = [];
+    try {
+      stored = JSON.parse(localStorage.getItem("cart")) || [];
+    } catch (e) {
+      stored = [];
+    }
+
     if (stored.length > 0) {
       setCartItems(stored);
     }
@@ -110,13 +122,16 @@ function CheckoutPage() {
     const fetchCart = async () => {
       try {
         const data = await getCartByUserService(user.userId);
+        
+        // Safety check for array
+        const cartData = Array.isArray(data) ? data : (data?.data || []);
 
-        const mapped = data.map((item) => ({
+        const mapped = cartData.map((item) => ({
           cartItemId: item.cartItemId,
           productId: item.productId,
-          name: item.productName,
-          image: item.imageUrl || "https://via.placeholder.com/100",
-          price: item.unitPrice,
+          name: item.productName || item.product?.name,
+          image: item.imageUrl || item.product?.imageUrl || "https://placehold.co/100",
+          price: item.unitPrice || 0,
           quantity: item.quantity,
           variant: {
             variantId: item.variantId,

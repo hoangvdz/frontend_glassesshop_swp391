@@ -213,7 +213,12 @@ function ProductDetailPage() {
   };
 
   const handleAddToCart = async () => {
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let cart;
+    try {
+      cart = JSON.parse(localStorage.getItem("cart")) || [];
+    } catch (e) {
+      cart = [];
+    }
 
     const selectedVariant = productData.variants[activeColor];
 
