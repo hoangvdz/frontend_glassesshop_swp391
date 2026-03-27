@@ -63,6 +63,13 @@ function ProductDetailPage() {
   const [toast, setToast] = useState({ visible: false, message: "" });
   const [token] = useState(localStorage.getItem("token"));
   const [lensOption, setLensOption] = useState(null);
+  const [prescription, setPrescription] = useState({
+    eyes: {
+      right: { sphere: "", cylinder: "", axis: "", add: "" },
+      left: { sphere: "", cylinder: "", axis: "", add: "" },
+    },
+    pd: "",
+  });
 
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
@@ -265,10 +272,23 @@ function ProductDetailPage() {
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("storage"));
     try {
+      // Prepare prescription payload if manual entry is selected
+      const isLens = lensOption === "manual";
       const apiRes = await addToCartService({
         productId: productData.id,
         variantId: selectedVariant.variantId,
         quantity,
+        isLens,
+        // Manual entry parameters
+        sphLeft: isLens ? parseFloat(prescription.eyes.left.sphere) || 0 : null,
+        sphRight: isLens ? parseFloat(prescription.eyes.right.sphere) || 0 : null,
+        cylLeft: isLens ? parseFloat(prescription.eyes.left.cylinder) || 0 : null,
+        cylRight: isLens ? parseFloat(prescription.eyes.right.cylinder) || 0 : null,
+        axisLeft: isLens ? parseInt(prescription.eyes.left.axis) || 0 : null,
+        axisRight: isLens ? parseInt(prescription.eyes.right.axis) || 0 : null,
+        addLeft: isLens ? parseFloat(prescription.eyes.left.add) || 0 : null,
+        addRight: isLens ? parseFloat(prescription.eyes.right.add) || 0 : null,
+        pd: isLens ? parseFloat(prescription.pd) || 0 : null,
       });
       if (apiRes) showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
       else showToast(apiRes?.message || "Lỗi khi thêm vào giỏ hàng");
@@ -512,6 +532,8 @@ function ProductDetailPage() {
                     <LensPurchaseOptions
                       lensOption={lensOption}
                       setLensOption={setLensOption}
+                      prescription={prescription}
+                      setPrescription={setPrescription}
                     />
                   )}
                 </div>
@@ -773,15 +795,7 @@ function FramePurchaseOptions({ product, navigate }) {
 }
 
 /* ─── Lens purchase options ─── */
-function LensPurchaseOptions({ lensOption, setLensOption }) {
-  const [prescription, setPrescription] = useState({
-    eyes: {
-      right: { sphere: "", cylinder: "", axis: "", add: "" },
-      left: { sphere: "", cylinder: "", axis: "", add: "" },
-    },
-    pd: "",
-  });
-
+function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPrescription }) {
   const handleEye = (side, field, value) => {
     setPrescription((prev) => ({
       ...prev,

@@ -12,6 +12,33 @@ import ViewOrderDetailsModal from "../modal/ViewOrderDetailModel";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { getAllOrders, getOrderById, updateOrderStatus } from "../services/orderService";
+import { updatePrescriptionStatus } from "../services/prescriptionService";
+
+/* ── helpers ── */
+const isOrderPrescription = (order) => {
+  if (order.hasPrescription) return true;
+  return order.orderItems?.some((item) => {
+    if (
+      item.itemType === "PRESCRIPTION" ||
+      item.fulfillmentType === "PRESCRIPTION" ||
+      item.isLens === true
+    )
+      return true;
+    if (item.prescription != null) return true;
+    const rx = item.prescription || item;
+    return (
+      rx.sphLeft != null ||
+      rx.sphRight != null ||
+      rx.cylLeft != null ||
+      rx.cylRight != null ||
+      rx.addLeft != null ||
+      rx.addRight != null ||
+      item.lensOptionId != null ||
+      item.productName?.toLowerCase().includes("tròng") ||
+      item.productName?.toLowerCase().includes("thấu kính")
+    );
+  });
+};
 
 /* ── status config ── */
 const statusMap = {
@@ -23,13 +50,17 @@ const statusMap = {
     label: "Chờ xử lý",
     className: "bg-yellow-50 text-yellow-700 border border-yellow-200",
   },
-  cancelled: {
-    label: "Đã huỷ",
-    className: "bg-red-50 text-red-700 border border-red-200",
+  processing: {
+    label: "Đang đóng gói",
+    className: "bg-orange-50 text-orange-700 border border-orange-200",
   },
   shipped: {
     label: "Đang giao",
     className: "bg-blue-50 text-blue-700 border border-blue-200",
+  },
+  cancelled: {
+    label: "Đã huỷ",
+    className: "bg-red-50 text-red-700 border border-red-200",
   },
 };
 
@@ -102,6 +133,11 @@ const OrderRow = memo(({ order, onView }) => {
               Pre-order
             </span>
           )}
+          {isOrderPrescription(order) && (
+            <span className="px-2 py-0.5 text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md font-bold uppercase tracking-tight">
+              Toa thuốc
+            </span>
+          )}
         </div>
       </td>
 
@@ -139,19 +175,18 @@ function AdminOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await getAllOrders();
-        console.log(data);
-        setOrders(data);
-      } catch (err) {
-        console.error("Lỗi lấy orders:", err);
-      }
-    };
-
-    fetchOrders();
+  const fetchOrders = useCallback(async () => {
+    try {
+      const data = await getAllOrders();
+      setOrders(data);
+    } catch (err) {
+      console.error("Lỗi lấy orders:", err);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const itemsPerPage = 5;
 
@@ -211,20 +246,34 @@ function AdminOrders() {
       if (!selectedOrder) return;
       try {
         const res = await updateOrderStatus(selectedOrder.id, newStatus);
-        if (res.success) {
-          setOrders((prev) =>
-            prev.map((o) =>
-              o.id === selectedOrder.id ? { ...o, status: newStatus } : o,
-            ),
-          );
-          setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+        if (res.success || res.status === 200 || res.data) {
+          const updated = await getOrderById(selectedOrder.id);
+          setSelectedOrder(updated);
+          fetchOrders();
         }
       } catch (err) {
-        console.error("Lỗi cập nhật status:", err);
-        alert("Lỗi khi cập nhật trạng thái đơn hàng");
+        console.error("Lỗi cập nhật trạng thái:", err);
       }
     },
-    [selectedOrder],
+    [selectedOrder, fetchOrders]
+  );
+
+  const handlePrescriptionAction = useCallback(
+    async (prescriptionId, approve, note) => {
+      try {
+        await updatePrescriptionStatus(prescriptionId, approve, note);
+        // Sau khi xử lý prescription thành công, load lại chi tiết order
+        if (selectedOrder) {
+          const updated = await getOrderById(selectedOrder.id);
+          setSelectedOrder(updated);
+          fetchOrders();
+        }
+      } catch (err) {
+        console.error("Lỗi xử lý đơn thuốc:", err);
+        throw err;
+      }
+    },
+    [selectedOrder, fetchOrders]
   );
 
   /* ── stats ── */
@@ -518,6 +567,7 @@ function AdminOrders() {
         order={selectedOrder}
         onClose={handleClose}
         onUpdateStatus={handleUpdateStatus}
+        onPrescriptionAction={handlePrescriptionAction}
       />
     </div>
   );
