@@ -26,7 +26,7 @@ export const getAllOrders = async () => {
 export const getOrderById = async (id) => {
   const res = await getOrderByIdApi(id);
   // Backend trả về ApiResponse { data: {...} }
-  const o = res.data?.data || res.data; 
+  const o = res.data?.data || res.data;
   return {
     ...o,
     id: o.orderId,
@@ -45,7 +45,8 @@ export const updateOrderStatus = async (orderId, status) => {
   let backendStatus = status.toUpperCase();
 
   // Ánh xạ sang từ điển của Backend
-  if (backendStatus === "SHIPPING" || backendStatus === "SHIPPED") backendStatus = "DELIVERING";
+  if (backendStatus === "SHIPPING" || backendStatus === "SHIPPED")
+    backendStatus = "DELIVERING";
   if (backendStatus === "COMPLETED") backendStatus = "DELIVERED";
   if (backendStatus === "CANCELLED") backendStatus = "CANCELED";
 

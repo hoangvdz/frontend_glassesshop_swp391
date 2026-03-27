@@ -11,3 +11,4 @@ export const getOrderByIdApi = async (id) => {
 export const updateOrderStatusApi = async (orderId, status) => {
   return axiosClient.patch(`/orders/${orderId}/status?status=${status}`);
 };
+
