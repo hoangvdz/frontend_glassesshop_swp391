@@ -8,7 +8,7 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 
-import { getMyOrders } from "../services/orderService";
+import { getMyOrders, cancelOrder } from "../services/orderService";
 // Dữ liệu mẫu (Mock Data)
 
 const TABS = [
@@ -36,48 +36,49 @@ function OrderHistoryPage() {
     fetchOrders();
   }, []);
 
-  // Hàm xử lý Hủy Đơn Hàng
-  const handleCancelOrder = (orderId) => {
+  const handleCancelOrder = async (orderId) => {
     const isConfirm = window.confirm(
       "Bạn có chắc chắn muốn hủy đơn hàng này không?",
     );
+
     if (isConfirm) {
-      // 1. Cập nhật State để UI thay đổi ngay lập tức
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status: "Cancelled" } : order,
-        ),
-      );
+      try {
+        const res = await cancelOrder(orderId);
 
-      // 2. Cập nhật lại trong localStorage (để F5 không bị mất đối với đơn thật)
-      const savedOrders = JSON.parse(localStorage.getItem("orders")) || [];
-      const updatedSavedOrders = savedOrders.map((order) => {
-        const formattedId = order.id.toString().startsWith("FALCON")
-          ? order.id
-          : `FALCON-${order.id.toString().slice(-4)}`;
-
-        if (formattedId === orderId) {
-          return { ...order, status: "Cancelled" };
+        if (res.success) {
+          setOrders((prevOrders) =>
+            prevOrders.map((order) =>
+              order.orderId === orderId
+                ? { ...order, status: "CANCELLED" }
+                : order,
+            ),
+          );
+          alert("Hủy đơn hàng thành công!");
         }
-        return order;
-      });
-      localStorage.setItem("orders", JSON.stringify(updatedSavedOrders));
+      } catch (error) {
+        console.error("Lỗi khi hủy đơn:", error);
+        alert(
+          "Hủy thất bại: " + (error.response?.data?.message || "Lỗi hệ thống"),
+        );
+      }
     }
   };
 
   const getStatusInfo = (status) => {
-    switch (status) {
-      case "SHIPPING":
-        return { text: "Đang giao hàng", code: 2, color: "text-amber-500" };
-      case "COMPLETED":
-        return { text: "Giao thành công", code: 3, color: "text-green-600" };
-      case "CANCELLED":
-        return { text: "Đã hủy", code: 4, color: "text-red-500" };
-      case "PENDING":
-      default:
-        return { text: "Chờ xác nhận", code: 1, color: "text-stone-500" };
-    }
-  };
+  switch (status) {
+    case "SHIPPING":
+      return { text: "Đang giao hàng", code: 2, color: "text-amber-500" };
+    case "PROCESSING":
+      return { text: "Đang đóng gói", code: 1.5, color: "text-blue-500" };
+    case "COMPLETED":
+      return { text: "Giao thành công", code: 3, color: "text-green-600" };
+    case "CANCELLED":
+      return { text: "Đã hủy", code: 4, color: "text-red-500" };
+    case "PENDING":
+    default:
+      return { text: "Chờ xác nhận", code: 1, color: "text-stone-500" };
+  }
+};
 
   const filteredOrders = orders.filter(
     (order) => activeTab === "All" || order.status === activeTab,
@@ -100,11 +101,10 @@ function OrderHistoryPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[120px] py-3 text-sm font-medium rounded-xl transition-all duration-300 ${
-                activeTab === tab.id
-                  ? "bg-stone-900 text-white shadow-md"
-                  : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
-              }`}
+              className={`flex-1 min-w-[120px] py-3 text-sm font-medium rounded-xl transition-all duration-300 ${activeTab === tab.id
+                ? "bg-stone-900 text-white shadow-md"
+                : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
+                }`}
             >
               {tab.label}
             </button>
@@ -187,17 +187,17 @@ function OrderHistoryPage() {
                     {/* Chờ xác nhận (Pending) */}
                     {statusInfo.code === 1 && (
                       <button
-                        onClick={() => handleCancelOrder(order.id)}
+                        onClick={() => handleCancelOrder(order.orderId)}
                         className="px-5 py-2.5 bg-white border border-stone-200 text-stone-600 font-medium rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors text-sm flex items-center gap-2"
                       >
                         <FiAlertCircle /> Hủy đơn hàng
                       </button>
                     )}
 
-                    {/* Đang giao (Shipping) */}
-                    {statusInfo.code === 2 && (
+                    {/* Đang giao & Đang xử lý & Chờ xác nhận (Hiển thị nút theo dõi) */}
+                    {(statusInfo.code === 2 || statusInfo.code === 1.5 || statusInfo.code === 1) && (
                       <Link
-                        to="/shipping-progress"
+                        to={`/shipping-progress/${order.orderId}`}
                         className="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white font-semibold rounded-xl hover:bg-stone-800 transition-colors text-sm shadow-md"
                       >
                         <FiTruck />
@@ -209,18 +209,20 @@ function OrderHistoryPage() {
                     {statusInfo.code === 3 && (
                       <>
                         <Link
-                          to="/return-request"
+                          to={`/return-request?orderItemId=${firstItem.orderItemId}`}
                           className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-colors text-sm"
                         >
                           Yêu cầu Đổi/Trả
                         </Link>
-                        <Link
-                          to="/order-feedback"
-                          className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors text-sm shadow-md shadow-amber-500/20"
-                        >
-                          <FiCheckCircle />
-                          Đánh giá sản phẩm
-                        </Link>
+                        {firstItem && (
+                          <Link
+                            to={`/product/${firstItem.productId}#review-form`}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors text-sm shadow-md shadow-amber-500/20"
+                          >
+                            <FiCheckCircle />
+                            Đánh giá sản phẩm
+                          </Link>
+                        )}
                       </>
                     )}
 

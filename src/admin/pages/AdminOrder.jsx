@@ -11,7 +11,11 @@ import {
 import ViewOrderDetailsModal from "../modal/ViewOrderDetailModel";
 import { motion, AnimatePresence } from "framer-motion";
 
+<<<<<<< HEAD
+import { getAllOrders, updateOrderStatus } from "../services/orderService";
+=======
 import { getAllOrders, getOrderById } from "../services/orderService";
+>>>>>>> main
 
 /* ── status config ── */
 const statusMap = {
@@ -26,6 +30,10 @@ const statusMap = {
   cancelled: {
     label: "Đã huỷ",
     className: "bg-red-50 text-red-700 border border-red-200",
+  },
+  shipped: {
+    label: "Đang giao",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
   },
 };
 
@@ -195,7 +203,30 @@ function AdminOrders() {
   }, []);
   const handleClose = useCallback(() => setSelectedOrder(null), []);
 
+<<<<<<< HEAD
+  const handleUpdateStatus = useCallback(
+    async (newStatus) => {
+      if (!selectedOrder) return;
+      try {
+        const res = await updateOrderStatus(selectedOrder.id, newStatus);
+        if (res.success) {
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.id === selectedOrder.id ? { ...o, status: newStatus } : o,
+            ),
+          );
+          setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+        }
+      } catch (err) {
+        console.error("Lỗi cập nhật status:", err);
+        alert("Lỗi khi cập nhật trạng thái đơn hàng");
+      }
+    },
+    [selectedOrder],
+  );
+=======
  
+>>>>>>> main
 
   /* ── stats ── */
   const stats = useMemo(
