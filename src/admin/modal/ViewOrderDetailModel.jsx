@@ -24,12 +24,6 @@ const STATUS_CONFIG = {
     badge: "bg-orange-50 text-orange-700 border border-orange-200",
     dot: "bg-orange-400",
   },
-  shipped: {
-    label: "Đang giao",
-    icon: <FiTruck size={13} />,
-    badge: "bg-blue-50 text-blue-700 border border-blue-200",
-    dot: "bg-blue-400",
-  },
   completed: {
     label: "Hoàn thành",
     icon: <FiCheckCircle size={13} />,
@@ -42,26 +36,12 @@ const STATUS_CONFIG = {
     badge: "bg-red-50 text-red-700 border border-red-200",
     dot: "bg-red-400",
   },
-  shipped: {
-    label: "Đang giao",
-    icon: <FiTruck size={13} />,
-    badge: "bg-blue-50 text-blue-700 border border-blue-200",
-    dot: "bg-blue-500",
-  },
 };
 
 function ViewOrderDetailsModal({ order,  onClose }) {
   if (!order) return null;
   console.log(order);
 
-<<<<<<< HEAD
-  const subtotal = order.items.reduce((sum, item) => {
-    return sum + (item.unitPrice || 0) * item.quantity;
-  }, 0);
-
-  const total = order.total || subtotal;
-=======
->>>>>>> main
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
 
   return (
@@ -134,11 +114,7 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                         className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                       >
                         <img
-<<<<<<< HEAD
                           src={item.imageUrl || item.img}
-=======
-                          src={item.imageUrl}
->>>>>>> main
                           alt={item.productName}
                           className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
                           loading="lazy"
@@ -146,12 +122,9 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-800 text-sm truncate">
                             {item.productName}
-<<<<<<< HEAD
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">
                             {item.color || ""}
-=======
->>>>>>> main
                           </p>
 
                           <div className="flex items-center gap-2 mt-1.5">
@@ -159,25 +132,17 @@ function ViewOrderDetailsModal({ order,  onClose }) {
                               x{item.quantity}
                             </span>
                             <span className="text-xs text-gray-400">
-<<<<<<< HEAD
                               {(item.unitPrice || 0).toLocaleString("vi-VN")} ₫
                               / sp
-=======
-                              {item.unitPrice.toLocaleString("vi-VN")} ₫ / sp
->>>>>>> main
                             </span>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-semibold text-gray-800 text-sm">
-<<<<<<< HEAD
                             {(
                               (item.unitPrice || 0) * item.quantity
                             ).toLocaleString("vi-VN")}{" "}
                             ₫
-=======
-                            {order.total.toLocaleString("vi-VN")} ₫
->>>>>>> main
                           </p>
                         </div>
                       </div>
