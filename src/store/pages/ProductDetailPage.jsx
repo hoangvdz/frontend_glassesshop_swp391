@@ -8,6 +8,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiStar,
+  FiEye,
 } from "react-icons/fi";
 import { formatPrice } from "../utils/formatPrice.js";
 // API
@@ -248,7 +249,7 @@ function ProductDetailPage() {
         variantId: selectedVariant.variantId,
         quantity: quantity,
       });
-      
+
       if (apiRes && apiRes.success) {
         showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
       } else {
@@ -441,10 +442,10 @@ function ProductDetailPage() {
 
               <div>
                 {product.category === "frame" && (
-                  <FramePurchaseOptions product={product} />
+                  <FramePurchaseOptions product={product} navigate={navigate} />
                 )}
                 {product.category === "lens" && (
-                  <LensPurchaseOptions product={product} />
+                  <LensPurchaseOptions product={product} navigate={navigate} />
                 )}
               </div>
 
@@ -460,8 +461,8 @@ function ProductDetailPage() {
                 <button
                   onClick={() => setWished((p) => !p)}
                   className={`w-12 h-12 flex items-center justify-center rounded-full border transition-all active:scale-95 ${wished
-                      ? "bg-red-50 border-red-200 text-red-500"
-                      : "bg-white border-stone-200 text-stone-400 hover:border-stone-400"
+                    ? "bg-red-50 border-red-200 text-red-500"
+                    : "bg-white border-stone-200 text-stone-400 hover:border-stone-400"
                     }`}
                 >
                   <FiHeart
@@ -651,6 +652,54 @@ function ProductDetailPage() {
         </section>
       </div>
     </>
+  );
+}
+
+/* ─── Lựa chọn mua gọng kính ─── */
+function FramePurchaseOptions({ product, navigate }) {
+  return (
+    <div className="space-y-3 pt-2">
+      <button
+        onClick={() => navigate(`/prescription/${product.id}`)}
+        className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-indigo-500 bg-indigo-50/60 hover:bg-indigo-50 transition-all group cursor-pointer"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+            <FiEye size={18} className="text-indigo-600" />
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-indigo-900 text-sm">Mua kèm tròng có độ</p>
+            <p className="text-[11px] text-indigo-500 mt-0.5">Cắt kính theo đơn thuốc của bạn</p>
+          </div>
+        </div>
+        <FiChevronRight size={18} className="text-indigo-500 group-hover:translate-x-1 transition-transform" />
+      </button>
+
+      <p className="text-[10px] text-center text-stone-300 uppercase tracking-[0.3em] font-medium">— hoặc mua gọng không độ bên dưới —</p>
+    </div>
+  );
+}
+
+/* ─── Lựa chọn mua tròng kính ─── */
+function LensPurchaseOptions({ product, navigate }) {
+  return (
+    <div className="space-y-3 pt-2">
+      <button
+        onClick={() => navigate(`/prescription/${product.id}`)}
+        className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/60 hover:bg-emerald-50 transition-all group cursor-pointer"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+            <FiEye size={18} className="text-emerald-600" />
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-emerald-900 text-sm">Nhập thông số độ mắt</p>
+            <p className="text-[11px] text-emerald-500 mt-0.5">Nhập SPH, CYL, AXIS, PD theo đơn bác sĩ</p>
+          </div>
+        </div>
+        <FiChevronRight size={18} className="text-emerald-500 group-hover:translate-x-1 transition-transform" />
+      </button>
+    </div>
   );
 }
 
