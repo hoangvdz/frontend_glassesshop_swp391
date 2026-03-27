@@ -124,10 +124,9 @@ function CheckoutPage() {
     const fetchCart = async () => {
       try {
         const data = await getCartByUserService(user.userId);
-
+        
         // Safety check for array
         const cartData = Array.isArray(data) ? data : data?.data || [];
-
         const mapped = cartData.map((item) => ({
           cartItemId: item.cartItemId,
           productId: item.productId,

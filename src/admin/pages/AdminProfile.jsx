@@ -15,12 +15,24 @@ import {
   FiCalendar,
   FiActivity,
 } from "react-icons/fi";
-import { adminMock } from "../data/adminMock";
+
 
 function AdminProfile() {
   const stored = localStorage.getItem("currentUser");
 
-  const getAdminData = stored ? JSON.parse(stored) : adminMock;
+  
+
+  const getAdminData = stored
+    ? JSON.parse(stored)
+    : {
+        userId: "",
+        name: "",
+        email: "",
+        phone: "",
+        role: "",
+        accountStatus: "",
+        createdAt: "",
+      };
 
   const [admin, setAdmin] = useState(getAdminData);
   const [draft, setDraft] = useState(getAdminData);
@@ -75,13 +87,6 @@ function AdminProfile() {
               </h2>
               <p className="text-sm text-gray-400 mt-0.5">{admin.email}</p>
 
-              <div className="flex items-center gap-2 mt-3">
-                <span className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-                  {admin.role}
-                </span>
-                <span className="text-xs text-gray-400">#{admin.id}</span>
-              </div>
-
               {/* Edit / Save / Cancel */}
               <div className="mt-5">
                 {!editing ? (
@@ -122,14 +127,9 @@ function AdminProfile() {
             <div className="space-y-4">
               {[
                 {
-                  icon: <FiActivity size={15} className="text-blue-500" />,
-                  label: "Đơn xử lý hôm nay",
-                  value: "24",
-                },
-                {
                   icon: <FiCalendar size={15} className="text-purple-500" />,
                   label: "Ngày tham gia",
-                  value: "12/2022",
+                  value: admin.createdAt,
                 },
                 {
                   icon: <FiShield size={15} className="text-green-500" />,
@@ -156,32 +156,28 @@ function AdminProfile() {
           {/* Social links */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-              Liên kết
+              Repository
             </h3>
             <div className="space-y-2">
               {[
                 {
                   icon: <FiGithub size={15} />,
-                  label: "GitHub",
-                  value: "github.com/admin-demo",
+                  label: "Github - FrontEnd",
+                  value: "https://github.com/KhangTDse/SWP_391_Group5_Frontend.git",
                   color: "text-gray-700",
                 },
                 {
-                  icon: <FiFacebook size={15} />,
-                  label: "Facebook",
-                  value: "fb.com/admin-demo",
-                  color: "text-blue-600",
-                },
-                {
-                  icon: <FiGlobe size={15} />,
-                  label: "Website",
-                  value: "www.admin-demo.com",
-                  color: "text-teal-600",
-                },
+                  icon: <FiGithub size={15} />,
+                  label: "Github - Backend",
+                  value: "https://github.com/nminhnhanz/SWP302_NHOM5_5.git",
+                  color: "text-gray-700",
+                }
+                
               ].map((s) => (
                 <a
                   key={s.label}
-                  href="#"
+                  href={s.value}
+                  target = "_blank"
                   className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors group"
                 >
                   <span
@@ -259,14 +255,10 @@ function AdminProfile() {
                   {admin.role}
                 </span>
               </ProfileDisplay>
-              <ProfileDisplay label="Role (EN)">
-                <span className="font-mono text-sm text-gray-700">
-                  {admin.role_EN}
-                </span>
-              </ProfileDisplay>
+
               <ProfileDisplay label="ID tài khoản">
                 <span className="font-mono text-sm text-gray-700">
-                  #{admin.id}
+                  #{admin.userId}
                 </span>
               </ProfileDisplay>
               <ProfileDisplay label="Trạng thái">
