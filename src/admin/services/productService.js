@@ -1,5 +1,11 @@
-import { createProductApi, deleteProductApi, getAllProductsApi } from "../api/productApi";
-
+import {
+  createProductApi,
+  deleteProductApi,
+  getAllProductsApi,
+  getProductByIdApi,
+  updateProductApi,
+  updateVariantApi,
+} from "../api/productApi";
 
 const mapProduct = (p) => {
   const totalStock =
@@ -46,8 +52,69 @@ export const createProduct = async (form) => {
   return mapProduct(res);
 };
 
-
 export const deleteProduct = async (id) => {
   const res = await deleteProductApi(id);
   return res;
+};
+
+export const getProductById = async (id) => {
+  const res = await getProductByIdApi(id);
+  const p = res.data.data;
+  return {
+    id: p.productId,
+    type: p.productType,
+    name: p.name || "",
+    brand: p.brand || "",
+    description: p.description || "",
+    price: p.price || "",
+
+    isPrescriptionSupported: true,
+    variants:
+      p.variants?.map((v) => ({
+        variantId: v.variantId,
+        stock: v.stockQuantity || "",
+        frameSize: v.frameSize || "",
+        color: v.color || "",
+        material: v.material || "",
+        image: v.imageUrl || "",
+        _done: true, // load lên coi như completed
+      })) || [],
+  };
+};
+
+export const updateProduct = async (id, form) => {
+  const payload = {
+    productId: id,
+    productType: form.type,
+    name: form.name,
+    brand: form.brand,
+    description: form.description || "",
+    price: Number(form.price),
+
+    isPrescriptionSupported: true,
+
+    variants: form.variants.map((v) => ({
+      variantId: v.variantId || 0, // 🔥 rất quan trọng
+      productId: id,
+      stockQuantity: v.stock,
+      frameSize: v.frameSize || null,
+      color: v.color,
+      material: v.material,
+      imageUrl: v.image,
+      status: "AVAILABLE",
+      active: true,
+      deleted: false,
+    })),
+  };
+
+  const res = await updateProductApi(id, payload);
+  console.log(res.data.data);
+
+  return res.data.data; // vì API bọc trong { success, data }
+};
+
+export const updateVariant = async (id, quantity, data) => {
+  const res = await updateVariantApi(id, quantity, data);
+  console.log(res.data.data);
+  return res.data.data;
 };
