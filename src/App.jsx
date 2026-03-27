@@ -24,7 +24,7 @@ import ReturnFormPage from "./store/pages/ReturnFormPage.jsx";
 import OrderHistoryPage from "./store/pages/OrderHistoryPage.jsx";
 import AdminDiscount from "./admin/pages/AdminDiscount.jsx";
 import AdminPreorder from "./admin/pages/AdminPreorder.jsx";
-
+import PaymentResultPage from "./store/pages/PaymentResultPage.jsx";
 import AdminRoute from "./shared/common/guard/AdminRoute.jsx";
 function App() {
   return (
@@ -48,6 +48,7 @@ function App() {
           <Route path="/order-feedback" element={<OrderFeedbackPage />} />
           <Route path="/return-request" element={<ReturnFormPage />} />
           <Route path="/my-orders" element={<OrderHistoryPage />} />
+          <Route path="/payment-result" element={<PaymentResultPage />} />
         </Route>
         <Route
           element={
