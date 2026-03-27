@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 import {
   getAllOrders as getAllOrdersApi,
+  getOrderById as getOrderByIdApi,
   updateOrderStatusApi,
 } from "../api/orderApi";
-=======
-import { getAllOrdersApi, getOrderByIdApi } from "../api/orderApi";
->>>>>>> main
 
 export const getAllOrders = async () => {
   const res = await getAllOrdersApi();
