@@ -13,11 +13,13 @@ import {
   FiMoreHorizontal,
 } from "react-icons/fi";
 
+import { useEffect, useState, useMemo } from "react";
+import { getAllOrders } from "../services/orderService";
+
 import {
   revenueData,
   orderStatusData,
   overviewStats,
-  recentOrders,
 } from "../data/adminMock";
 
 /* ── animation helpers ── */
@@ -83,13 +85,60 @@ const statCards = [
 
 /* ── order status badge ── */
 const statusStyle = {
-  "Hoàn thành": "bg-green-50 text-green-700 ring-1 ring-green-200",
-  "Đang xử lý": "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-  "Đã hủy": "bg-red-50 text-red-700 ring-1 ring-red-200",
-  "Chờ xác nhận": "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",
+  completed: "bg-green-50 text-green-700",
+  pending: "bg-yellow-50 text-yellow-700",
+  cancelled: "bg-red-50 text-red-700",
+  shipped: "bg-blue-50 text-blue-700",
+};
+
+const statusText = {
+  completed: "Hoàn thành",
+  pending: "Chờ xử lý",
+  cancelled: "Đã huỷ",
+  shipped: "Đang giao",
+};
+
+const parseDateVN = (dateStr) => {
+  const [day, month, year] = dateStr.split("/");
+  return new Date(`${year}-${month}-${day}`);
 };
 
 function AdminOverview() {
+  const [orders, setOrders] = useState([]);
+  const [filter, setFilter] = useState("7days"); // mặc định 7 ngày
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await getAllOrders();
+        console.log(data);
+        setOrders(data);
+      } catch (err) {
+        console.error("Lỗi lấy orders:", err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const recentOrdersFiltered = useMemo(() => {
+    const now = new Date();
+
+    const days = filter === "7days" ? 7 : 30;
+
+    return orders
+      .filter((order) => {
+        if (!order.createdAt) return false;
+
+        const created = parseDateVN(order.createdAt);
+        const diffTime = now - created;
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        return diffDays <= days;
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // mới nhất trước
+      .slice(0, 5); // lấy 5 đơn
+  }, [orders, filter]);
+
   const today = new Date().toLocaleDateString("vi-VN", {
     weekday: "long",
     year: "numeric",
@@ -233,19 +282,31 @@ function AdminOverview() {
                 Đơn hàng gần đây
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                {recentOrders.length} đơn hàng mới nhất
+                {recentOrdersFiltered.length} đơn hàng
               </p>
             </div>
-            <Link
-              to="/dashboard/orders"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition"
-            >
-              Xem tất cả →
-            </Link>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-gray-50"
+              >
+                <option value="7days">7 ngày</option>
+                <option value="30days">1 tháng</option>
+              </select>
+
+              <Link
+                to="/dashboard/orders"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Xem tất cả →
+              </Link>
+            </div>
           </div>
 
           <div className="space-y-1 flex-1">
-            {recentOrders.slice(0, 5).map((order, i) => (
+            {recentOrdersFiltered.map((order, i) => (
               <motion.div
                 key={order.id}
                 initial={{ opacity: 0, x: 10 }}
@@ -255,7 +316,7 @@ function AdminOverview() {
               >
                 <div className="flex items-center gap-3">
                   <img
-                    src={order.avatar}
+                    src={`https://ui-avatars.com/api/?name=${order.customer || order.email}&background=1c1917&color=fff&bold=true`}
                     alt={order.customer}
                     className="w-9 h-9 rounded-full object-cover ring-2 ring-gray-100"
                   />
@@ -277,7 +338,7 @@ function AdminOverview() {
                     <span
                       className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusStyle[order.status] ?? "bg-gray-50 text-gray-500"}`}
                     >
-                      {order.status}
+                       {statusText[order.status]}
                     </span>
                   )}
                 </div>
