@@ -1,17 +1,40 @@
-import axiosClient from "../api/axiosClient";
+import { getAllOrdersApi } from "../api/orderApi";
 
-export const getAllPreOrderItems = async () => {
-  const response = await axiosClient.get("/order-items/pre-orders");
-  return response.data;
-};
+export const getPreorderItemsService = async () => {
+  try {
+    const res = await getAllOrdersApi();
 
-export const getPreOrderStats = async () => {
-  const response = await axiosClient.get("/order-items/stats");
-  return response.data;
-};
+    const orders = res?.data?.data || [];
 
-// If you have specific preorder status update endpoints:
-export const updatePreOrderStatus = async (orderItemId, data) => {
-  const response = await axiosClient.put(`/order-items/${orderItemId}/pre-order`, data);
-  return response.data;
+    const preorderItems = orders.flatMap((order) =>
+      (order.orderItems || [])
+        .filter((item) => item.isPreorder === true)
+        .map((item) => ({
+          ...item,
+
+          // 🔥 attach FULL order info
+          orderId: order.orderId,
+          orderCode: order.orderCode,
+          orderStatus: order.status,
+
+          customerName: order.userName,
+          customerEmail: order.userEmail,
+
+          createdAt: order.orderDate,
+
+          phone: order.phone,
+          address: order.address,
+
+          note: order.note,
+
+          totalPrice: order.finalPrice || order.totalPrice,
+          paymentStatus: order.paymentStatus,
+        })),
+    );
+
+    return preorderItems;
+  } catch (error) {
+    console.error("Get preorder items error:", error);
+    throw error;
+  }
 };
