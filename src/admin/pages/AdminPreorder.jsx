@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState, memo, useEffect } from "react";
-// import { preordersMock, productsMock } from "../data/adminMock";
-import { getAllPreOrderItems } from "../services/preOrderService";
+import { getPreorderItemsService } from "../services/preOrderService";
 import {
   FiPackage,
   FiUser,
@@ -24,75 +23,8 @@ import {
   FiRotateCcw,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { MdEdit } from "react-icons/md";
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   PIPELINE DEFINITION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-export const STEPS = [
-  {
-    id: 0,
-    key: "placed",
-    label: "Đã đặt",
-    short: "Đặt hàng",
-    icon: <FiPackage size={14} />,
-    color: "gray",
-    actionLabel: "Xác nhận đơn",
-  },
-  {
-    id: 1,
-    key: "confirmed",
-    label: "Xác nhận",
-    short: "Xác nhận",
-    icon: <FiCheck size={14} />,
-    color: "blue",
-    actionLabel: "Kiểm tra toa mắt",
-  },
-  {
-    id: 2,
-    key: "prescription",
-    label: "Kiểm tra toa",
-    short: "Toa mắt",
-    icon: <FiFileText size={14} />,
-    color: "violet",
-    actionLabel: "Chuyển sản xuất",
-  },
-  {
-    id: 3,
-    key: "production",
-    label: "Sản xuất",
-    short: "Sản xuất",
-    icon: <FiClock size={14} />,
-    color: "amber",
-    actionLabel: "Chuyển kiểm tra QC",
-  },
-  {
-    id: 4,
-    key: "qc",
-    label: "Kiểm tra QC",
-    short: "QC",
-    icon: <FiShield size={14} />,
-    color: "orange",
-    actionLabel: "Giao vận",
-  },
-  {
-    id: 5,
-    key: "shipping",
-    label: "Đang giao",
-    short: "Giao hàng",
-    icon: <FiTruck size={14} />,
-    color: "teal",
-    actionLabel: "Xác nhận đã giao",
-  },
-  {
-    id: 6,
-    key: "delivered",
-    label: "Hoàn tất",
-    short: "Hoàn tất",
-    icon: <FiCheck size={14} />,
-    color: "green",
-    actionLabel: null,
-  },
-];
 
 const STEP_COLORS = {
   gray: {
@@ -156,14 +88,7 @@ const STEP_COLORS = {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    HELPERS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const getProduct = (id) => productsMock.find((p) => p.id === id);
 
-const calcTotal = (items) => {
-  if (!items) return 0;
-  return items.reduce((s, i) => s + (i.unitPrice || 0) * (i.quantity || 1), 0);
-};
-
-const stepOf = (id) => STEPS.find((s) => s.id === id) || STEPS[0];
 const colorOf = (step) => STEP_COLORS[step.color] || STEP_COLORS.gray;
 
 const fmtDate = () => new Date().toLocaleDateString("vi-VN");
@@ -211,10 +136,6 @@ function MiniPipeline({ currentStep, cancelled }) {
    PREORDER ROW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const PreorderRow = memo(({ order, onView }) => {
-  const step = stepOf(order.step);
-  const clr = colorOf(step);
-  const total = calcTotal(order.items);
-
   return (
     <tr className="hover:bg-gray-50/50 group">
       {/* ID */}
@@ -244,31 +165,19 @@ const PreorderRow = memo(({ order, onView }) => {
 
       {/* Items */}
       <td className="px-5 py-4">
-        <p className="text-sm text-gray-700">{order.items.length} sản phẩm</p>
-        <p className="text-xs text-gray-400 font-semibold">
-          {total.toLocaleString("vi-VN")}đ
-        </p>
+        {order.items.map((item, i) => (
+          <div key={i}>
+            <p className="text-sm font-medium text-gray-800">{item.name}</p>
+            <p className="text-xs text-gray-400">Số lượng: {item.quantity}</p>
+          </div>
+        ))}
       </td>
 
-      {/* Pipeline */}
       <td className="px-5 py-4">
-        <MiniPipeline currentStep={order.step} cancelled={order.cancelled} />
-      </td>
-
-      {/* Current step badge */}
-      <td className="px-5 py-4">
-        {order.cancelled ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Đã huỷ
-          </span>
-        ) : (
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${clr.bg} ${clr.text} border ${clr.border}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${clr.dot}`} />{" "}
-            {step.label}
-          </span>
-        )}
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+          Preorder
+        </span>
       </td>
 
       {/* Date */}
@@ -282,13 +191,10 @@ const PreorderRow = memo(({ order, onView }) => {
           <div className="relative group/tip">
             <button
               onClick={() => onView(order)}
-              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+              className="px-10 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
             >
-              <FiEye size={16} />
+              Xác nhận
             </button>
-            <span className="pointer-events-none absolute bottom-full mb-1.5 right-0 px-2 py-1 text-[11px] rounded-md bg-gray-800 text-white opacity-0 group-hover/tip:opacity-100 transition-opacity whitespace-nowrap z-50">
-              Xem & xử lý
-            </span>
           </div>
         </div>
       </td>
@@ -298,371 +204,10 @@ const PreorderRow = memo(({ order, onView }) => {
 PreorderRow.displayName = "PreorderRow";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DETAIL MODAL — with advance step
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function DetailModal({ order, onClose, onAdvance, onCancel }) {
-  const [note, setNote] = useState("");
-  const [confirming, setConf] = useState(false);
-  const step = stepOf(order.step);
-  const clr = colorOf(step);
-  const total = calcTotal(order.items);
-  const canAdv = !order.cancelled && order.step < 6;
-  const nextStep = STEPS[order.step + 1];
-
-  const handleAdvance = () => {
-    onAdvance(order.id, note || `${step.actionLabel} — bởi admin.`);
-    setNote("");
-    setConf(false);
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full max-w-2xl rounded-2xl shadow-xl max-h-[92vh] flex flex-col"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
-                <FiPackage size={17} className="text-blue-600" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-semibold text-gray-800">{order.id}</h2>
-                  {order.cancelled ? (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
-                      Đã huỷ
-                    </span>
-                  ) : (
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium border ${clr.bg} ${clr.text} ${clr.border}`}
-                    >
-                      {step.label}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
-                  <FiCalendar size={10} /> {order.createdAt}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
-            >
-              <FiX size={18} />
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-5 divide-x divide-gray-100">
-              {/* ── Left: items + pipeline ── */}
-              <div className="col-span-3 px-6 py-5 space-y-5">
-                {/* Pipeline visual */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                    Quy trình
-                  </p>
-                  <div className="relative">
-                    {/* vertical line */}
-                    <div className="absolute left-3.5 top-4 bottom-4 w-px bg-gray-100" />
-                    <div className="space-y-0">
-                      {STEPS.map((s) => {
-                        const done = !order.cancelled && order.step > s.id;
-                        const active = !order.cancelled && order.step === s.id;
-                        const future = order.cancelled
-                          ? order.step < s.id
-                          : order.step < s.id;
-                        const cx = colorOf(s);
-                        const histEntry = order.history?.find(
-                          (h) => h.step === s.id,
-                        );
-                        return (
-                          <div
-                            key={s.id}
-                            className="flex items-start gap-3 py-2 relative z-10"
-                          >
-                            <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border
-                              ${
-                                done
-                                  ? "bg-green-500 border-green-500 text-white"
-                                  : active
-                                    ? `${cx.bg} border ${cx.border} ${cx.text}`
-                                    : "bg-white border-gray-200 text-gray-300"
-                              }`}
-                            >
-                              {done ? <FiCheck size={12} /> : s.icon}
-                            </div>
-                            <div className="flex-1 min-w-0 pt-0.5">
-                              <div className="flex items-center gap-2">
-                                <p
-                                  className={`text-sm font-semibold ${done ? "text-green-700" : active ? "text-gray-800" : "text-gray-400"}`}
-                                >
-                                  {s.label}
-                                </p>
-                                {active && !order.cancelled && (
-                                  <span
-                                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium border ${cx.bg} ${cx.text} ${cx.border}`}
-                                  >
-                                    Hiện tại
-                                  </span>
-                                )}
-                              </div>
-                              {histEntry && (
-                                <p className="text-xs text-gray-400 mt-0.5 leading-snug">
-                                  {histEntry.note}
-                                </p>
-                              )}
-                              {histEntry && (
-                                <p className="text-[10px] text-gray-300 mt-0.5">
-                                  {histEntry.date}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Items */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                    Sản phẩm ({order.items.length})
-                  </p>
-                  <div className="space-y-3">
-                    {order.items.map((item, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
-                        >
-                          <img
-                            src={item.img}
-                            alt={item.name}
-                            className="w-12 h-12 rounded-xl object-cover border border-gray-100 flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 truncate">
-                              {item.name}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              ×{item.quantity}
-                            </p>
-                          </div>
-                          <p className="text-sm font-bold text-gray-800 flex-shrink-0">
-                            {(item.unitPrice * item.quantity).toLocaleString("vi-VN")}đ
-                          </p>
-                        </div>
-                    ))}
-                    <div className="flex justify-between pt-2 border-t border-gray-100 text-sm">
-                      <span className="font-semibold text-gray-600">
-                        Tổng cộng
-                      </span>
-                      <span className="font-bold text-gray-900">
-                        {total.toLocaleString("vi-VN")}đ
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Right: customer + action ── */}
-              <div className="col-span-2 px-5 py-5 flex flex-col gap-5">
-                {/* Customer */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <FiUser size={11} /> Khách hàng
-                  </p>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl mb-3">
-                    <img
-                      src={order.avatar}
-                      alt=""
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">
-                        {order.customer}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">
-                        {order.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 text-xs text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <FiPhone
-                        size={11}
-                        className="flex-shrink-0 text-gray-300"
-                      />
-                      {order.phone}
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <FiMapPin
-                        size={11}
-                        className="flex-shrink-0 text-gray-300 mt-0.5"
-                      />
-                      <span className="leading-snug">{order.address}</span>
-                    </div>
-                    {order.rxId && (
-                      <div className="flex items-center gap-2">
-                        <FiFileText
-                          size={11}
-                          className="flex-shrink-0 text-gray-300"
-                        />
-                        <span>
-                          Toa:{" "}
-                          <span className="font-mono font-bold text-gray-600">
-                            {order.rxId}
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                    {order.deposit > 0 && (
-                      <div className="flex items-center gap-2">
-                        <FiHash
-                          size={11}
-                          className="flex-shrink-0 text-gray-300"
-                        />
-                        <span>
-                          Cọc:{" "}
-                          <span className="font-semibold text-green-600">
-                            {order.deposit.toLocaleString("vi-VN")}đ
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Note */}
-                {order.note && (
-                  <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
-                    <FiAlertCircle
-                      size={13}
-                      className="text-amber-500 flex-shrink-0 mt-0.5"
-                    />
-                    <p className="text-xs text-amber-700 leading-snug">
-                      {order.note}
-                    </p>
-                  </div>
-                )}
-
-                {/* ── ADVANCE STEP PANEL ── */}
-                {canAdv && !confirming && (
-                  <div className="mt-auto">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                      Hành động
-                    </p>
-                    <textarea
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      rows={2}
-                      placeholder={`Ghi chú cho bước "${nextStep?.label}"...`}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none bg-gray-50 mb-3"
-                    />
-                    <button
-                      onClick={() => setConf(true)}
-                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${colorOf(nextStep || step).btn}`}
-                    >
-                      <FiArrowRight size={14} />
-                      {step.actionLabel}
-                    </button>
-                    <button
-                      onClick={() => onCancel(order.id)}
-                      className="w-full mt-2 flex items-center justify-center gap-2 py-2 rounded-xl border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition-colors"
-                    >
-                      <FiX size={12} /> Huỷ đơn
-                    </button>
-                  </div>
-                )}
-
-                {/* Confirm prompt */}
-                {canAdv && confirming && (
-                  <div className="mt-auto bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <p className="text-sm font-semibold text-blue-800 mb-1">
-                      Xác nhận chuyển bước?
-                    </p>
-                    <p className="text-xs text-blue-600 mb-4">
-                      Chuyển sang: <strong>{nextStep?.label}</strong>
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setConf(false)}
-                        className="flex-1 py-2 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium hover:bg-white transition-colors"
-                      >
-                        Huỷ bỏ
-                      </button>
-                      <button
-                        onClick={handleAdvance}
-                        className="flex-1 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
-                      >
-                        Xác nhận
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {order.cancelled && (
-                  <div className="mt-auto flex items-center gap-2 px-3 py-3 bg-red-50 border border-red-200 rounded-xl">
-                    <FiX size={14} className="text-red-500 flex-shrink-0" />
-                    <p className="text-xs text-red-600 font-medium">
-                      Đơn này đã bị huỷ
-                    </p>
-                  </div>
-                )}
-
-                {!order.cancelled && order.step === 6 && (
-                  <div className="mt-auto flex items-center gap-2 px-3 py-3 bg-green-50 border border-green-200 rounded-xl">
-                    <FiCheck
-                      size={14}
-                      className="text-green-500 flex-shrink-0"
-                    />
-                    <p className="text-xs text-green-700 font-medium">
-                      Đơn đã hoàn tất giao hàng
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-white transition-colors"
-            >
-              Đóng
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    MAIN PAGE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 export default function AdminPreorders() {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [stepFilter, setStepFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -670,62 +215,73 @@ export default function AdminPreorders() {
   const [toast, setToast] = useState(null);
   const itemsPerPage = 7;
 
+  const mapStatusToStep = (status) => {
+    switch (status) {
+      case "PENDING":
+        return 0;
+      case "CONFIRMED":
+        return 1;
+      case "PRESCRIPTION_CHECKED":
+        return 2;
+      case "IN_PRODUCTION":
+        return 3;
+      case "QC":
+        return 4;
+      case "SHIPPING":
+        return 5;
+      case "DELIVERED":
+        return 6;
+      default:
+        return 0;
+    }
+  };
+
   useEffect(() => {
-    const fetchPreOrders = async () => {
-      try {
-        const data = await getAllPreOrderItems();
-        // Ánh xạ dữ liệu backend (OrderItemDTO) sang format của PreorderRow
-        const mapped = data.map(item => ({
-          id: `ITEM-${item.orderItemId}`,
-          orderId: item.orderId,
-          customer: item.userName || "Khách lẻ",
-          email: item.userEmail || "N/A",
-          avatar: item.imageUrl || `https://ui-avatars.com/api/?name=${item.userName}&background=random`,
-          items: [{
-            productId: item.productId,
+    const fetchPreorder = async () => {
+      const data = await getPreorderItemsService();
+
+      const mapped = data.map((item) => ({
+        productId: item.productId,
+        variantId: item.variantId,
+        id: item.orderCode,
+        orderId: item.orderId,
+
+        customer: item.customerName,
+        email: item.customerEmail,
+        phone: item.phone,
+        address: item.address,
+
+        createdAt: new Date(item.createdAt).toLocaleDateString("vi-VN"),
+
+        note: item.note,
+
+        avatar: `https://ui-avatars.com/api/?name=${item.customerName}`,
+
+        items: [
+          {
             name: item.productName,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            img: item.imageUrl
-          }],
-          step: item.preOrder?.step || 0,
-          cancelled: false, // Tạm thời
-          createdAt: item.createdAt || "Vừa xong",
-          phone: item.phone,
-          address: item.address,
-          rxId: item.prescription?.prescriptionId,
-          note: item.note
-        }));
-        setOrders(mapped);
-      } catch (err) {
-        console.error("Lỗi fetch preorders:", err);
-      } finally {
-        setLoading(false);
-      }
+            img: item.imageUrl || "https://via.placeholder.com/50",
+          },
+        ],
+
+        step: mapStatusToStep(item.orderStatus),
+        cancelled: item.orderStatus === "CANCELLED",
+
+        history: [],
+      }));
+      console.log(mapped);
+      setOrders(mapped); // ✅ FIX Ở ĐÂY
     };
-    fetchPreOrders();
+
+    fetchPreorder();
   }, []);
 
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2800);
   }, []);
-
-  /* ── stats ── */
-  const stats = useMemo(() => {
-    const active = orders.filter((o) => !o.cancelled && o.step < 6);
-    const completed = orders.filter((o) => !o.cancelled && o.step === 6);
-    const cancelled = orders.filter((o) => o.cancelled);
-    const needsAction = orders.filter(
-      (o) => !o.cancelled && [0, 4].includes(o.step),
-    ); // placed or QC done
-    return {
-      active: active.length,
-      completed: completed.length,
-      cancelled: cancelled.length,
-      needsAction: needsAction.length,
-    };
-  }, [orders]);
 
   /* ── filter ── */
   const filtered = useMemo(() => {
@@ -852,90 +408,6 @@ export default function AdminPreorders() {
         </div>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {[
-          {
-            icon: <FiClock size={16} className="text-blue-600" />,
-            label: "Đang xử lý",
-            value: stats.active,
-            accent: "bg-blue-50",
-          },
-          {
-            icon: <FiAlertCircle size={16} className="text-amber-500" />,
-            label: "Cần hành động",
-            value: stats.needsAction,
-            accent: "bg-amber-50",
-          },
-          {
-            icon: <FiCheck size={16} className="text-green-600" />,
-            label: "Hoàn tất",
-            value: stats.completed,
-            accent: "bg-green-50",
-          },
-          {
-            icon: <FiX size={16} className="text-red-500" />,
-            label: "Đã huỷ",
-            value: stats.cancelled,
-            accent: "bg-red-50",
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3 shadow-sm"
-          >
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.accent}`}
-            >
-              {s.icon}
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 font-medium">{s.label}</p>
-              <p className="text-xl font-bold text-gray-800 leading-tight">
-                {s.value}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Pipeline step filters */}
-      <div className="flex gap-2 mb-5 overflow-x-auto pb-1 flex-wrap">
-        {[
-          { key: "all", label: "Tất cả", count: orders.length },
-          { key: "active", label: "Đang xử lý", count: stats.active },
-          ...STEPS.slice(0, 6).map((s) => ({
-            key: String(s.id),
-            label: s.short,
-            count: orders.filter((o) => !o.cancelled && o.step === s.id).length,
-          })),
-          { key: "done", label: "Hoàn tất", count: stats.completed },
-          { key: "cancelled", label: "Đã huỷ", count: stats.cancelled },
-        ].map((f) => (
-          <button
-            key={f.key}
-            onClick={() => {
-              setStepFilter(f.key);
-              setCurrentPage(1);
-            }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-sm font-medium whitespace-nowrap transition-all
-              ${
-                stepFilter === f.key
-                  ? "border-blue-400 bg-blue-50 text-blue-700 shadow-sm"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-          >
-            {f.label}
-            <span
-              className={`text-xs px-1.5 py-0.5 rounded-full font-bold
-              ${stepFilter === f.key ? "bg-blue-200 text-blue-800" : "bg-gray-100 text-gray-500"}`}
-            >
-              {f.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
       {/* Table card */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
         {/* Toolbar */}
@@ -987,15 +459,14 @@ export default function AdminPreorders() {
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Sản phẩm
                 </th>
-                <th className="text-left px-5 py-3.5 font-semibold tracking-wider min-w-[220px]">
-                  Tiến trình
-                </th>
+
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Trạng thái
                 </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Ngày đặt
                 </th>
+
                 <th className="w-16 px-5 py-3.5" />
               </tr>
             </thead>
