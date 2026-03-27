@@ -259,7 +259,7 @@ function ProductDetailPage() {
         quantity: quantity,
       });
 
-      if (apiRes && apiRes.success) {
+      if (apiRes) {
         showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
       } else {
         showToast(apiRes?.message || "Lỗi khi thêm vào giỏ hàng");

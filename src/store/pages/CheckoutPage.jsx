@@ -99,6 +99,7 @@ function CheckoutPage() {
       user = JSON.parse(localStorage.getItem("currentUser"));
     } catch (e) {
       user = null;
+      console.log(e);
     }
 
     if (!user) {
@@ -112,6 +113,7 @@ function CheckoutPage() {
       stored = JSON.parse(localStorage.getItem("cart")) || [];
     } catch (e) {
       stored = [];
+      console.log(e);
     }
 
     if (stored.length > 0) {
@@ -122,15 +124,18 @@ function CheckoutPage() {
     const fetchCart = async () => {
       try {
         const data = await getCartByUserService(user.userId);
-        
+
         // Safety check for array
-        const cartData = Array.isArray(data) ? data : (data?.data || []);
+        const cartData = Array.isArray(data) ? data : data?.data || [];
 
         const mapped = cartData.map((item) => ({
           cartItemId: item.cartItemId,
           productId: item.productId,
           name: item.productName || item.product?.name,
-          image: item.imageUrl || item.product?.imageUrl || "https://placehold.co/100",
+          image:
+            item.imageUrl ||
+            item.product?.imageUrl ||
+            "https://placehold.co/100",
           price: item.unitPrice || 0,
           quantity: item.quantity,
           variant: {
