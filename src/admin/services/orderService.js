@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 import {
   getAllOrders as getAllOrdersApi,
   updateOrderStatusApi,
 } from "../api/orderApi";
+=======
+import { getAllOrdersApi, getOrderByIdApi } from "../api/orderApi";
+>>>>>>> main
 
 export const getAllOrders = async () => {
   const res = await getAllOrdersApi();
@@ -56,4 +60,20 @@ const mapStatus = (status) => {
     default:
       return "pending";
   }
+};
+
+
+export const getOrderById = async (id) => {
+  const res = await getOrderByIdApi(id);
+  const o = res.data;
+  return {
+    id: o.orderId,
+    code: o.orderCode,
+    customer: o.userName,
+    email: o.userEmail,
+    total: o.totalPrice,
+    status: o.status?.toLowerCase(),
+    createdAt: o.orderDate,
+    items: o.orderItems,
+  };
 };

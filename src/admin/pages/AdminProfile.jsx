@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import { useState } from "react";
 import {
   FiEdit,
   FiMail,
@@ -57,7 +57,7 @@ function AdminProfile() {
             <div className="px-6 pb-6 -mt-10">
               <div className="relative w-fit mb-4">
                 <img
-                  src={admin.img}
+                  src={`https://ui-avatars.com/api/?name=${admin.name || admin.email}&background=1c1917&color=fff&bold=true`}
                   alt={admin.name}
                   className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
                 />

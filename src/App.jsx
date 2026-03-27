@@ -21,7 +21,6 @@ import ShippingProgressPage from "./store/pages/ShippingProgressPage.jsx";
 import OrderFeedbackPage from "./store/pages/OrderFeedbackPage.jsx";
 import ReturnFormPage from "./store/pages/ReturnFormPage.jsx";
 import OrderHistoryPage from "./store/pages/OrderHistoryPage.jsx";
-import AdminDiscount from "./admin/pages/AdminDiscount.jsx";
 import AdminPreorder from "./admin/pages/AdminPreorder.jsx";
 
 import AdminRoute from "./shared/common/guard/AdminRoute.jsx";
@@ -62,7 +61,6 @@ function App() {
             path="/dashboard/prescriptions"
             element={<AdminPrescription />}
           />
-          <Route path="/dashboard/discount" element={<AdminDiscount />} />
           <Route path="/dashboard/preoders" element={<AdminPreorder />} />
         </Route>
       </Routes>

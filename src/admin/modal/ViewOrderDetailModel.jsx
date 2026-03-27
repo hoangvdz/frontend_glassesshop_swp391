@@ -1,4 +1,3 @@
-import { useRef, useState } from "react";
 import {
   FiX,
   FiCheckCircle,
@@ -43,39 +42,27 @@ const STATUS_CONFIG = {
     badge: "bg-red-50 text-red-700 border border-red-200",
     dot: "bg-red-400",
   },
+  shipped: {
+    label: "Đang giao",
+    icon: <FiTruck size={13} />,
+    badge: "bg-blue-50 text-blue-700 border border-blue-200",
+    dot: "bg-blue-500",
+  },
 };
 
-function ViewOrderDetailsModal({
-  order,
-  products = [],
-  onClose,
-  onUpdateStatus,
-}) {
-  const prevOrderId = useRef(null);
-  const [newStatus, setNewStatus] = useState(order?.status || "");
-  const [updated, setUpdated] = useState(false);
-
-  if (order?.id !== prevOrderId.current) {
-    prevOrderId.current = order?.id;
-    if (order?.status !== newStatus) setNewStatus(order?.status || "");
-    setUpdated(false);
-  }
-
+function ViewOrderDetailsModal({ order,  onClose }) {
   if (!order) return null;
+  console.log(order);
 
+<<<<<<< HEAD
   const subtotal = order.items.reduce((sum, item) => {
     return sum + (item.unitPrice || 0) * item.quantity;
   }, 0);
 
   const total = order.total || subtotal;
+=======
+>>>>>>> main
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
-  const isDirty = newStatus !== order.status;
-
-  const handleUpdate = () => {
-    onUpdateStatus(newStatus);
-    setUpdated(true);
-    setTimeout(() => setUpdated(false), 2000);
-  };
 
   return (
     <AnimatePresence>
@@ -147,7 +134,11 @@ function ViewOrderDetailsModal({
                         className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                       >
                         <img
+<<<<<<< HEAD
                           src={item.imageUrl || item.img}
+=======
+                          src={item.imageUrl}
+>>>>>>> main
                           alt={item.productName}
                           className="w-14 h-14 rounded-xl object-cover border border-gray-100 flex-shrink-0"
                           loading="lazy"
@@ -155,26 +146,38 @@ function ViewOrderDetailsModal({
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-800 text-sm truncate">
                             {item.productName}
+<<<<<<< HEAD
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">
                             {item.color || ""}
+=======
+>>>>>>> main
                           </p>
+
                           <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
                               x{item.quantity}
                             </span>
                             <span className="text-xs text-gray-400">
+<<<<<<< HEAD
                               {(item.unitPrice || 0).toLocaleString("vi-VN")} ₫
                               / sp
+=======
+                              {item.unitPrice.toLocaleString("vi-VN")} ₫ / sp
+>>>>>>> main
                             </span>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-semibold text-gray-800 text-sm">
+<<<<<<< HEAD
                             {(
                               (item.unitPrice || 0) * item.quantity
                             ).toLocaleString("vi-VN")}{" "}
                             ₫
+=======
+                            {order.total.toLocaleString("vi-VN")} ₫
+>>>>>>> main
                           </p>
                         </div>
                       </div>
@@ -192,7 +195,7 @@ function ViewOrderDetailsModal({
                   </p>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                     <img
-                      src={order.avatar}
+                      src={`https://ui-avatars.com/api/?name=${order.customer || order.email}&background=1c1917&color=fff&bold=true`}
                       alt={order.customer}
                       className="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
                     />
@@ -216,7 +219,7 @@ function ViewOrderDetailsModal({
                     <div className="flex justify-between">
                       <span className="text-gray-500">Tạm tính</span>
                       <span className="text-gray-700 font-medium">
-                        {subtotal.toLocaleString("vi-VN")} ₫
+                        {order.total} ₫
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -230,88 +233,17 @@ function ViewOrderDetailsModal({
                         Tổng cộng
                       </span>
                       <span className="font-bold text-blue-600 text-base">
-                        {total.toLocaleString("vi-VN")} ₫
+                        {order.total.toLocaleString("vi-VN")} ₫
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Status updater — visual pills */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                    Cập nhật trạng thái
-                  </p>
-                  <div className="space-y-2">
-                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
-                      const isCurrent = order.status === key;
-                      const isSelected = newStatus === key;
-                      return (
-                        <button
-                          key={key}
-                          onClick={() => {
-                            setNewStatus(key);
-                            setUpdated(false);
-                          }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all duration-150
-                            ${
-                              isSelected
-                                ? "border-blue-400 bg-blue-50"
-                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                            }`}
-                        >
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`}
-                          />
-                          <span
-                            className={`text-xs font-medium flex-1 ${isSelected ? "text-blue-700" : "text-gray-600"}`}
-                          >
-                            {cfg.label}
-                          </span>
-                          {isCurrent && !isSelected && (
-                            <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                              Hiện tại
-                            </span>
-                          )}
-                          {isSelected && (
-                            <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                              <FiCheckCircle size={10} className="text-white" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Confirm button */}
-                  <AnimatePresence mode="wait">
-                    {updated ? (
-                      <motion.div
-                        key="done"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        transition={{ duration: 0.15 }}
-                        className="mt-3 flex items-center justify-center gap-1.5 w-full px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl text-sm font-medium"
-                      >
-                        <FiCheckCircle size={14} /> Đã cập nhật
-                      </motion.div>
-                    ) : (
-                      <motion.button
-                        key="btn"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        transition={{ duration: 0.15 }}
-                        disabled={!isDirty}
-                        onClick={handleUpdate}
-                        className="mt-3 w-full px-4 py-2 text-sm rounded-xl font-medium transition-colors
-                          disabled:opacity-40 disabled:pointer-events-none
-                          bg-blue-600 text-white hover:bg-blue-700"
-                      >
-                        Xác nhận cập nhật
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
+                <div className="p-3 rounded-xl border border-gray-200 bg-gray-50 flex items-center gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full ${status.dot}`} />
+                  <span className="text-sm font-medium text-gray-700">
+                    {status.label}
+                  </span>
                 </div>
               </div>
             </div>
