@@ -124,7 +124,7 @@ function CheckoutPage() {
     const fetchCart = async () => {
       try {
         const data = await getCartByUserService(user.userId);
-        
+
         // Safety check for array
         const cartData = Array.isArray(data) ? data : data?.data || [];
         const mapped = cartData.map((item) => ({
@@ -617,7 +617,7 @@ function CheckoutPage() {
               </div>
 
               {/* Free shipping badge */}
-              {shippingFee === 0 && (
+              {total > 1500000 && (
                 <div className="flex items-center gap-2.5 px-4 py-3 bg-green-50 border border-green-100 rounded-xl">
                   <FiTruck size={14} className="text-green-600 flex-shrink-0" />
                   <p className="text-xs text-green-700 font-medium">

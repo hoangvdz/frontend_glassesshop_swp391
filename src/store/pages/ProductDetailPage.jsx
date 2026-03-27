@@ -122,6 +122,7 @@ function ProductDetailPage() {
       setReviews(rData?.data?.data || []);
     } catch (err) {
       setReviews([]);
+      console.log(err);
     }
   };
 
