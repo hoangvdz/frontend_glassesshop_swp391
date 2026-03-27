@@ -1,5 +1,8 @@
 import { useCallback, useMemo, useState, memo, useEffect } from "react";
-import { getPreorderItemsService } from "../services/preOrderService";
+import {
+  getPreorderItemsService,
+  getStockVariantById,
+} from "../services/preOrderService";
 import {
   FiPackage,
   FiUser,
@@ -24,7 +27,6 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdEdit } from "react-icons/md";
-
 
 const STEP_COLORS = {
   gray: {
@@ -135,7 +137,7 @@ function MiniPipeline({ currentStep, cancelled }) {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    PREORDER ROW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const PreorderRow = memo(({ order, onView }) => {
+const PreorderRow = memo(({ order, onView, checkStock }) => {
   return (
     <tr className="hover:bg-gray-50/50 group">
       {/* ID */}
@@ -190,7 +192,7 @@ const PreorderRow = memo(({ order, onView }) => {
         <div className="flex justify-end">
           <div className="relative group/tip">
             <button
-              onClick={() => onView(order)}
+              onClick={() => checkStock(order)}
               className="px-10 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
             >
               Xác nhận
@@ -214,7 +216,6 @@ export default function AdminPreorders() {
   const [viewing, setViewing] = useState(null);
   const [toast, setToast] = useState(null);
   const itemsPerPage = 7;
-
   const mapStatusToStep = (status) => {
     switch (status) {
       case "PENDING":
@@ -239,7 +240,6 @@ export default function AdminPreorders() {
   useEffect(() => {
     const fetchPreorder = async () => {
       const data = await getPreorderItemsService();
-
       const mapped = data.map((item) => ({
         productId: item.productId,
         variantId: item.variantId,
@@ -282,6 +282,24 @@ export default function AdminPreorders() {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2800);
   }, []);
+
+  const checkStockBeforeConfirm = async (order) => {
+    try {
+      const stock = await getStockVariantById(order.variantId);
+
+      console.log("Stock:", stock);
+
+      if (!stock || stock.stockQuantity <= 0) {
+        showToast("Sản phẩm đã hết hàng!", "error");
+        return;
+      }
+
+      setViewing(order); // ✅ mở modal nếu còn hàng
+    } catch (error) {
+      console.error(error);
+      showToast("Lỗi kiểm tra tồn kho!", "error");
+    }
+  };
 
   /* ── filter ── */
   const filtered = useMemo(() => {
@@ -488,7 +506,7 @@ export default function AdminPreorders() {
                 </tr>
               ) : (
                 paginated.map((o) => (
-                  <PreorderRow key={o.id} order={o} onView={setViewing} />
+                  <PreorderRow key={o.id} order={o} onView={setViewing} checkStockStock={checkStockBeforeConfirm } />
                 ))
               )}
             </tbody>

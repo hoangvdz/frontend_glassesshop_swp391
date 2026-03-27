@@ -266,10 +266,6 @@ function CheckoutPage() {
 
       setSuccess(true);
 
-      // clear cart
-      localStorage.setItem("cart", JSON.stringify([]));
-      window.dispatchEvent(new Event("storage"));
-
       setTimeout(() => navigate("/"), 2200);
     } catch (error) {
       console.error(error);

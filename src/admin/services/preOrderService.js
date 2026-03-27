@@ -1,5 +1,5 @@
 import { getAllOrdersApi } from "../api/orderApi";
-
+import {getStockVariantByIdApi} from "../api/preOrderApi";
 export const getPreorderItemsService = async () => {
   try {
     const res = await getAllOrdersApi();
@@ -38,3 +38,9 @@ export const getPreorderItemsService = async () => {
     throw error;
   }
 };
+
+
+export const getStockVariantById = async (id) => {
+  const res = await getStockVariantByIdApi(id);
+  return res.data.data;
+}
