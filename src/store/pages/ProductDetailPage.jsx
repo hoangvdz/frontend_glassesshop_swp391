@@ -122,6 +122,7 @@ function ProductDetailPage() {
       setReviews(rData?.data?.data || []);
     } catch (err) {
       setReviews([]);
+      console.log(err);
     }
   };
 
@@ -293,7 +294,11 @@ function ProductDetailPage() {
         @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         @keyframes imgIn   { from{opacity:0;transform:scale(1.03)} to{opacity:1;transform:scale(1)} }
         .thumb-ring { box-shadow: 0 0 0 2px #1c1917; }
-        .color-pill-active { background:#1c1917; color:#fff; }
+        .color-pill-active {  background: #1c1917;
+  color: #fff;
+  border-color: #1c1917;
+  box-shadow: 0 0 0 2px rgba(28,25,23,0.2);
+  transform: scale(1.05); }
         .color-pill { border: 1.5px solid #e7e5e4; padding: 6px 16px; border-radius: 99px; font-size:13px; font-weight:500; transition: all .15s; cursor:pointer; background: white; color: #44403c; }
         .color-pill:hover { border-color: #a8a29e; }
         input[type=number]::-webkit-inner-spin-button,
