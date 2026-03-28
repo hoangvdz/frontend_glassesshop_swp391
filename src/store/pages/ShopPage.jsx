@@ -12,6 +12,7 @@ import {
 } from "react-icons/fi";
 // API
 import { getAllProducts } from "../services/productService";
+
 const CATEGORIES = ["All", "frame", "lens", "accessory"];
 
 // Label hiển thị đẹp hơn cho từng category
@@ -37,7 +38,9 @@ function LoginModal({ isOpen, onClose, productName }) {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+  
   if (!isOpen) return null;
+  
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -83,7 +86,8 @@ function LoginModal({ isOpen, onClose, productName }) {
             <button
               onClick={() => {
                 onClose();
-                navigate("/login", { state: { from: location.pathname } });
+                // FIX LỖI: Sử dụng window.location.pathname thay vì location trống
+                navigate("/login", { state: { from: window.location.pathname } });
               }}
               className="w-full py-3 cursor-pointer bg-stone-900 hover:bg-amber-500 text-white font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
             >
@@ -139,23 +143,31 @@ function ShopPage() {
 
   const navigate = useNavigate();
 
-  //STATE API
   const [products, setProducts] = useState([]);
+  
   // CALL API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const data = await getAllProducts();
 
-        const mapped = data.map((p) => ({
-          id: p.id,
-          name: p.name,
-          price: (p.price ?? 0).toLocaleString("vi-VN") + "đ",
-          priceNum: p.price ?? 0,
-          category: p.category?.toLowerCase(),
-          brand: p.brand,
-          img: p.img,
-        }));
+        // FIX LỖI: Ánh xạ đúng dữ liệu từ Backend trả về để không bị mất ảnh hoặc category
+        const mapped = data.map((p) => {
+          const finalPrice = p.price || p.variants?.[0]?.price || 0;
+          const finalImg = p.img || p.imageUrl || p.variants?.[0]?.imageUrl || "https://via.placeholder.com/500";
+          const finalCategory = (p.category || p.productType || "frame").toLowerCase();
+
+          return {
+            id: p.id || p.productId,
+            name: p.name,
+            price: finalPrice.toLocaleString("vi-VN") + "đ",
+            priceNum: finalPrice,
+            category: finalCategory,
+            brand: p.brand,
+            img: finalImg,
+          };
+        });
+        
         setProducts(mapped);
       } catch (err) {
         console.error("Fetch products error:", err);
@@ -192,7 +204,7 @@ function ShopPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!localStorage.getItem("currentUser")) {
+    if (!localStorage.getItem("currentUser") && !localStorage.getItem("token")) {
       setPendingProduct(product);
       setModalOpen(true);
       return;
@@ -202,7 +214,7 @@ function ShopPage() {
   };
 
   const handleProductClick = (e) => {
-    if (!localStorage.getItem("currentUser")) {
+    if (!localStorage.getItem("currentUser") && !localStorage.getItem("token")) {
       e.preventDefault();
       setPendingProduct(null);
       setModalOpen(true);
@@ -292,7 +304,7 @@ function ShopPage() {
               )}
             </div>
 
-            {/* Category pills — rounded-full đồng bộ với CTA buttons ở HomePage */}
+            {/* Category pills */}
             <div className="flex gap-2 flex-wrap">
               {CATEGORIES.map((cat) => (
                 <button
@@ -350,7 +362,7 @@ function ShopPage() {
             {search ? ` · "${search}"` : ""}
           </p>
 
-          {/* ── PRODUCT GRID — card structure identical to HomePage ── */}
+          {/* ── PRODUCT GRID ── */}
           {filtered.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
               {filtered.map((product, i) => (
@@ -365,16 +377,17 @@ function ShopPage() {
                     to={`/product/${product.id}`}
                     onClick={handleProductClick}
                   >
-                    <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-stone-100 mb-3">
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-stone-100 mb-3 border border-stone-100">
+                      {/* FIX LỖI ẢNH: Sử dụng object-contain và bg-white để ảnh không bị méo */}
                       <img
                         src={product.img}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        className="w-full h-full object-contain bg-white p-2 group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
-                      <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm text-stone-600 text-[10px] font-medium tracking-wider uppercase px-2.5 py-1 rounded-full">
+                      <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm text-stone-600 text-[10px] font-medium tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">
                         {product.brand}
                       </span>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/8 transition-all duration-300" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-300" />
                       <button
                         onClick={(e) => handleAddToCart(e, product)}
                         className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-8 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white hover:bg-amber-500 text-stone-800 hover:text-white px-4 py-2 rounded-full text-xs font-medium shadow-md whitespace-nowrap flex items-center gap-1.5"
@@ -383,10 +396,10 @@ function ShopPage() {
                       </button>
                     </div>
                     <div className="pl-4 pb-4">
-                      <p className="text-stone-800 text-sm font-medium mb-0.5 leading-tight group-hover:text-stone-500 transition-colors truncate">
+                      <p className="text-stone-800 text-sm font-medium mb-0.5 leading-tight group-hover:text-amber-600 transition-colors truncate">
                         {product.name}
                       </p>
-                      <p className="text-stone-900 text-sm font-semibold">
+                      <p className="text-stone-900 text-sm font-bold">
                         {product.price}
                       </p>
                     </div>
@@ -437,7 +450,7 @@ function ShopPage() {
           )}
         </div>
 
-        {/* ── CTA STRIP — đồng bộ 100% với HomePage CTA section ── */}
+        {/* ── CTA STRIP ── */}
         <section className="relative overflow-hidden bg-stone-900 py-24">
           <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full border border-white/[0.04]" />
           <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full border border-white/[0.04]" />
@@ -449,8 +462,7 @@ function ShopPage() {
               Đặt lịch tư vấn miễn phí
             </h2>
             <p className="text-stone-400 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
-              Đội ngũ chuyên gia sẵn sàng giúp bạn chọn chiếc kính hoàn hảo
-              nhất.
+              Đội ngũ chuyên gia sẵn sàng giúp bạn chọn chiếc kính hoàn hảo nhất.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button className="px-7 py-3 bg-amber-500 hover:bg-amber-400 text-stone-900 font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">

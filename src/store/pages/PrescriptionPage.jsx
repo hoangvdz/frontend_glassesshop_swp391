@@ -11,6 +11,7 @@ import { addToCartApi } from "../api/cartApi";
 import {
   getMyPrescriptionsApi,
   savePrescriptionApi,
+  deletePrescriptionApi
 } from "../api/prescriptionApi";
 
 export default function PrescriptionPage() {
@@ -89,6 +90,23 @@ export default function PrescriptionPage() {
     setErrors({});
   };
 
+  /* ---------- DELETE PRESCRIPTION ---------- */
+  const handleDeletePrescription = async (rxId) => {
+    if (!rxId) return;
+    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa đơn thuốc này khỏi tài khoản không?");
+    if (!confirmDelete) return;
+
+    try {
+      await deletePrescriptionApi(rxId);
+      // Xóa thành công thì lọc cái đơn đó ra khỏi màn hình
+      setSavedPrescriptions((prev) => prev.filter((rx) => rx.id !== rxId && rx.prescriptionId !== rxId));
+      alert("Đã xóa đơn thuốc thành công!");
+    } catch (error) {
+      console.error("Lỗi xóa đơn thuốc:", error);
+      alert("Không thể xóa đơn thuốc lúc này. Vui lòng thử lại sau.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -139,6 +157,9 @@ export default function PrescriptionPage() {
     const toInt = (val) => (val === "" || val === null || val === undefined ? null : parseInt(val, 10));
 
     const variantId = product.variants?.[0]?.variantId;
+    
+    // FIX 1: Lấy chuẩn xác ID do Backend trả về
+    const productId = product.productId || product.id; 
 
     const prescriptionData = {
       sphLeft: toNum(form.left.sph),
@@ -152,38 +173,64 @@ export default function PrescriptionPage() {
       pd: toNum(form.pd),
     };
 
-    const payload = {
-      productId: product.id,
-      variantId: variantId,
-      quantity: 1,
-      itemType: "PRESCRIPTION",
-      fulfillmentType: "PRESCRIPTION",
-      isLens: true,
-      ...prescriptionData,
-    };
-
     setSubmitting(true);
     try {
-      // 1. Lưu đơn thuốc nếu user chọn checkbox "Lưu đơn thuốc"
-      if (form.savePrescription) {
-        try {
-          await savePrescriptionApi(prescriptionData);
-          console.log("Đã lưu đơn thuốc thành công!");
-        } catch (saveErr) {
-          console.error("Lỗi lưu đơn thuốc:", saveErr);
-          // Không block việc thêm vào giỏ hàng
-        }
+      // FIX 3: Xử lý lưu Giỏ hàng Local (Dành cho khách chưa Đăng nhập)
+      let cart = [];
+      try { cart = JSON.parse(localStorage.getItem("cart")) || []; } catch {}
+      
+      const selectedVariant = product.variants?.[0];
+      const finalPrice = selectedVariant?.price || product.price || 0;
+      
+      const cartItem = {
+        productId: productId,
+        name: product.name,
+        brand: product.brand,
+        price: finalPrice,
+        quantity: 1,
+        variant: selectedVariant,
+        isPreOrder: selectedVariant?.stockQuantity === 0,
+        isLens: true,
+        prescription: prescriptionData
+      };
+
+      cart.push(cartItem);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("storage"));
+
+      // Nếu khách đã đăng nhập, đẩy thẳng lên Database Backend
+      if (localStorage.getItem("token")) {
+          // Kiểm tra xem khách có chọn lưu đơn thuốc không
+          if (form.savePrescription) {
+            try { 
+              await savePrescriptionApi(prescriptionData); 
+              console.log("Đã lưu đơn thuốc vào tài khoản!");
+            } catch (e) { 
+              console.error("Lỗi khi lưu đơn thuốc:", e);
+            }
+          }
+
+          const payload = {
+            productId: productId,
+            variantId: variantId,
+            quantity: 1,
+            itemType: "PRESCRIPTION",
+            fulfillmentType: "PRESCRIPTION",
+            isLens: true,
+            ...prescriptionData,
+          };
+          await addToCartApi(payload);
       }
 
-      // 2. Thêm vào giỏ hàng
-      console.log("SUBMITTING TO CART", payload);
-      await addToCartApi(payload);
       alert("Đã thêm sản phẩm có độ vào giỏ hàng thành công!");
-      navigate("/cart");
+      
+      // FIX 2: Đổi hướng về /checkout vì không có trang /cart
+      navigate("/checkout");
     } catch (err) {
       console.error("Lỗi thêm vào giỏ hàng:", err);
-      const msg = err?.response?.data?.message || "Thêm vào giỏ hàng thất bại. Vui lòng thử lại.";
-      alert(msg);
+      // Nếu API lỗi, thì khách vẫn có giỏ hàng Local Storage để thanh toán tiếp
+      alert("Đã lưu vào giỏ hàng tạm thời!");
+      navigate("/checkout");
     } finally {
       setSubmitting(false);
     }
@@ -203,22 +250,38 @@ export default function PrescriptionPage() {
             Nhập đơn thuốc của bạn
           </h1>
 
-          {/* Danh sách đơn thuốc đã lưu */}
+          {/* Danh sách đơn thuốc đã lưu KÈM NÚT XÓA */}
           {savedPrescriptions.length > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
               <p className="text-sm font-semibold text-blue-800 mb-3">
                 📋 Đơn thuốc đã lưu
               </p>
               <div className="flex flex-wrap gap-2">
-                {savedPrescriptions.map((rx, idx) => (
-                  <button
-                    key={rx.id || idx}
-                    onClick={() => applySavedPrescription(rx)}
-                    className="px-3 py-2 bg-white border border-blue-200 text-blue-700 text-xs rounded-lg hover:bg-blue-100 transition-colors font-medium shadow-sm"
-                  >
-                    Đơn #{idx + 1} — OD: {rx.sphRight ?? "—"} / OS: {rx.sphLeft ?? "—"}
-                  </button>
-                ))}
+                {savedPrescriptions.map((rx, idx) => {
+                  const rxId = rx.id || rx.prescriptionId; 
+                  return (
+                    <div
+                      key={rxId || idx}
+                      className="flex items-stretch bg-white border border-blue-200 rounded-lg shadow-sm overflow-hidden"
+                    >
+                      <button
+                        onClick={() => applySavedPrescription(rx)}
+                        className="px-3 py-2 text-blue-700 text-xs hover:bg-blue-100 transition-colors font-medium text-left"
+                      >
+                        Đơn #{idx + 1} — OD: {rx.sphRight ?? "—"} / OS: {rx.sphLeft ?? "—"}
+                      </button>
+                      {rxId && (
+                        <button
+                          onClick={() => handleDeletePrescription(rxId)}
+                          className="px-2.5 flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors border-l border-blue-100"
+                          title="Xóa đơn thuốc này"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
