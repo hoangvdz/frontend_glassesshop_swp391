@@ -1,30 +1,11 @@
 import { useCallback, useMemo, useState, memo, useEffect } from "react";
-import { getPreorderItemsService } from "../services/preOrderService";
 import {
-  FiPackage,
-  FiUser,
-  FiMapPin,
-  FiFileText,
-  FiCheck,
-  FiChevronRight,
-  FiSearch,
-  FiFilter,
-  FiClock,
-  FiShield,
-  FiEye,
-  FiX,
-  FiAlertCircle,
-  FiArrowRight,
-  FiCalendar,
-  FiPhone,
-  FiMail,
-  FiHash,
-  FiTruck,
-  FiRotateCcw,
-} from "react-icons/fi";
+  getPreorderItemsService,
+  getStockVariantById,
+  updateStockService,
+} from "../services/preOrderService";
+import { FiPackage, FiCheck, FiSearch, FiFilter, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { MdEdit } from "react-icons/md";
-
 
 const STEP_COLORS = {
   gray: {
@@ -135,7 +116,7 @@ function MiniPipeline({ currentStep, cancelled }) {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    PREORDER ROW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const PreorderRow = memo(({ order, onView }) => {
+const PreorderRow = memo(({ order, onView, checkStock }) => {
   return (
     <tr className="hover:bg-gray-50/50 group">
       {/* ID */}
@@ -167,10 +148,19 @@ const PreorderRow = memo(({ order, onView }) => {
       <td className="px-5 py-4">
         {order.items.map((item, i) => (
           <div key={i}>
-            <p className="text-sm font-medium text-gray-800">{item.name}</p>
+            <p className="text-sm font-medium text-gray-800">
+              {item.name} - {order.color}
+            </p>
             <p className="text-xs text-gray-400">Số lượng: {item.quantity}</p>
           </div>
         ))}
+      </td>
+
+      <td className="px-5 py-4">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+          {order.stock}
+        </span>
       </td>
 
       <td className="px-5 py-4">
@@ -190,7 +180,7 @@ const PreorderRow = memo(({ order, onView }) => {
         <div className="flex justify-end">
           <div className="relative group/tip">
             <button
-              onClick={() => onView(order)}
+              onClick={() => checkStock(order)}
               className="px-10 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
             >
               Xác nhận
@@ -214,7 +204,6 @@ export default function AdminPreorders() {
   const [viewing, setViewing] = useState(null);
   const [toast, setToast] = useState(null);
   const itemsPerPage = 7;
-
   const mapStatusToStep = (status) => {
     switch (status) {
       case "PENDING":
@@ -240,39 +229,55 @@ export default function AdminPreorders() {
     const fetchPreorder = async () => {
       const data = await getPreorderItemsService();
 
-      const mapped = data.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        id: item.orderCode,
-        orderId: item.orderId,
+      const mapped = await Promise.all(
+        data.map(async (item) => {
+          let stock = 0;
 
-        customer: item.customerName,
-        email: item.customerEmail,
-        phone: item.phone,
-        address: item.address,
+          try {
+            const stockData = await getStockVariantById(item.variantId);
+            stock = stockData?.stockQuantity ?? 0;
+          } catch (e) {
+            console.error("Stock error:", e);
+          }
 
-        createdAt: new Date(item.createdAt).toLocaleDateString("vi-VN"),
+          return {
+            productId: item.productId,
+            variantId: item.variantId,
+            color: item.variantColor,
+            id: item.orderCode,
+            orderId: item.orderId,
 
-        note: item.note,
+            customer: item.customerName,
+            email: item.customerEmail,
+            phone: item.phone,
+            address: item.address,
 
-        avatar: `https://ui-avatars.com/api/?name=${item.customerName}`,
+            createdAt: new Date(item.createdAt).toLocaleDateString("vi-VN"),
 
-        items: [
-          {
-            name: item.productName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            img: item.imageUrl || "https://via.placeholder.com/50",
-          },
-        ],
+            note: item.note,
 
-        step: mapStatusToStep(item.orderStatus),
-        cancelled: item.orderStatus === "CANCELLED",
+            avatar: `https://ui-avatars.com/api/?name=${item.customerName}`,
 
-        history: [],
-      }));
+            items: [
+              {
+                name: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                img: item.imageUrl || "https://via.placeholder.com/50",
+              },
+            ],
+
+            stock, // ✅ thêm vào đây
+
+            step: mapStatusToStep(item.orderStatus),
+            cancelled: item.orderStatus === "CANCELLED",
+
+            history: [],
+          };
+        }),
+      );
       console.log(mapped);
-      setOrders(mapped); // ✅ FIX Ở ĐÂY
+      setOrders(mapped);
     };
 
     fetchPreorder();
@@ -282,6 +287,36 @@ export default function AdminPreorders() {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2800);
   }, []);
+
+  const checkStockBeforeConfirm = async (order) => {
+    try {
+      const stockData = await getStockVariantById(order.variantId);
+      console.log(order);
+      const currentStock = stockData?.stockQuantity ?? 0;
+
+      if (currentStock <= 0) {
+        showToast("Sản phẩm đã hết hàng!", "error");
+        return;
+      }
+
+      const qtyOrder = order.items?.[0]?.quantity || 0;
+
+      if (currentStock < qtyOrder.quantity || qtyOrder.quantity === 0) {
+        showToast("Không đủ hàng trong kho!", "error");
+        return;
+      }
+
+      showToast("Xác nhận đơn & trừ kho thành công!");
+
+      // ✅ update UI (trừ stock local)
+
+      // 👉 mở modal nếu bạn vẫn cần
+      setViewing(order);
+    } catch (error) {
+      console.error(error);
+      showToast("Lỗi khi cập nhật kho!", "error");
+    }
+  };
 
   /* ── filter ── */
   const filtered = useMemo(() => {
@@ -459,7 +494,9 @@ export default function AdminPreorders() {
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Sản phẩm
                 </th>
-
+                <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
+                  Stock
+                </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Trạng thái
                 </th>
@@ -488,7 +525,12 @@ export default function AdminPreorders() {
                 </tr>
               ) : (
                 paginated.map((o) => (
-                  <PreorderRow key={o.id} order={o} onView={setViewing} />
+                  <PreorderRow
+                    key={o.id}
+                    order={o}
+                    onView={setViewing}
+                    checkStock={checkStockBeforeConfirm}
+                  />
                 ))
               )}
             </tbody>

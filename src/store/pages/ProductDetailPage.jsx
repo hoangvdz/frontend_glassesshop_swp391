@@ -273,8 +273,6 @@ function ProductDetailPage() {
         quantity,
         isPreorder: isOutOfStock,
       });
-      console.log(isOutOfStock);
-      console.log(apiRes);
       if (apiRes) showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
       else showToast(apiRes?.message || "Lỗi khi thêm vào giỏ hàng");
     } catch {
