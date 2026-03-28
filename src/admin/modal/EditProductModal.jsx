@@ -14,7 +14,13 @@ import {
   FiEdit2,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { getProductById, updateProduct, updateVariant } from "../services/productService";
+import {
+  createVariant,
+  deleteVariant,
+  getProductById,
+  updateProduct,
+  updateVariant,
+} from "../services/productService";
 
 /* ─────────────────────────────────────────────
    STEPPER
@@ -338,7 +344,7 @@ function VariantCard({
 /* ─────────────────────────────────────────────
    MAIN MODAL
 ───────────────────────────────────────────── */
-function EditProductModal({ product, onClose, onAdd }) {
+function EditProductModal({ product, onClose, onUpdate }) {
   const [step, setStep] = useState(1);
   const [completed, setCompleted] = useState(false);
   const [direction, setDirection] = useState(1);
@@ -406,12 +412,30 @@ function EditProductModal({ product, onClose, onAdd }) {
 
   const addVariant = () =>
     setForm((f) => ({ ...f, variants: [...f.variants, makeVariant()] }));
-  const removeVariant = (i) =>
-    setForm((f) => ({
-      ...f,
-      variants: f.variants.filter((_, idx) => idx !== i),
-    }));
+  const removeVariant = async (index) => {
+    const v = form.variants[index];
 
+    // 🟢 Nếu có variantId → gọi API xoá
+    if (v.variantId) {
+      try {
+        await deleteVariant(v.variantId);
+
+        // xoá khỏi UI sau khi API thành công
+        setForm((f) => ({
+          ...f,
+          variants: f.variants.filter((_, i) => i !== index),
+        }));
+      } catch (err) {
+        console.error("Lỗi xoá variant:", err);
+        alert("Xoá variant thất bại!");
+      }
+    } else {
+      setForm((f) => ({
+        ...f,
+        variants: f.variants.filter((_, i) => i !== index),
+      }));
+    }
+  };
   const handleSubmit = async () => {
     if (!form.name || !form.type || !form.price) {
       alert("Nhập thiếu thông tin!");
@@ -423,27 +447,41 @@ function EditProductModal({ product, onClose, onAdd }) {
         alert("Không tìm thấy ID sản phẩm!");
         return;
       }
-
       // 🟢 1. update product trước
       await updateProduct(form.id, form);
-
       // 🟢 2. update từng variant
       await Promise.all(
         form.variants.map((v) => {
-          // ❗ bỏ qua variant mới chưa có id
-          if (!v.variantId) return null;
+          if (v.variantId) {
+            return updateVariant(v.variantId, Number(v.stock) || 0, {
+              frameSize: v.frameSize || "",
+              color: v.color || "",
+              material: v.material || "",
+              imageUrl: v.image || "",
+              status: "AVAILABLE",
+              active: true,
+            });
+          }
 
-          return updateVariant(v.variantId, Number(v.stock), {
-            frameSize: v.frameSize || "",
+          return createVariant(form.id, {
+            stockQuantity: v.stock || 0,
+            frameSize: v.frameSize || 0,
             color: v.color || "",
             material: v.material || "",
-            imageUrl: v.image || "",
+            imageUrl: v.imageUrl || "",
             status: "AVAILABLE",
             active: true,
           });
         }),
       );
 
+      onUpdate({
+        ...form,
+        stock: form.variants.reduce(
+          (total, v) => total + (Number(v.stock) || 0),
+          0,
+        ),
+      });
       setCompleted(true);
       setStep(3);
     } catch (err) {

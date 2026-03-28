@@ -23,6 +23,17 @@ export const updateProductApi = async (id, payload) => {
   return axiosClient.put(`/products/${id}`, payload);
 };
 
-export const updateVariantApi = async (id, quantity,data) => {
-  return adminClient.put(`/admin/products/variants/updateStock/${id}?quantity=${quantity}`, data);
+export const updateVariantApi = async (id, quantity, data) => {
+  return adminClient.put(
+    `/admin/products/variants/updateStock/${id}?quantity=${quantity}`,
+    data,
+  );
+};
+
+export const createVariantApi = async (id, data) => {
+  return adminClient.post(`/admin/products/${id}/variants`, data);
+};
+
+export const deleteVariantApi = async (id) => {
+  return adminClient.delete(`/admin/products/variants/${id}`);
 };

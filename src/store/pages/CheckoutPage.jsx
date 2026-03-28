@@ -145,7 +145,7 @@ function CheckoutPage() {
         }));
 
         // ✅ update UI
-        setCartItems(mapped);
+        setCartItems([] );
         // ✅ update localStorage (GIỮ cache)
         localStorage.setItem("cart", JSON.stringify(mapped));
         window.dispatchEvent(new Event("storage"));
@@ -265,6 +265,10 @@ function CheckoutPage() {
       await checkoutOrder(formData, shippingFee);
 
       setSuccess(true);
+
+      // clear cart
+      localStorage.setItem("cart", JSON.stringify([]));
+      window.dispatchEvent(new Event("storage"));
 
       setTimeout(() => navigate("/"), 2200);
     } catch (error) {

@@ -2,31 +2,10 @@ import { useCallback, useMemo, useState, memo, useEffect } from "react";
 import {
   getPreorderItemsService,
   getStockVariantById,
+  updateStockService,
 } from "../services/preOrderService";
-import {
-  FiPackage,
-  FiUser,
-  FiMapPin,
-  FiFileText,
-  FiCheck,
-  FiChevronRight,
-  FiSearch,
-  FiFilter,
-  FiClock,
-  FiShield,
-  FiEye,
-  FiX,
-  FiAlertCircle,
-  FiArrowRight,
-  FiCalendar,
-  FiPhone,
-  FiMail,
-  FiHash,
-  FiTruck,
-  FiRotateCcw,
-} from "react-icons/fi";
+import { FiPackage, FiCheck, FiSearch, FiFilter, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { MdEdit } from "react-icons/md";
 
 const STEP_COLORS = {
   gray: {
@@ -169,10 +148,19 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
       <td className="px-5 py-4">
         {order.items.map((item, i) => (
           <div key={i}>
-            <p className="text-sm font-medium text-gray-800">{item.name}</p>
+            <p className="text-sm font-medium text-gray-800">
+              {item.name} - {order.color}
+            </p>
             <p className="text-xs text-gray-400">Số lượng: {item.quantity}</p>
           </div>
         ))}
+      </td>
+
+      <td className="px-5 py-4">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+          {order.stock}
+        </span>
       </td>
 
       <td className="px-5 py-4">
@@ -240,39 +228,56 @@ export default function AdminPreorders() {
   useEffect(() => {
     const fetchPreorder = async () => {
       const data = await getPreorderItemsService();
-      const mapped = data.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        id: item.orderCode,
-        orderId: item.orderId,
 
-        customer: item.customerName,
-        email: item.customerEmail,
-        phone: item.phone,
-        address: item.address,
+      const mapped = await Promise.all(
+        data.map(async (item) => {
+          let stock = 0;
 
-        createdAt: new Date(item.createdAt).toLocaleDateString("vi-VN"),
+          try {
+            const stockData = await getStockVariantById(item.variantId);
+            stock = stockData?.stockQuantity ?? 0;
+          } catch (e) {
+            console.error("Stock error:", e);
+          }
 
-        note: item.note,
+          return {
+            productId: item.productId,
+            variantId: item.variantId,
+            color: item.variantColor,
+            id: item.orderCode,
+            orderId: item.orderId,
 
-        avatar: `https://ui-avatars.com/api/?name=${item.customerName}`,
+            customer: item.customerName,
+            email: item.customerEmail,
+            phone: item.phone,
+            address: item.address,
 
-        items: [
-          {
-            name: item.productName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            img: item.imageUrl || "https://via.placeholder.com/50",
-          },
-        ],
+            createdAt: new Date(item.createdAt).toLocaleDateString("vi-VN"),
 
-        step: mapStatusToStep(item.orderStatus),
-        cancelled: item.orderStatus === "CANCELLED",
+            note: item.note,
 
-        history: [],
-      }));
+            avatar: `https://ui-avatars.com/api/?name=${item.customerName}`,
+
+            items: [
+              {
+                name: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                img: item.imageUrl || "https://via.placeholder.com/50",
+              },
+            ],
+
+            stock, // ✅ thêm vào đây
+
+            step: mapStatusToStep(item.orderStatus),
+            cancelled: item.orderStatus === "CANCELLED",
+
+            history: [],
+          };
+        }),
+      );
       console.log(mapped);
-      setOrders(mapped); // ✅ FIX Ở ĐÂY
+      setOrders(mapped);
     };
 
     fetchPreorder();
@@ -285,19 +290,31 @@ export default function AdminPreorders() {
 
   const checkStockBeforeConfirm = async (order) => {
     try {
-      const stock = await getStockVariantById(order.variantId);
+      const stockData = await getStockVariantById(order.variantId);
+      console.log(order);
+      const currentStock = stockData?.stockQuantity ?? 0;
 
-      console.log("Stock:", stock);
-
-      if (!stock || stock.stockQuantity <= 0) {
+      if (currentStock <= 0) {
         showToast("Sản phẩm đã hết hàng!", "error");
         return;
       }
 
-      setViewing(order); // ✅ mở modal nếu còn hàng
+      const qtyOrder = order.items?.[0]?.quantity || 0;
+
+      if (currentStock < qtyOrder.quantity || qtyOrder.quantity === 0) {
+        showToast("Không đủ hàng trong kho!", "error");
+        return;
+      }
+
+      showToast("Xác nhận đơn & trừ kho thành công!");
+
+      // ✅ update UI (trừ stock local)
+
+      // 👉 mở modal nếu bạn vẫn cần
+      setViewing(order);
     } catch (error) {
       console.error(error);
-      showToast("Lỗi kiểm tra tồn kho!", "error");
+      showToast("Lỗi khi cập nhật kho!", "error");
     }
   };
 
@@ -477,7 +494,9 @@ export default function AdminPreorders() {
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Sản phẩm
                 </th>
-
+                <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
+                  Stock
+                </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Trạng thái
                 </th>
@@ -506,7 +525,12 @@ export default function AdminPreorders() {
                 </tr>
               ) : (
                 paginated.map((o) => (
-                  <PreorderRow key={o.id} order={o} onView={setViewing} checkStockStock={checkStockBeforeConfirm } />
+                  <PreorderRow
+                    key={o.id}
+                    order={o}
+                    onView={setViewing}
+                    checkStock={checkStockBeforeConfirm}
+                  />
                 ))
               )}
             </tbody>

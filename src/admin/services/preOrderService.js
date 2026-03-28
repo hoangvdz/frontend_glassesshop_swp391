@@ -1,14 +1,13 @@
 import { getAllOrdersApi } from "../api/orderApi";
-import {getStockVariantByIdApi} from "../api/preOrderApi";
+import { getStockVariantByIdApi, updateStockApi } from "../api/preOrderApi";
 export const getPreorderItemsService = async () => {
   try {
     const res = await getAllOrdersApi();
 
     const orders = res?.data?.data || [];
-
     const preorderItems = orders.flatMap((order) =>
       (order.orderItems || [])
-        .filter((item) => item.isPreorder === true)
+        .filter((item) => item.itemType === "PRE_ORDER")
         .map((item) => ({
           ...item,
 
@@ -39,8 +38,12 @@ export const getPreorderItemsService = async () => {
   }
 };
 
-
 export const getStockVariantById = async (id) => {
   const res = await getStockVariantByIdApi(id);
   return res.data.data;
-}
+};
+
+export const updateStockService = async (variantId, quantity, variantData) => {
+  const res = await updateStockApi(variantId, quantity, variantData);
+  return res.data.data;
+};

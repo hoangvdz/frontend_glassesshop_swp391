@@ -1,6 +1,8 @@
 import {
   createProductApi,
+  createVariantApi,
   deleteProductApi,
+  deleteVariantApi,
   getAllProductsApi,
   getProductByIdApi,
   updateProductApi,
@@ -108,7 +110,6 @@ export const updateProduct = async (id, form) => {
   };
 
   const res = await updateProductApi(id, payload);
-  console.log(res.data.data);
 
   return res.data.data; // vì API bọc trong { success, data }
 };
@@ -117,4 +118,23 @@ export const updateVariant = async (id, quantity, data) => {
   const res = await updateVariantApi(id, quantity, data);
   console.log(res.data.data);
   return res.data.data;
+};
+
+export const createVariant = async (id, data) => {
+  const payload = {
+    stockQuantity: data.stockQuantity,
+    frameSize: data.frameSize,
+    color: data.color,
+    material: data.material,
+    imageUrl: data.imageUrl,
+    status: "AVAILABLE",
+    active: true,
+  };
+  const res = await createVariantApi(id, payload);
+  return res.data.data;
+};
+
+export const deleteVariant = async (id) => {
+  const res = await deleteVariantApi(id);
+  return res.data;
 };
