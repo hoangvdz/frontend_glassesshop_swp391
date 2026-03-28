@@ -132,7 +132,7 @@ function CheckoutPage() {
         }));
 
         // ✅ update UI
-        setCartItems([] );
+        setCartItems(mapped);
         // ✅ update localStorage (GIỮ cache)
         localStorage.setItem("cart", JSON.stringify(mapped));
         window.dispatchEvent(new Event("storage"));
