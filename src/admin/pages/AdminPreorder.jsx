@@ -4,7 +4,8 @@ import {
   getStockVariantById,
   updateStockService,
 } from "../services/preOrderService";
-import { FiPackage, FiCheck, FiSearch, FiFilter, FiX } from "react-icons/fi";
+import { FiPackage, FiCheck, FiSearch, FiFilter, FiX, FiEye, FiClock, FiAlertCircle } from "react-icons/fi";
+import { updateOrderStatus } from "../services/orderService";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STEP_COLORS = {
@@ -164,10 +165,29 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
       </td>
 
       <td className="px-5 py-4">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-          Preorder
-        </span>
+        {order.cancelled ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+            Đã huỷ
+          </span>
+        ) : (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+            order.step === 6 
+              ? "bg-green-50 text-green-700 border-green-200" 
+              : order.step === 0 
+                ? "bg-yellow-50 text-yellow-700 border-yellow-200" 
+                : "bg-blue-50 text-blue-700 border-blue-200"
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              order.step === 6 
+                ? "bg-green-500" 
+                : order.step === 0 
+                  ? "bg-yellow-400" 
+                  : "bg-blue-400"
+            }`} />
+            {order.step === 6 ? "Hoàn thành" : order.step === 0 ? "Chờ xử lý" : "Đang xử lý"}
+          </span>
+        )}
       </td>
 
       {/* Date */}
@@ -175,19 +195,19 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
         {order.createdAt}
       </td>
 
-      {/* Action */}
-      <td className="px-5 py-4">
         <div className="flex justify-end">
           <div className="relative group/tip">
             <button
               onClick={() => checkStock(order)}
-              className="px-10 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
+              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
             >
-              Xác nhận
+              <FiEye size={18} />
             </button>
+            <span className="pointer-events-none absolute bottom-full mb-2 right-0 px-2 py-1 text-[10px] rounded-md bg-gray-800 text-white opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+              Xem & duyệt
+            </span>
           </div>
         </div>
-      </td>
     </tr>
   );
 });
@@ -263,7 +283,7 @@ export default function AdminPreorders() {
                 name: item.productName,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
-                img: item.imageUrl || "https://via.placeholder.com/50",
+                img: item.imageUrl || "https://placehold.co/50",
               },
             ],
 
@@ -622,3 +642,156 @@ export default function AdminPreorders() {
     </div>
   );
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   DETAIL MODAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function DetailModal({ order, onClose, onAdvance, onCancel }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleApprove = async () => {
+    if (!window.confirm("Duyệt đơn đặt trước này và trừ kho hàng?")) return;
+    setLoading(true);
+    try {
+      // 1. Lấy kho mới nhất và thông tin variant đầy đủ từ server
+      const variantRes = await getStockVariantById(order.variantId);
+      const currentStock = variantRes?.stockQuantity ?? 0;
+      
+      const qtyToDeduct = order.items?.[0]?.quantity || 0;
+      const newQuantity = Math.max(0, currentStock - qtyToDeduct);
+      
+      // 2. Chuẩn bị payload đầy đủ như EditProductModal
+      const variantPayload = {
+        frameSize: variantRes?.frameSize || "",
+        color: variantRes?.color || "",
+        material: variantRes?.material || "",
+        imageUrl: variantRes?.imageUrl || "",
+        status: "AVAILABLE",
+        active: true,
+      };
+
+      console.log(`Deducting stock for variant ${order.variantId}: ${currentStock} -> ${newQuantity}`, variantPayload);
+      
+      // 3. Cập nhật kho mới với đầy đủ thông tin variant
+      await updateStockService(order.variantId, newQuantity, variantPayload);
+      
+      // 4. Cập nhật trạng thái đơn hàng sang PROCESSING
+      await updateOrderStatus(order.orderId, "PROCESSING");
+      
+      alert(`Xử lý thành công! \n- Product ID: #${order.productId} \n- Variant ID: #${order.variantId} \n- Kho cũ: ${currentStock} \n- Kho mới: ${newQuantity}`);
+      window.location.reload(); 
+    } catch (error) {
+      console.error("Lỗi xử lý:", error);
+      alert("Lỗi khi xử lý đơn đặt trước: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+        >
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                <FiPackage size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800">Duyệt Đơn Đặt Trước</h3>
+                <p className="text-xs text-gray-500">Mã đơn: {order.id}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400"><FiX size={18} /></button>
+          </div>
+
+          {/* Body */}
+          <div className="p-6 space-y-6 flex-1 overflow-y-auto max-h-[70vh]">
+            <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <img src={order.avatar} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" alt="" />
+              <div>
+                <p className="font-bold text-gray-800 text-sm">{order.customer}</p>
+                <p className="text-xs text-gray-400">{order.email}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <FiPackage size={12} /> Sản phẩm đặt trước
+              </p>
+              {order.items.map((it, idx) => (
+                <div key={idx} className="flex gap-4 p-3 rounded-xl border border-gray-100 bg-white">
+                  <img src={it.img} className="w-14 h-14 rounded-lg object-cover border border-gray-100" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm truncate">{it.name}</p>
+                    <p className="text-xs text-gray-500 font-medium">Màu: {order.color} | SL: {it.quantity}</p>
+                    <div className="mt-1">
+                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.stock >= it.quantity ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                         Tồn kho: {order.stock}
+                       </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
+              <FiAlertCircle className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
+              <div className="text-xs text-amber-800 leading-relaxed">
+                <strong>Lưu ý:</strong> Khi bạn nhấn "Duyệt đơn hàng", hệ thống sẽ chuyển trạng thái đơn hàng sang <strong>Đang đóng gói</strong>. Đơn hàng này sau đó có thể được xử lý tiếp tại trang Quản lý đơn hàng.
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex gap-3">
+            <button 
+               onClick={onClose} 
+               className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 border border-gray-200 rounded-xl hover:bg-white transition-colors"
+            >
+              QUAY LẠI
+            </button>
+            
+            {order.step === 0 && !order.cancelled && (
+              <button 
+               disabled={loading || order.stock < (order.items?.[0]?.quantity || 0)}
+               onClick={handleApprove}
+               className="flex-[2] px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:grayscale"
+            >
+              {loading ? "ĐANG XỬ LÝ..." : (order.stock < (order.items?.[0]?.quantity || 0) ? "KHÔNG ĐỦ HÀNG" : "DUYỆT ĐƠN HÀNG")}
+            </button>
+            )}
+
+            {(order.step > 0 || order.cancelled) && (
+              <div className="flex-[2] flex items-center justify-center bg-gray-100 rounded-xl text-[10px] font-bold text-gray-400">
+                {order.cancelled ? "ĐƠN HÀNG ĐÃ HUỶ" : "ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT"}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+const STEPS = [
+  { id: 0, label: "Chờ xử lý", color: "amber" },
+  { id: 1, label: "Xác nhận", color: "blue" },
+  { id: 2, label: "Kiểm tra", color: "violet" },
+  { id: 3, label: "Sản xuất", color: "orange" },
+  { id: 4, label: "QC", color: "teal" },
+  { id: 5, label: "Vận chuyển", color: "blue" },
+  { id: 6, label: "Đã giao", color: "green" },
+];

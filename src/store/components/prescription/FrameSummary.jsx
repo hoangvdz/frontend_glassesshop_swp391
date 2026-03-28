@@ -9,7 +9,7 @@ export default function FrameSummary({ product }) {
           src={variant.imageUrl || "/frames/sample.png"}
           alt={product.name}
           className="w-full h-full object-contain"
-          onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=Product+Image"; }}
+          onError={(e) => { e.target.src = "https://placehold.co/300?text=Product+Image"; }}
         />
       </div>
 
