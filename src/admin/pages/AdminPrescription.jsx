@@ -302,40 +302,6 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
                 Số kính
               </p>
-              <div className="bg-gray-50 rounded-xl overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="py-2.5 pr-4 text-left text-xs text-gray-400 font-semibold uppercase pl-4">
-                        Mắt
-                      </th>
-                      {["Sph (D)", "Cyl (D)", "Axis", "Add"].map((h) => (
-                        <th
-                          key={h}
-                          className="py-2.5 px-3 text-center text-xs text-gray-400 font-semibold uppercase"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 px-4">
-                    <tr>
-                      <td colSpan={5} className="pl-4">
-                        <EyeRow label="Mắt P" data={rx.eyes.right} />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colSpan={5} className="pl-4">
-                        <EyeRow label="Mắt T" data={rx.eyes.left} />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                {/* Fix: proper table rows */}
-              </div>
-
-              {/* Proper eye table */}
               <div className="bg-gray-50 rounded-xl overflow-hidden mt-0">
                 <table className="w-full text-sm">
                   <thead>
@@ -418,13 +384,13 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
             {(rx.status === "pending" || !rx.status) && (
               <div className="flex gap-2">
                 <button
-                  onClick={() => onDecline(rx.id, reviewNote)}
+                  onClick={() => onDecline(rx.id, reviewNote, rx)}
                   className="flex items-center gap-2 px-4 py-2 text-sm border border-red-200 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors font-medium"
                 >
                   <FiX size={14} /> Từ chối
                 </button>
                 <button
-                  onClick={() => onApprove(rx.id, reviewNote)}
+                  onClick={() => onApprove(rx.id, reviewNote, rx)}
                   className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                 >
                   <FiCheck size={14} /> Duyệt toa
@@ -768,17 +734,19 @@ function AdminPrescription() {
               rx.sphRight != null;
 
             if (isRxItem) {
+              const realRx = item.prescription || {};
               orderRx.push({
-                id: `order-rx-${order.id}-${idx}`,
+                id: realRx.id ? realRx.id : `order-rx-${order.id}-${idx}`,
+                prescriptionId: realRx.id, // Lưu ID thực tế để gọi API
                 customerName: order.customer,
                 email: order.email,
                 userName: order.customer,
                 orderCode: order.code,
                 orderId: order.id,
-                source: "order", // Đánh dấu nguồn từ đơn hàng
+                source: "order", 
                 status: "pending",
                 createdAt: order.createdAt,
-                ...rx, // Gộp các thông số sph, cyl, axis...
+                ...realRx,
               });
             }
           });
@@ -898,12 +866,14 @@ function AdminPrescription() {
   const handleView = useCallback((rx) => setViewing(rx), []);
   const handleClose = useCallback(() => setViewing(null), []);
 
-  const handleApprove = useCallback(async (id, note) => {
+  const handleApprove = useCallback(async (id, note, rx) => {
     try {
-      await approvePrescriptionApi(id, note);
+      // Ưu tiên dùng prescriptionId nếu id là dạng chuỗi 'order-rx-...'
+      const targetId = rx?.prescriptionId || id;
+      await approvePrescriptionApi(targetId, note);
       setPrescriptions((prev) =>
-        prev.map((rx) =>
-          rx.id === id ? { ...rx, status: "approved", reviewNote: note } : rx,
+        prev.map((item) =>
+          item.id === id ? { ...item, status: "approved", reviewNote: note } : item,
         ),
       );
       setViewing((v) =>
@@ -915,12 +885,13 @@ function AdminPrescription() {
     }
   }, []);
 
-  const handleDecline = useCallback(async (id, note) => {
+  const handleDecline = useCallback(async (id, note, rx) => {
     try {
-      await declinePrescriptionApi(id, note);
+      const targetId = rx?.prescriptionId || id;
+      await declinePrescriptionApi(targetId, note);
       setPrescriptions((prev) =>
-        prev.map((rx) =>
-          rx.id === id ? { ...rx, status: "declined", reviewNote: note } : rx,
+        prev.map((item) =>
+          item.id === id ? { ...item, status: "declined", reviewNote: note } : item,
         ),
       );
       setViewing((v) =>

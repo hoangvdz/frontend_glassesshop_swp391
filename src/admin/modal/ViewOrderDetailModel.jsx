@@ -119,7 +119,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
 
   // Nếu là đơn prescription + đang pending + chưa được duyệt toàn bộ → chặn chỉnh sửa status
   const isPrescriptionBlocked =
-    isOrderPrescription && !allPrescriptionsApproved && currentStatus === "pending";
+    isPrescriptionOrder && !allPrescriptionsApproved && currentStatus === "pending";
 
   return (
     <AnimatePresence>
