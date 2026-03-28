@@ -243,6 +243,8 @@ function ProductDetailPage() {
     stockColor = "text-emerald-600";
   }
 
+  const maxStock = selectedVariantUI?.stockQuantity || 0;
+
   const handleAddToCart = async () => {
     let cart;
     try {
@@ -501,6 +503,7 @@ function ProductDetailPage() {
                 </p>
                 <div className="flex items-center border border-stone-200 rounded-full w-fit overflow-hidden bg-stone-50">
                   <button
+                    disabled={quantity <= 1}
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="w-10 h-10 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors text-xl font-light select-none"
                   >
@@ -510,6 +513,7 @@ function ProductDetailPage() {
                     {quantity}
                   </span>
                   <button
+                    disabled={quantity > maxStock - 1}
                     onClick={() => setQuantity(quantity + 1)}
                     className="w-10 h-10 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors text-xl font-light select-none"
                   >
