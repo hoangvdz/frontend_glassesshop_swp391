@@ -19,6 +19,8 @@ const mapProduct = (p) => {
     category: p.productType,
     price: p.price ?? 0,
     stock: totalStock,
+    status: p.status || "AVAILABLE",
+    active: p.active ?? true,
     img:
       p.variants?.[0]?.imageUrl ||
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTj1_Gp9JZ246p0IK04AFBLjWqfTwYWt-nD9w&s",
@@ -94,6 +96,7 @@ export const updateProduct = async (id, form) => {
     price: Number(form.price),
 
     isPrescriptionSupported: true,
+    active: form.active ?? true, // 🔥 dùng giá trị từ form thay vì hardcode true
 
     variants: form.variants.map((v) => ({
       variantId: v.variantId || 0, // 🔥 rất quan trọng
@@ -102,9 +105,9 @@ export const updateProduct = async (id, form) => {
       frameSize: v.frameSize || null,
       color: v.color,
       material: v.material,
-      imageUrl: v.image,
-      status: "AVAILABLE",
-      active: true,
+      imageUrl: v.image || v.imageUrl,
+      status: v.status || (form.active === false ? "UNAVAILABLE" : "AVAILABLE"),
+      active: form.active ?? true, // 🔥 đồng bộ với trạng thái sản phẩm
       deleted: false,
     })),
   };

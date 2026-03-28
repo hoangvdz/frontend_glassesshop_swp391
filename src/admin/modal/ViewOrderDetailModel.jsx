@@ -121,6 +121,19 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
   const isPrescriptionBlocked =
     isPrescriptionOrder && !allPrescriptionsApproved && currentStatus === "pending";
 
+  // Kiểm tra đơn hàng có sản phẩm Pre-order không
+  const isPreOrderOrder = order.orderItems?.some((item) => {
+    return (
+      item.isPreorder === true ||
+      item.type === "PRE_ORDER" ||
+      item.fulfillmentType === "PRE_ORDER" ||
+      item.isPreOrder === true
+    );
+  });
+
+  // Chặn xử lý đơn hàng Pre-order tại trang Order thông thường
+  const isPreOrderBlocked = isPreOrderOrder && currentStatus === "pending";
+
   return (
     <AnimatePresence>
       <motion.div
@@ -320,49 +333,28 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           </div>
                         )}
                         
-                        {/* Admin Action for Prescription (inline) */}
+                        {/* Hướng dẫn Duyệt đơn thuốc (Không xử lý trực tiếp) */}
                         {currentStatus === "pending" && rx.status !== true && (
                           <div className="mt-4 pt-4 border-t border-indigo-100/50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                              Xử lý đơn thuốc này
-                            </p>
-                            <textarea
-                              placeholder="Nhập ghi chú/lý do cho khách hàng (nếu từ chối)..."
-                              className="w-full text-xs p-3 rounded-lg border border-indigo-100 bg-white focus:ring-1 focus:ring-indigo-400 focus:outline-none transition-all resize-none min-h-[60px]"
-                              value={adminNotes[rx.prescriptionId] || ""}
-                              onChange={(e) => setAdminNotes(prev => ({ ...prev, [rx.prescriptionId]: e.target.value }))}
-                            />
-                            <div className="flex gap-2 mt-2">
-                              <button
-                                disabled={actionLoading}
-                                onClick={async () => {
-                                  setActionLoading(true);
-                                  try {
-                                    await onPrescriptionAction(rx.prescriptionId, true, adminNotes[rx.prescriptionId]);
-                                  } catch (err) { alert("Lỗi khi duyệt đơn thuốc"); }
-                                  finally { setActionLoading(false); }
-                                }}
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold py-2 rounded-lg transition-colors disabled:opacity-50"
-                              >
-                                {actionLoading ? "Đang xử lý..." : "DUYỆT ĐƠN THUỐC"}
-                              </button>
-                              <button
-                                disabled={actionLoading}
-                                onClick={async () => {
-                                  if (!adminNotes[rx.prescriptionId]) {
-                                    alert("Vui lòng nhập lý do từ chối vào ô ghi chú");
-                                    return;
-                                  }
-                                  setActionLoading(true);
-                                  try {
-                                    await onPrescriptionAction(rx.prescriptionId, false, adminNotes[rx.prescriptionId]);
-                                  } catch (err) { alert("Lỗi khi từ chối đơn thuốc"); }
-                                  finally { setActionLoading(false); }
-                                }}
-                                className="flex-1 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-[10px] font-bold py-2 rounded-lg transition-colors disabled:opacity-50"
-                              >
-                                TỪ CHỐI
-                              </button>
+                            <div className="flex items-start gap-2 p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl">
+                              <FiAlertCircle size={14} className="text-indigo-500 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-xs font-semibold text-indigo-700 mb-1">
+                                  Cần duyệt toa thuốc
+                                </p>
+                                <p className="text-[10px] text-indigo-600 leading-relaxed mb-2">
+                                  Việc duyệt/từ chối toa thuốc hiện được thực hiện tại trang quản lý chuyên biệt.
+                                </p>
+                                <button
+                                  onClick={() => {
+                                    onClose();
+                                    navigate("/dashboard/prescriptions");
+                                  }}
+                                  className="text-[10px] font-bold text-indigo-700 underline flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                                >
+                                  Đến trang Quản lý toa thuốc
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -477,7 +469,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                     </span>
                   </div>
 
-                  {/* Nếu là đơn PRESCRIPTION + PENDING + CHƯA DUYỆT XONG → chặn, hiện hướng dẫn */}
+                  {/* 1. Nếu là đơn PRESCRIPTION + PENDING + CHƯA DUYỆT XONG → chặn */}
                   {isPrescriptionBlocked ? (
                     <div className="pt-2 border-t border-gray-200">
                       <div className="flex items-start gap-2 p-3 bg-indigo-50 border border-indigo-200 rounded-xl mb-3">
@@ -489,9 +481,18 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           <p className="text-xs font-semibold text-indigo-700 mb-1">
                             Toa thuốc chưa được duyệt
                           </p>
-                          <p className="text-xs text-indigo-600 leading-relaxed">
+                          <p className="text-xs text-indigo-600 leading-relaxed mb-2">
                             Cần duyệt <strong>tất cả</strong> các đơn thuốc ở phía bên trái trước khi có thể xác nhận đơn hàng này.
                           </p>
+                          <button
+                            onClick={() => {
+                              onClose();
+                              navigate("/dashboard/prescriptions");
+                            }}
+                            className="text-xs font-bold text-indigo-700 underline flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                          >
+                            Đến trang Quản lý toa thuốc
+                          </button>
                         </div>
                       </div>
                       <button
@@ -509,8 +510,49 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         Hủy đơn
                       </button>
                     </div>
+                  ) : isPreOrderBlocked ? (
+                    /* 2. Nếu là đơn PRE-ORDER + PENDING → chặn xử lý tại đây, hướng dẫn qua trang Pre-order */
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl mb-3">
+                        <FiClock
+                          size={15}
+                          className="text-amber-500 mt-0.5 flex-shrink-0"
+                        />
+                        <div>
+                          <p className="text-xs font-semibold text-amber-700 mb-1">
+                            Đơn hàng có sản phẩm Đặt trước (Pre-order)
+                          </p>
+                          <p className="text-xs text-amber-600 leading-relaxed mb-2">
+                            Vui lòng quản lý và xử lý đơn hàng này tại trang <strong>Quản lý đặt trước</strong>.
+                          </p>
+                          <button
+                            onClick={() => {
+                              onClose();
+                              navigate("/dashboard/preoders");
+                            }}
+                            className="text-xs font-bold text-amber-700 underline flex items-center gap-1 hover:text-amber-800 transition-colors"
+                          >
+                            Đến trang Quản lý đặt trước
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              "Bạn có chắc chắn muốn hủy đơn hàng đặt trước này?"
+                            )
+                          ) {
+                            onUpdateStatus("cancelled");
+                          }
+                        }}
+                        className="w-full px-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors"
+                      >
+                        Hủy đơn
+                      </button>
+                    </div>
                   ) : (
-                    /* Actions bình thường cho đơn KHÔNG có prescription hoặc prescription đã duyệt */
+                    /* 3. Actions bình thường cho các trường hợp còn lại */
                     <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
                       {currentStatus === "pending" && (
                         <button
