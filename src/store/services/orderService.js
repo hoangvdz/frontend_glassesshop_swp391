@@ -1,4 +1,9 @@
-import { historyOrderApi, cancelOrderApi, getOrderByIdApi } from "../api/orderApi";
+import {
+  historyOrderApi,
+  cancelOrderApi,
+  getOrderByIdApi,
+  updatePaymentStatusApi,
+} from "../api/orderApi";
 
 // map status backend → frontend
 const mapStatus = (status) => {
@@ -98,6 +103,21 @@ export const getOrderDetails = async (id) => {
     id: order.orderCode,
     date: new Date(order.orderDate).toLocaleDateString("vi-VN"),
     status: statusCode,
-    rawStatus: mapStatusLabel(order.status), 
+    rawStatus: mapStatusLabel(order.status),
   };
+};
+
+export const updatePaymentStatus = async (orderId, resCode, transCode) => {
+  const isSuccess = resCode === "00" && transCode === "00";
+  const status = isSuccess ? "PAID" : "UNPAID";
+  try {
+    const res = await updatePaymentStatusApi(orderId, status);
+
+    console.log("Service response:", res.data);
+
+    return res.data;
+  } catch (error) {
+    console.error("Service error:", error);
+    throw error;
+  }
 };
