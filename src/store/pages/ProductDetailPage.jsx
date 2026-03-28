@@ -207,7 +207,7 @@ function ProductDetailPage() {
     category: productData.category,
     description: productData.description,
     images: productData.variants?.map((v) => v.imageUrl) || [
-      "https://via.placeholder.com/500",
+      "https://placehold.co/500",
     ],
     colors: productData.variants?.map((v) => v.color) || [],
     specs: [
@@ -276,11 +276,13 @@ function ProductDetailPage() {
     try {
       // Prepare prescription payload if manual entry is selected
       const isLens = lensOption === "manual";
+
       const apiRes = await addToCartService({
         productId: productData.id,
         variantId: selectedVariant.variantId,
         quantity,
         isLens,
+        isPreorder: isOutOfStock,
         // Manual entry parameters
         sphLeft: isLens ? parseFloat(prescription.eyes.left.sphere) || 0 : null,
         sphRight: isLens ? parseFloat(prescription.eyes.right.sphere) || 0 : null,
@@ -292,8 +294,20 @@ function ProductDetailPage() {
         addRight: isLens ? parseFloat(prescription.eyes.right.add) || 0 : null,
         pd: isLens ? parseFloat(prescription.pd) || 0 : null,
       });
-      if (apiRes) showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
-      else showToast(apiRes?.message || "Lỗi khi thêm vào giỏ hàng");
+
+      if (apiRes) {
+        // Save preorder state locally to bypass backend strict API validation rejection (500)
+        if (isOutOfStock) {
+          try {
+            const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
+            preorders[selectedVariant.variantId] = true;
+            localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
+          } catch(e){}
+        }
+        showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
+      } else {
+        showToast("Lỗi khi thêm vào giỏ hàng");
+      }
     } catch {
       showToast("Đã lưu vào giỏ hàng cục bộ!");
     }
@@ -366,7 +380,7 @@ function ProductDetailPage() {
               <div className="relative aspect-square overflow-hidden rounded-3xl bg-stone-50 group border border-stone-100">
                 <img
                   key={activeImg}
-                  src={product.images[activeImg]}
+                  src={product.images[activeImg] || "https://placehold.co/500"}
                   alt={product.name}
                   className="w-full h-full object-cover"
                   style={{ animation: "imgIn .35s ease" }}

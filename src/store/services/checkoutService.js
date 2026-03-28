@@ -25,7 +25,7 @@ export const checkoutOrder = async (formData, shippingFee, items = []) => {
       addLeft: item.addLeft,
       addRight: item.addRight,
       pd: item.pd,
-      itemType: item.isLens ? "PRESCRIPTION" : "IN_STOCK"
+      itemType: item.itemType === "PRE_ORDER" || item.isPreorder ? "PRE_ORDER" : (item.itemType || (item.isLens ? "PRESCRIPTION" : "IN_STOCK"))
     }))
   };
 

@@ -18,7 +18,7 @@ export const getAllProducts = async () => {
       brand: p.brand,
       img:
         p.variants?.[0]?.imageUrl ||
-        "https://via.placeholder.com/500",
+        "https://placehold.co/500",
     };
   });
 };

@@ -105,6 +105,15 @@ function CheckoutPage() {
         console.log("=== RAW CART DATA FROM SERVER ===", data);
 
         const cartData = Array.isArray(data) ? data : data?.data || [];
+
+        const checkLocalPreorder = (vId) => {
+          try {
+            const raw = localStorage.getItem("frontend_preorders");
+            if (!raw) return false;
+            return !!(JSON.parse(raw)[vId]);
+          } catch { return false; }
+        };
+
         const mapped = cartData.map((item) => ({
           cartItemId: item.cartItemId,
           productId: item.productId,
@@ -124,6 +133,8 @@ function CheckoutPage() {
           addRight: item.addRight,
           pd: item.pd,
           prescription: item.prescription,
+          itemType: item.itemType || item.type,
+          isPreorder: item.isPreorder || checkLocalPreorder(item.variantId),
           variant: {
             variantId: item.variantId,
             color: item.variantColor,
@@ -275,10 +286,15 @@ function CheckoutPage() {
             {cartItems.map(item => (
               <div key={item.cartItemId} className="flex gap-3 text-sm">
                 <img src={item.image} className="w-12 h-12 rounded-lg object-cover border border-stone-100" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-stone-400">Qty: {item.quantity} · {item.price.toLocaleString()}₫</p>
-                  {item.isLens && <p className="text-[10px] text-indigo-500 font-bold mt-0.5 tracking-tight uppercase">Đơn thuốc mắt</p>}
+                <div className="flex-1 min-w-0 flex justify-between">
+                  <div>
+                    <p className="font-medium truncate pr-2">{item.name}</p>
+                    <p className="text-xs text-stone-400">Qty: {item.quantity} · {item.price.toLocaleString()}₫</p>
+                    {item.isLens && !item.isPreorder && <p className="text-[10px] text-indigo-500 font-bold mt-0.5 tracking-tight uppercase">Đơn thuốc mắt</p>}
+                  </div>
+                  <button onClick={() => removeItem(item.productId, item.variant?.variantId, item.cartItemId)} className="text-stone-400 hover:text-red-500 p-1 -mt-1 -mr-2 h-fit" title="Xóa">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
                 </div>
               </div>
             ))}
