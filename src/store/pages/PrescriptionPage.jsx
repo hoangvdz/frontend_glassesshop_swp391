@@ -8,12 +8,20 @@ import ExtrasSection from "../components/prescription/ExtrasSection";
 import SubmitBar from "../components/prescription/SubmitBar";
 import { getProductByIdApi } from "../api/productApi";
 import { addToCartApi } from "../api/cartApi";
+import {
+  getMyPrescriptionsApi,
+  savePrescriptionApi,
+} from "../api/prescriptionApi";
 
 export default function PrescriptionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [savedPrescriptions, setSavedPrescriptions] = useState([]);
+  const [loadingRx, setLoadingRx] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     right: { sph: "", cyl: "", axis: "", add: "" },
@@ -26,6 +34,7 @@ export default function PrescriptionPage() {
 
   const [errors, setErrors] = useState({});
 
+  /* ---------- LOAD PRODUCT ---------- */
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -40,6 +49,45 @@ export default function PrescriptionPage() {
     };
     if (id) fetchProduct();
   }, [id, navigate]);
+
+  /* ---------- LOAD SAVED PRESCRIPTIONS ---------- */
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      setLoadingRx(true);
+      try {
+        const res = await getMyPrescriptionsApi();
+        const data = res.data?.data || res.data || [];
+        setSavedPrescriptions(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Lỗi tải đơn thuốc đã lưu:", err);
+        setSavedPrescriptions([]);
+      } finally {
+        setLoadingRx(false);
+      }
+    };
+    fetchPrescriptions();
+  }, []);
+
+  /* ---------- APPLY SAVED PRESCRIPTION ---------- */
+  const applySavedPrescription = (rx) => {
+    setForm((prev) => ({
+      ...prev,
+      right: {
+        sph: rx.sphRight != null ? String(rx.sphRight) : "",
+        cyl: rx.cylRight != null ? String(rx.cylRight) : "",
+        axis: rx.axisRight != null ? String(rx.axisRight) : "",
+        add: rx.addRight != null ? String(rx.addRight) : "",
+      },
+      left: {
+        sph: rx.sphLeft != null ? String(rx.sphLeft) : "",
+        cyl: rx.cylLeft != null ? String(rx.cylLeft) : "",
+        axis: rx.axisLeft != null ? String(rx.axisLeft) : "",
+        add: rx.addLeft != null ? String(rx.addLeft) : "",
+      },
+      pd: rx.pd != null ? String(rx.pd) : "",
+    }));
+    setErrors({});
+  };
 
   if (loading) {
     return (
@@ -92,11 +140,7 @@ export default function PrescriptionPage() {
 
     const variantId = product.variants?.[0]?.variantId;
 
-    const payload = {
-      productId: product.id,
-      variantId: variantId,
-      quantity: 1,
-      isLens: true,
+    const prescriptionData = {
       sphLeft: toNum(form.left.sph),
       sphRight: toNum(form.right.sph),
       cylLeft: toNum(form.left.cyl),
@@ -108,7 +152,30 @@ export default function PrescriptionPage() {
       pd: toNum(form.pd),
     };
 
+    const payload = {
+      productId: product.id,
+      variantId: variantId,
+      quantity: 1,
+      itemType: "PRESCRIPTION",
+      fulfillmentType: "PRESCRIPTION",
+      isLens: true,
+      ...prescriptionData,
+    };
+
+    setSubmitting(true);
     try {
+      // 1. Lưu đơn thuốc nếu user chọn checkbox "Lưu đơn thuốc"
+      if (form.savePrescription) {
+        try {
+          await savePrescriptionApi(prescriptionData);
+          console.log("Đã lưu đơn thuốc thành công!");
+        } catch (saveErr) {
+          console.error("Lỗi lưu đơn thuốc:", saveErr);
+          // Không block việc thêm vào giỏ hàng
+        }
+      }
+
+      // 2. Thêm vào giỏ hàng
       console.log("SUBMITTING TO CART", payload);
       await addToCartApi(payload);
       alert("Đã thêm sản phẩm có độ vào giỏ hàng thành công!");
@@ -117,6 +184,8 @@ export default function PrescriptionPage() {
       console.error("Lỗi thêm vào giỏ hàng:", err);
       const msg = err?.response?.data?.message || "Thêm vào giỏ hàng thất bại. Vui lòng thử lại.";
       alert(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -134,6 +203,33 @@ export default function PrescriptionPage() {
             Nhập đơn thuốc của bạn
           </h1>
 
+          {/* Danh sách đơn thuốc đã lưu */}
+          {savedPrescriptions.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+              <p className="text-sm font-semibold text-blue-800 mb-3">
+                📋 Đơn thuốc đã lưu
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {savedPrescriptions.map((rx, idx) => (
+                  <button
+                    key={rx.id || idx}
+                    onClick={() => applySavedPrescription(rx)}
+                    className="px-3 py-2 bg-white border border-blue-200 text-blue-700 text-xs rounded-lg hover:bg-blue-100 transition-colors font-medium shadow-sm"
+                  >
+                    Đơn #{idx + 1} — OD: {rx.sphRight ?? "—"} / OS: {rx.sphLeft ?? "—"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {loadingRx && (
+            <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              Đang tải đơn thuốc đã lưu...
+            </div>
+          )}
+
           <PrescriptionTable
             form={form}
             errors={errors}
@@ -146,7 +242,7 @@ export default function PrescriptionPage() {
         </div>
       </div>
 
-      <SubmitBar onSubmit={handleSubmit} disabled={!isValid} />
+      <SubmitBar onSubmit={handleSubmit} disabled={!isValid || submitting} />
     </div>
   );
-}
+}

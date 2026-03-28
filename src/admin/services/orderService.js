@@ -4,29 +4,56 @@ import {
   getOrderByIdApi,
 } from "../api/orderApi";
 
+// Hàm kiểm tra đơn có toa thuốc hay không (Broad check)
+const checkIfHasPrescription = (items = []) => {
+  return items.some((item) => {
+    // 1. Flag or Type
+    if (item.itemType === "PRESCRIPTION" || item.fulfillmentType === "PRESCRIPTION" || item.isLens) return true;
+    // 2. Object link
+    if (item.prescription != null) return true;
+    // 3. Raw parameters (OD/OS) lồng hoặc phẳng
+    const rx = item.prescription || item;
+    return (
+      rx.sphLeft != null ||
+      rx.sphRight != null ||
+      rx.lensOptionId != null
+    );
+  });
+};
+
 export const getAllOrders = async () => {
   const res = await getAllOrdersApi();
-  // Backend trả về ApiResponse { data: [...] }
   const orders = res.data?.data || [];
 
-  return orders.map((o) => ({
-    id: o.orderId,
-    code: o.orderCode,
-    customer: o.userName,
-    email: o.userEmail,
-    avatar: `https://ui-avatars.com/api/?name=${o.userName}&background=random`,
-    // ưu tiên finalPrice
-    total: o.finalPrice ?? o.totalPrice ?? 0,
-    status: mapStatus(o.status),
-    createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
-    orderItems: o.orderItems || o.items || [], // để modal dùng sau
-  }));
+  return orders.map((o) => {
+    const items = o.orderItems || o.items || [];
+    const hasPrescription = checkIfHasPrescription(items);
+    
+    return {
+      id: o.orderId,
+      code: o.orderCode,
+      customer: o.userName,
+      email: o.userEmail,
+      avatar: `https://ui-avatars.com/api/?name=${o.userName}&background=random`,
+      total: o.finalPrice ?? o.totalPrice ?? 0,
+      status: mapStatus(o.status),
+      createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
+      orderItems: items,
+      hasPrescription: hasPrescription,
+    };
+  });
 };
 
 export const getOrderById = async (id) => {
   const res = await getOrderByIdApi(id);
-  // Backend trả về ApiResponse { data: {...} }
   const o = res.data?.data || res.data;
+  const items = o.orderItems || o.items || [];
+  
+  // LOG SIÊU CHI TIẾT ĐỂ DEBUG
+  console.log("!!! FULL DATA OF SELECTED ORDER !!!", JSON.stringify(o, null, 2));
+  
+  const hasPrescription = checkIfHasPrescription(items);
+
   return {
     ...o,
     id: o.orderId,
@@ -36,17 +63,14 @@ export const getOrderById = async (id) => {
     total: o.finalPrice ?? o.totalPrice ?? 0,
     status: mapStatus(o.status),
     createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
-    orderItems: o.orderItems || o.items || [], // Đảm bảo luôn có orderItems cho Modal
+    orderItems: items,
+    hasPrescription,
   };
 };
 
 export const updateOrderStatus = async (orderId, status) => {
-  // mapping status UI (lowercase) → backend (UPPERCASE)
   let backendStatus = status.toUpperCase();
-
-  // Ánh xạ sang từ điển của Backend
-  if (backendStatus === "SHIPPING" || backendStatus === "SHIPPED")
-    backendStatus = "DELIVERING";
+  if (backendStatus === "SHIPPING" || backendStatus === "SHIPPED") backendStatus = "DELIVERING";
   if (backendStatus === "COMPLETED") backendStatus = "DELIVERED";
   if (backendStatus === "CANCELLED") backendStatus = "CANCELED";
 
@@ -58,20 +82,14 @@ const mapStatus = (status) => {
   if (!status) return "pending";
   const s = status.toUpperCase();
   switch (s) {
-    case "PENDING":
-      return "pending";
-    case "PROCESSING":
-      return "processing";
+    case "PENDING": return "pending";
+    case "PROCESSING": return "processing";
     case "DELIVERING":
-    case "SHIPPING":
-      return "shipped";
+    case "SHIPPING": return "shipped";
     case "DELIVERED":
-    case "COMPLETED":
-      return "completed";
+    case "COMPLETED": return "completed";
     case "CANCELED":
-    case "CANCELLED":
-      return "cancelled";
-    default:
-      return s.toLowerCase();
+    case "CANCELLED": return "cancelled";
+    default: return s.toLowerCase();
   }
 };

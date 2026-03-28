@@ -1,5 +1,10 @@
-import { useCallback, useMemo, useState, memo } from "react";
-import { prescriptionsMock } from "../data/adminMock";
+import { useCallback, useMemo, useState, useEffect, memo } from "react";
+import {
+  getAllPrescriptionsApi,
+  approvePrescriptionApi,
+  declinePrescriptionApi,
+  createOfflinePrescriptionApi,
+} from "../api/prescriptionApi";
 import {
   FiSearch,
   FiFilter,
@@ -410,7 +415,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
               Đóng
             </button>
 
-            {rx.status === "pending" && (
+            {(rx.status === "pending" || !rx.status) && (
               <div className="flex gap-2">
                 <button
                   onClick={() => onDecline(rx.id, reviewNote)}
@@ -720,7 +725,8 @@ function Field({ label, ...props }) {
 
 /* ── MAIN PAGE ── */
 function AdminPrescription() {
-  const [prescriptions, setPrescriptions] = useState(prescriptionsMock);
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
@@ -729,6 +735,127 @@ function AdminPrescription() {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const itemsPerPage = 6;
+
+  /* ── fetch prescriptions from ALL sources ── */
+  const fetchPrescriptions = useCallback(async () => {
+    setLoadingData(true);
+    try {
+      // 1. Lấy prescriptions từ API Prescription (Profile)
+      let profileRx = [];
+      try {
+        const resRx = await getAllPrescriptionsApi();
+        profileRx = resRx.data?.data || resRx.data || [];
+      } catch (err) {
+        console.error("Lỗi tải đơn thuốc profile:", err);
+      }
+
+      // 2. Lấy đơn hàng để lọc ra các đơn nhập toa trực tiếp (Order Rx)
+      let orderRx = [];
+      try {
+        const { getAllOrders } = await import("../services/orderService");
+        const allOrders = await getAllOrders();
+        // Lọc các đơn đang chờ xử lý có toa thuốc
+        const pendingOrders = allOrders.filter(o => o.status === "pending" && o.hasPrescription);
+        
+        pendingOrders.forEach(order => {
+          order.orderItems?.forEach((item, idx) => {
+            // Chỉ lấy các item có thông tin toa thuốc
+            const rx = item.prescription || item;
+            const isRxItem = 
+              item.itemType === "PRESCRIPTION" || 
+              item.isLens || 
+              rx.sphLeft != null || 
+              rx.sphRight != null;
+
+            if (isRxItem) {
+              orderRx.push({
+                id: `order-rx-${order.id}-${idx}`,
+                customerName: order.customer,
+                email: order.email,
+                userName: order.customer,
+                orderCode: order.code,
+                orderId: order.id,
+                source: "order", // Đánh dấu nguồn từ đơn hàng
+                status: "pending",
+                createdAt: order.createdAt,
+                ...rx, // Gộp các thông số sph, cyl, axis...
+              });
+            }
+          });
+        });
+      } catch (err) {
+        console.error("Lỗi trích xuất đơn thuốc từ đơn hàng:", err);
+      }
+
+      // 3. Hợp nhất
+      const combined = [
+        ...profileRx.map(r => ({ ...r, source: r.source || "profile" })),
+        ...orderRx
+      ];
+
+      // 4. Map API fields to component-expected shape
+      const mapped = combined.map((rx) => {
+        // Logic mới:
+        // true: Đã duyệt
+        // false + có ghi chú: Từ chối
+        // false + không ghi chú: Chờ duyệt
+        let statusValue = "pending";
+        if (rx.status === true || String(rx.status).toLowerCase() === 'approved') {
+          statusValue = "approved";
+        } else if ((rx.status === false || !rx.status) && (rx.adminNote || rx.reviewNote)) {
+          statusValue = "declined";
+        } else {
+          statusValue = "pending";
+        }
+
+        return {
+          id: rx.id ?? rx.prescriptionId,
+          prescriptionId: rx.prescriptionId || rx.id,
+          customer: rx.customerName || rx.userName || rx.customer || "N/A",
+          email: rx.customerEmail || rx.email || "",
+          avatar: rx.avatar || rx.user?.avatar || `https://ui-avatars.com/api/?name=${rx.customerName || rx.userName || "P"}&background=6366f1&color=fff`,
+          doctor: rx.doctorName || rx.doctor || "Chưa cập nhật",
+          hospital: rx.hospital || "N/A",
+          issuedDate: rx.issuedDate || rx.expirationDate || "N/A",
+          submittedAt: rx.submittedAt || rx.createdAt || "N/A",
+          status: statusValue,
+          source: rx.source || "online",
+          note: rx.note || (rx.orderCode ? `Toa đi kèm đơn # ${rx.orderCode}` : ""),
+          reviewNote: rx.adminNote || rx.reviewNote || "",
+          pd: rx.pd || 0,
+          imgUrl: rx.imgUrl || rx.imageUrl || "",
+          eyes: rx.eyes || {
+            right: { 
+              sphere: rx.sphRight, 
+              cylinder: rx.cylRight, 
+              axis: rx.axisRight, 
+              add: rx.addRight 
+            },
+            left: { 
+              sphere: rx.sphLeft, 
+              cylinder: rx.cylLeft, 
+              axis: rx.axisLeft, 
+              add: rx.addLeft 
+            },
+          },
+        };
+      });
+
+      // Sắp xếp đơn mới lên đầu
+      mapped.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+      
+      setPrescriptions(mapped);
+    } catch (err) {
+      console.error("Lỗi tải danh sách đơn thuốc:", err);
+      setPrescriptions([]);
+    } finally {
+      setLoadingData(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPrescriptions();
+  }, [fetchPrescriptions]);
 
   /* ── filter ── */
   const filtered = useMemo(() => {
@@ -771,31 +898,50 @@ function AdminPrescription() {
   const handleView = useCallback((rx) => setViewing(rx), []);
   const handleClose = useCallback(() => setViewing(null), []);
 
-  const handleApprove = useCallback((id, note) => {
-    setPrescriptions((prev) =>
-      prev.map((rx) =>
-        rx.id === id ? { ...rx, status: "approved", reviewNote: note } : rx,
-      ),
-    );
-    setViewing((v) =>
-      v ? { ...v, status: "approved", reviewNote: note } : null,
-    );
+  const handleApprove = useCallback(async (id, note) => {
+    try {
+      await approvePrescriptionApi(id, note);
+      setPrescriptions((prev) =>
+        prev.map((rx) =>
+          rx.id === id ? { ...rx, status: "approved", reviewNote: note } : rx,
+        ),
+      );
+      setViewing((v) =>
+        v ? { ...v, status: "approved", reviewNote: note } : null,
+      );
+    } catch (err) {
+      console.error("Lỗi duyệt đơn thuốc:", err);
+      alert("Duyệt đơn thuốc thất bại: " + (err?.response?.data?.message || err.message));
+    }
   }, []);
 
-  const handleDecline = useCallback((id, note) => {
-    setPrescriptions((prev) =>
-      prev.map((rx) =>
-        rx.id === id ? { ...rx, status: "declined", reviewNote: note } : rx,
-      ),
-    );
-    setViewing((v) =>
-      v ? { ...v, status: "declined", reviewNote: note } : null,
-    );
+  const handleDecline = useCallback(async (id, note) => {
+    try {
+      await declinePrescriptionApi(id, note);
+      setPrescriptions((prev) =>
+        prev.map((rx) =>
+          rx.id === id ? { ...rx, status: "declined", reviewNote: note } : rx,
+        ),
+      );
+      setViewing((v) =>
+        v ? { ...v, status: "declined", reviewNote: note } : null,
+      );
+    } catch (err) {
+      console.error("Lỗi từ chối đơn thuốc:", err);
+      alert("Từ chối đơn thuốc thất bại: " + (err?.response?.data?.message || err.message));
+    }
   }, []);
 
-  const handleAdd = useCallback((rx) => {
-    setPrescriptions((prev) => [rx, ...prev]);
-  }, []);
+  const handleAdd = useCallback(async (rxData) => {
+    try {
+      const res = await createOfflinePrescriptionApi(rxData);
+      // Reload data from API after adding
+      fetchPrescriptions();
+    } catch (err) {
+      console.error("Lỗi tạo đơn thuốc offline:", err);
+      alert("Tạo đơn thuốc thất bại: " + (err?.response?.data?.message || err.message));
+    }
+  }, [fetchPrescriptions]);
 
   /* ── stats ── */
   const stats = useMemo(
@@ -973,7 +1119,18 @@ function AdminPrescription() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {paginated.length === 0 ? (
+              {loadingData ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+                      <p className="text-sm text-gray-400">
+                        Đang tải đơn thuốc...
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
