@@ -20,7 +20,7 @@ import {
   updateCartItemService,
 } from "../services/cartService";
 
-import { checkoutOrder } from "../services/checkoutService";
+import { checkoutOrder, createVNPayPayment } from "../services/checkoutService";
 
 function Toast({ message, visible }) {
   if (!visible) return null;
@@ -76,6 +76,7 @@ function CheckoutPage() {
   };
 
   const [cartItems, setCartItems] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState("COD");
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -109,7 +110,10 @@ function CheckoutPage() {
           cartItemId: item.cartItemId,
           productId: item.productId,
           name: item.productName || item.product?.name,
-          image: item.imageUrl || item.product?.imageUrl || "https://placehold.co/100",
+          image:
+            item.imageUrl ||
+            item.product?.imageUrl ||
+            "https://placehold.co/100",
           price: item.unitPrice || 0,
           quantity: item.quantity,
           // Preserving prescription data
@@ -147,18 +151,24 @@ function CheckoutPage() {
     setFormData((prev) => ({ ...prev, fullName: user.name || "" }));
   }, [navigate]);
 
-  const total = cartItems.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
+  const total = cartItems.reduce(
+    (acc, item) => acc + Number(item.price) * item.quantity,
+    0,
+  );
   const shippingFee = calculateShippingFee(formData.city, total);
   const totalWithShipping = total + shippingFee;
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
     setTimeout(() => setToast({ visible: false, message: "" }), 3000);
   };
 
   const updateQty = async (productId, variantId, delta, cartItemId) => {
-    const item = cartItems.find(i => String(i.cartItemId) === String(cartItemId));
+    const item = cartItems.find(
+      (i) => String(i.cartItemId) === String(cartItemId),
+    );
     if (!item) return;
     const newQty = item.quantity + delta;
     if (newQty <= 0) {
@@ -167,7 +177,11 @@ function CheckoutPage() {
     }
     try {
       await updateCartItemService(cartItemId, newQty);
-      const updated = cartItems.map((i) => String(i.cartItemId) === String(cartItemId) ? { ...i, quantity: newQty } : i);
+      const updated = cartItems.map((i) =>
+        String(i.cartItemId) === String(cartItemId)
+          ? { ...i, quantity: newQty }
+          : i,
+      );
       setCartItems(updated);
       localStorage.setItem("cart", JSON.stringify(updated));
     } catch (error) {
@@ -178,7 +192,9 @@ function CheckoutPage() {
   const removeItem = async (productId, variantId, cartItemId) => {
     try {
       await deleteCartItemService(cartItemId);
-      const updated = cartItems.filter((i) => String(i.cartItemId) !== String(cartItemId));
+      const updated = cartItems.filter(
+        (i) => String(i.cartItemId) !== String(cartItemId),
+      );
       setCartItems(updated);
       localStorage.setItem("cart", JSON.stringify(updated));
       if (updated.length === 0) navigate("/shop");
@@ -189,14 +205,44 @@ function CheckoutPage() {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.phone || !formData.address || !formData.city) {
+
+    if (
+      !formData.fullName ||
+      !formData.phone ||
+      !formData.address ||
+      !formData.city
+    ) {
       showToast("Vui lòng điền đầy đủ thông tin!");
       return;
     }
+
     setPlacing(true);
+
     try {
-      console.log("PLACING ORDER WITH ITEMS:", cartItems);
-      await checkoutOrder(formData, shippingFee, cartItems);
+      const order = await checkoutOrder(
+        formData,
+        shippingFee,
+        cartItems,
+        paymentMethod,
+      );
+
+      console.log("Order:", order);
+
+      // ✅ VNPay
+      if (paymentMethod === "VNPAY") {
+        const paymentUrl = await createVNPayPayment(
+          order.finalPrice,
+          order.orderId,
+        );
+
+        console.log(paymentUrl);
+        console.log("Redirecting to:", paymentUrl);
+
+        window.location.href = paymentUrl; // 🚀 chuyển trang
+        return;
+      }
+
+      // ✅ COD
       setSuccess(true);
       localStorage.setItem("cart", JSON.stringify([]));
       window.dispatchEvent(new Event("storage"));
@@ -208,90 +254,180 @@ function CheckoutPage() {
     }
   };
 
-  if (success) return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-6">
-      <div className="text-center max-w-sm animate-pulse">
-        <FiCheck size={40} className="text-green-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Đặt hàng thành công!</h2>
-        <p className="text-stone-400">Đang chuyển về trang chủ...</p>
+  if (success)
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="text-center max-w-sm animate-pulse">
+          <FiCheck size={40} className="text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Đặt hàng thành công!</h2>
+          <p className="text-stone-400">Đang chuyển về trang chủ...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="min-h-screen bg-white text-stone-800 font-sans">
       <div className="border-b border-stone-100 px-6 py-4 flex items-center justify-between max-w-5xl mx-auto">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-stone-400 hover:text-stone-800 text-sm">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-stone-400 hover:text-stone-800 text-sm"
+        >
           <FiArrowLeft size={14} /> Quay lại
         </button>
-        <p className="text-[11px] text-stone-400 tracking-widest uppercase font-medium">Thanh toán</p>
+        <p className="text-[11px] text-stone-400 tracking-widest uppercase font-medium">
+          Thanh toán
+        </p>
         <div className="w-16" />
       </div>
 
-      <form onSubmit={handlePlaceOrder} className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10">
+      <form
+        onSubmit={handlePlaceOrder}
+        className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10"
+      >
         <div className="space-y-8">
           <div className="bg-white border border-stone-100 rounded-2xl p-6 shadow-sm">
             <h2 className="font-semibold text-lg mb-6 flex items-center gap-2">
-              <span className="w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs">1</span>
+              <span className="w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs">
+                1
+              </span>
               Thông tin giao hàng
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Field label="Họ và tên" required icon={FiUser}>
-                <input type="text" name="fullName" required value={formData.fullName} onChange={handleChange} className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl" />
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl"
+                />
               </Field>
               <Field label="Số điện thoại" required icon={FiPhone}>
-                <input type="tel" name="phone" required value={formData.phone} onChange={handleChange} className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl" />
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl"
+                />
               </Field>
               <Field label="Tỉnh / Thành phố" required icon={FiMapPin}>
-                <select name="city" required value={formData.city || ""} onChange={handleChange} className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl">
+                <select
+                  name="city"
+                  required
+                  value={formData.city || ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl"
+                >
                   <option value="">Chọn tỉnh/thành</option>
-                  {southernCities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                  {southernCities.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
               </Field>
               <Field label="Địa chỉ" required icon={FiMapPin}>
-                <input type="text" name="address" required value={formData.address} onChange={handleChange} className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl" />
+                <input
+                  type="text"
+                  name="address"
+                  required
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl"
+                />
               </Field>
             </div>
           </div>
 
           <div className="bg-white border border-stone-100 rounded-2xl p-6 shadow-sm">
-             <h2 className="font-semibold text-lg mb-6 flex items-center gap-2">
-              <span className="w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs">2</span>
-              Thanh toán (COD)
+            <h2 className="font-semibold text-lg mb-6 flex items-center gap-2">
+              <span className="w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs">
+                2
+              </span>
+              Thanh toán
             </h2>
-            <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl flex items-center gap-3">
-              <FiTruck className="text-stone-500" />
+
+            {/* COD */}
+            <div
+              onClick={() => setPaymentMethod("COD")}
+              className={`p-4 border rounded-xl flex items-center gap-3 cursor-pointer ${
+                paymentMethod === "COD"
+                  ? "border-black bg-stone-50"
+                  : "border-stone-200"
+              }`}
+            >
+              <FiTruck />
               <div>
                 <p className="text-sm font-medium">Thanh toán khi nhận hàng</p>
-                <p className="text-xs text-stone-400">Nhận hàng và thanh toán tại nhà</p>
+              </div>
+            </div>
+
+            {/* VNPay */}
+            <div
+              onClick={() => setPaymentMethod("VNPAY")}
+              className={`p-4 border rounded-xl flex items-center gap-3 cursor-pointer mt-3 ${
+                paymentMethod === "VNPAY"
+                  ? "border-black bg-stone-50"
+                  : "border-stone-200"
+              }`}
+            >
+              <FiCreditCard />
+              <div>
+                <p className="text-sm font-medium">Thanh toán VNPay</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="bg-white border border-stone-100 rounded-2xl p-6 shadow-sm h-fit sticky top-6">
-          <h3 className="font-semibold mb-5">Đơn hàng của bạn ({cartItems.length})</h3>
+          <h3 className="font-semibold mb-5">
+            Đơn hàng của bạn ({cartItems.length})
+          </h3>
           <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2">
-            {cartItems.map(item => (
+            {cartItems.map((item) => (
               <div key={item.cartItemId} className="flex gap-3 text-sm">
-                <img src={item.image} className="w-12 h-12 rounded-lg object-cover border border-stone-100" />
+                <img
+                  src={item.image}
+                  className="w-12 h-12 rounded-lg object-cover border border-stone-100"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-stone-400">Qty: {item.quantity} · {item.price.toLocaleString()}₫</p>
-                  {item.isLens && <p className="text-[10px] text-indigo-500 font-bold mt-0.5 tracking-tight uppercase">Đơn thuốc mắt</p>}
+                  <p className="text-xs text-stone-400">
+                    Qty: {item.quantity} · {item.price.toLocaleString()}₫
+                  </p>
+                  {item.isLens && (
+                    <p className="text-[10px] text-indigo-500 font-bold mt-0.5 tracking-tight uppercase">
+                      Đơn thuốc mắt
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
           </div>
           <div className="border-t border-stone-100 pt-4 space-y-2 text-sm">
-            <div className="flex justify-between text-stone-500"><span>Tạm tính</span><span>{total.toLocaleString()}₫</span></div>
-            <div className="flex justify-between text-stone-500"><span>Phí ship</span><span>{shippingFee.toLocaleString()}₫</span></div>
+            <div className="flex justify-between text-stone-500">
+              <span>Tạm tính</span>
+              <span>{total.toLocaleString()}₫</span>
+            </div>
+            <div className="flex justify-between text-stone-500">
+              <span>Phí ship</span>
+              <span>{shippingFee.toLocaleString()}₫</span>
+            </div>
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-stone-100">
               <span>Tổng cộng</span>
-              <span className="text-amber-600">{totalWithShipping.toLocaleString()}₫</span>
+              <span className="text-amber-600">
+                {totalWithShipping.toLocaleString()}₫
+              </span>
             </div>
           </div>
-          <button type="submit" disabled={placing} className="w-full mt-6 bg-black text-white py-4 rounded-full font-bold hover:bg-stone-800 transition-colors disabled:opacity-50 shadow-lg">
+          <button
+            type="submit"
+            disabled={placing}
+            className="w-full mt-6 bg-black text-white py-4 rounded-full font-bold hover:bg-stone-800 transition-colors disabled:opacity-50 shadow-lg"
+          >
             {placing ? "Đang xử lý..." : "Đặt hàng"}
           </button>
         </div>
