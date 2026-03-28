@@ -197,28 +197,22 @@ function ProductDetailPage() {
     );
   }
 
+  // FIX LỖI: Lấy giá trị category đúng chuẩn, chống lỗi undefined
   const product = {
-    id: productData.id,
+    id: productData.id || productData.productId,
     name: productData.name || "No name",
-    price: formatPrice(
-      productData.price || productData.variants?.[0]?.price || 0,
-    ),
+    price: formatPrice(productData.price || productData.variants?.[0]?.price || 0),
     priceNum: productData.price || productData.variants?.[0]?.price || 0,
-    category: productData.category,
+    category: (productData.category || productData.productType || "").toLowerCase(),
     description: productData.description,
-    images: productData.variants?.map((v) => v.imageUrl) || [
-      "https://via.placeholder.com/500",
-    ],
+    images: productData.variants?.map((v) => v.imageUrl) || ["https://via.placeholder.com/500"],
     colors: productData.variants?.map((v) => v.color) || [],
     specs: [
       { label: "Thương hiệu", value: productData.brand },
-      { label: "Loại sản phẩm", value: productData.category },
+      { label: "Loại sản phẩm", value: productData.category || productData.productType },
       {
         label: "Tồn kho",
-        value: productData.variants?.reduce(
-          (sum, v) => sum + v.stockQuantity,
-          0,
-        ),
+        value: productData.variants?.reduce((sum, v) => sum + v.stockQuantity, 0),
       },
       {
         label: "Hỗ trợ độ",
@@ -228,9 +222,8 @@ function ProductDetailPage() {
   };
 
   const selectedVariantUI = productData.variants?.[activeColor];
-  let stockText = "",
-    stockColor = "",
-    isOutOfStock = false;
+  let stockText = "", stockColor = "", isOutOfStock = false;
+  
   if (!selectedVariantUI || selectedVariantUI.stockQuantity === 0) {
     stockText = "Hết hàng · Có thể đặt trước";
     stockColor = "text-red-500";
@@ -246,42 +239,57 @@ function ProductDetailPage() {
   const maxStock = selectedVariantUI?.stockQuantity || 0;
 
   const handleAddToCart = async () => {
+    // FIX LỖI: Bắt buộc chọn tuỳ chọn nếu mua tròng kính
+    const productCat = (productData.category || productData.productType || "").toLowerCase();
+    if (productCat === "lens" && !lensOption) {
+      showToast("Vui lòng chọn phương thức nhập độ kính!");
+      return;
+    }
+
     let cart;
     try {
       cart = JSON.parse(localStorage.getItem("cart")) || [];
     } catch {
       cart = [];
     }
+    
     const selectedVariant = productData.variants[activeColor];
     if (!selectedVariant) {
-      showToast("Vui lòng chọn màu");
+      showToast("Vui lòng chọn màu sắc");
       return;
     }
+
+    // FIX LỖI: Cập nhật lấy giá đúng theo Variant, chống lỗi undefined / price = 0
+    const finalPrice = selectedVariant.price || productData.price || 0;
+
     const cartItem = {
-      productId: productData.id,
+      productId: productData.id || productData.productId,
       name: productData.name,
       brand: productData.brand,
-      price: productData.price,
+      price: finalPrice, 
       quantity,
       variant: selectedVariant,
       isPreOrder: isOutOfStock,
     };
+    
     const idx = cart.findIndex(
       (item) => item.variant?.variantId === selectedVariant.variantId,
     );
+    
     if (idx !== -1) cart[idx].quantity += quantity;
     else cart.push(cartItem);
+    
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("storage"));
+    
     try {
       // Prepare prescription payload if manual entry is selected
       const isLens = lensOption === "manual";
       const apiRes = await addToCartService({
-        productId: productData.id,
+        productId: productData.id || productData.productId,
         variantId: selectedVariant.variantId,
         quantity,
         isLens,
-        // Manual entry parameters
         sphLeft: isLens ? parseFloat(prescription.eyes.left.sphere) || 0 : null,
         sphRight: isLens ? parseFloat(prescription.eyes.right.sphere) || 0 : null,
         cylLeft: isLens ? parseFloat(prescription.eyes.left.cylinder) || 0 : null,
@@ -316,15 +324,10 @@ function ProductDetailPage() {
         @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         @keyframes imgIn   { from{opacity:0;transform:scale(1.03)} to{opacity:1;transform:scale(1)} }
         .thumb-ring { box-shadow: 0 0 0 2px #1c1917; }
-        .color-pill-active {  background: #1c1917;
-  color: #fff;
-  border-color: #1c1917;
-  box-shadow: 0 0 0 2px rgba(28,25,23,0.2);
-  transform: scale(1.05); }
+        .color-pill-active {  background: #1c1917; color: #fff; border-color: #1c1917; box-shadow: 0 0 0 2px rgba(28,25,23,0.2); transform: scale(1.05); }
         .color-pill { border: 1.5px solid #e7e5e4; padding: 6px 16px; border-radius: 99px; font-size:13px; font-weight:500; transition: all .15s; cursor:pointer; background: white; color: #44403c; }
         .color-pill:hover { border-color: #a8a29e; }
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
         input[type=number] { -moz-appearance: textfield; }
       `}</style>
 
@@ -363,12 +366,12 @@ function ProductDetailPage() {
             {/* ── LEFT: Images ── */}
             <div className="space-y-3" style={{ animation: "fadeIn .5s ease" }}>
               {/* Main image */}
-              <div className="relative aspect-square overflow-hidden rounded-3xl bg-stone-50 group border border-stone-100">
+              <div className="relative aspect-square overflow-hidden rounded-3xl bg-white group border border-stone-100 p-4 shadow-sm">
                 <img
                   key={activeImg}
                   src={product.images[activeImg]}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain mix-blend-multiply"
                   style={{ animation: "imgIn .35s ease" }}
                 />
                 {/* Image counter pill */}
@@ -382,13 +385,13 @@ function ProductDetailPage() {
                   <>
                     <button
                       onClick={prevImg}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-stone-700 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 hover:bg-white border border-stone-100"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-stone-700 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 hover:bg-white border border-stone-100 shadow-sm"
                     >
                       <FiChevronLeft size={16} />
                     </button>
                     <button
                       onClick={nextImg}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-stone-700 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 hover:bg-white border border-stone-100"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-stone-700 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 hover:bg-white border border-stone-100 shadow-sm"
                     >
                       <FiChevronRight size={16} />
                     </button>
@@ -403,7 +406,7 @@ function ProductDetailPage() {
                     <button
                       key={i}
                       onClick={() => setActiveImg(i)}
-                      className={`w-[72px] h-[72px] flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
+                      className={`w-[72px] h-[72px] flex-shrink-0 rounded-xl overflow-hidden border-2 bg-white p-1 transition-all ${
                         i === activeImg
                           ? "thumb-ring border-stone-900"
                           : "border-stone-100 hover:border-stone-300"
@@ -412,7 +415,7 @@ function ProductDetailPage() {
                       <img
                         src={img}
                         alt=""
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain mix-blend-multiply"
                       />
                     </button>
                   ))}
@@ -505,7 +508,7 @@ function ProductDetailPage() {
                   <button
                     disabled={quantity <= 1}
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors text-xl font-light select-none"
+                    className="w-10 h-10 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors text-xl font-light select-none disabled:opacity-50"
                   >
                     −
                   </button>
@@ -515,7 +518,7 @@ function ProductDetailPage() {
                   <button
                     disabled={quantity > maxStock - 1}
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors text-xl font-light select-none"
+                    className="w-10 h-10 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors text-xl font-light select-none disabled:opacity-50"
                   >
                     +
                   </button>
@@ -524,7 +527,7 @@ function ProductDetailPage() {
 
               {/* Lens / Frame options */}
               {(product.category === "frame" ||
-                product.category?.toLowerCase() === "lens") && (
+                product.category === "lens") && (
                 <div>
                   {product.category === "frame" && (
                     <FramePurchaseOptions
@@ -532,7 +535,7 @@ function ProductDetailPage() {
                       navigate={navigate}
                     />
                   )}
-                  {product.category?.toLowerCase() === "lens" && (
+                  {product.category === "lens" && (
                     <LensPurchaseOptions
                       lensOption={lensOption}
                       setLensOption={setLensOption}
@@ -575,7 +578,7 @@ function ProductDetailPage() {
                     <p className="text-[10px] text-stone-400 uppercase tracking-wider font-semibold mb-1">
                       {spec.label}
                     </p>
-                    <p className="text-sm font-semibold text-stone-800">
+                    <p className="text-sm font-semibold text-stone-800 truncate">
                       {spec.value ?? "—"}
                     </p>
                   </div>
