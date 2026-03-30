@@ -9,8 +9,8 @@ export const getAllReturnRequestsApi = () => {
 };
 
 // ADMIN / STAFF cập nhật status
-export const updateReturnRequestStatusApi = (id, status) => {
-    return axiosClient.patch(`/return-requests/${id}/status`, { status });
+export const updateReturnRequestStatusApi = (id, payload) => {
+    return axiosClient.patch(`/return-requests/${id}/status`, payload);
 };
 
 export const getReturnRequestByOrderItemApi = (orderItemId) => {

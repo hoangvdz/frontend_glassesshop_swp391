@@ -245,11 +245,17 @@ function OrderHistoryPage() {
                                                         const returnStatus = getReturnStatusInfo(returnInfo.status);
 
                                                         return (
-                                                            <span
+                                                            <div
                                                                 className={`px-4 py-2 rounded-xl text-sm font-semibold ${returnStatus.bg} ${returnStatus.color}`}
                                                             >
-                                                            Đổi/Trả: {returnStatus.text}
-                                                            </span>
+                                                                <div>Đổi/Trả: {returnStatus.text}</div>
+
+                                                                {returnInfo.status === "REJECTED" && (
+                                                                    <div className="mt-1 text-xs text-red-500">
+                                                                        Lý do: {returnInfo.rejectionReason || "Không có lý do"}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         );
                                                     }
 

@@ -54,6 +54,21 @@ function ReturnRequestManagementPage() {
     }, [requests, keyword, statusFilter]);
 
     const handleUpdateStatus = async (requestId, newStatus) => {
+        let payload = { status: newStatus };
+
+        if (newStatus === "REJECTED") {
+            const reason = window.prompt("Nhập lý do từ chối:");
+
+            if (reason === null) return;
+
+            if (!reason.trim()) {
+                alert("Vui lòng nhập lý do từ chối");
+                return;
+            }
+
+            payload.rejectionReason = reason.trim();
+        }
+
         const confirmText = getConfirmText(newStatus);
         const ok = window.confirm(confirmText);
         if (!ok) return;
@@ -61,7 +76,7 @@ function ReturnRequestManagementPage() {
         try {
             setUpdatingId(requestId);
 
-            const res = await updateReturnRequestStatusApi(requestId, newStatus);
+            const res = await updateReturnRequestStatusApi(requestId, payload);
             const updated = res?.data?.data;
 
             setRequests((prev) =>
@@ -82,51 +97,52 @@ function ReturnRequestManagementPage() {
 
     const renderActions = (item) => {
         const isUpdating = updatingId === item.requestId;
+        const canHandle = role === "ADMIN" || role === "OPERATIONAL_STAFF";
 
-        if (role === "OPERATIONAL_STAFF" && item.status === "PENDING") {
+        // PENDING → cho cả ADMIN + STAFF approve + reject
+        if (item.status === "PENDING" && canHandle) {
             return (
-                <button
-                    onClick={() => handleUpdateStatus(item.requestId, "APPROVED")}
-                    disabled={isUpdating}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
-                        isUpdating
-                            ? "bg-stone-300 text-white cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                    }`}
-                >
-                    {isUpdating ? "Đang cập nhật..." : "Duyệt"}
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => handleUpdateStatus(item.requestId, "APPROVED")}
+                        disabled={isUpdating}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold ${
+                            isUpdating
+                                ? "bg-stone-300 text-white cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                    >
+                        {isUpdating ? "..." : "Đồng ý"}
+                    </button>
+
+                    <button
+                        onClick={() => handleUpdateStatus(item.requestId, "REJECTED")}
+                        disabled={isUpdating}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold ${
+                            isUpdating
+                                ? "bg-stone-300 text-white cursor-not-allowed"
+                                : "bg-red-600 hover:bg-red-700 text-white"
+                        }`}
+                    >
+                        {isUpdating ? "..." : "Từ chối"}
+                    </button>
+                </div>
             );
         }
 
-        if (role === "ADMIN" && item.status === "PENDING") {
-            return (
-                <button
-                    onClick={() => handleUpdateStatus(item.requestId, "REJECTED")}
-                    disabled={isUpdating}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
-                        isUpdating
-                            ? "bg-stone-300 text-white cursor-not-allowed"
-                            : "bg-red-600 hover:bg-red-700 text-white"
-                    }`}
-                >
-                    {isUpdating ? "Đang cập nhật..." : "Từ chối"}
-                </button>
-            );
-        }
-
-        if (role === "ADMIN" && item.status === "APPROVED") {
+        // APPROVED → cho cả ADMIN + STAFF hoàn tất
+        if (item.status === "APPROVED" && canHandle) {
             return (
                 <button
                     onClick={() => handleUpdateStatus(item.requestId, "COMPLETED")}
                     disabled={isUpdating}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold ${
                         isUpdating
                             ? "bg-stone-300 text-white cursor-not-allowed"
                             : "bg-emerald-600 hover:bg-emerald-700 text-white"
                     }`}
                 >
-                    {isUpdating ? "Đang cập nhật..." : "Hoàn tất"}
+                    {isUpdating ? "..." : "Hoàn tất"}
                 </button>
             );
         }

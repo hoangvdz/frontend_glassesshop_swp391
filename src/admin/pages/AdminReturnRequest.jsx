@@ -286,40 +286,26 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
                         </div>
 
                         <div className="flex gap-4 flex-wrap">
-                            {role === "OPERATIONAL_STAFF" && item.status === "PENDING" && (
-                                <button
-                                    disabled={updating}
-                                    onClick={() => onUpdate(item.requestId, "APPROVED")}
-                                    className="px-6 py-4 rounded-2xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
-                                >
-                                    {updating ? "Đang cập nhật..." : "Duyệt yêu cầu"}
-                                </button>
-                            )}
+                            {item.status === "PENDING" &&
+                                (role === "ADMIN" || role === "OPERATIONAL_STAFF") && (
+                                    <>
+                                        <button
+                                            disabled={updating}
+                                            onClick={() => onUpdate(item.requestId, "APPROVED")}
+                                            className="px-6 py-4 rounded-2xl bg-blue-600 text-white text-lg font-semibold"
+                                        >
+                                            Đồng ý
+                                        </button>
 
-                            {role === "ADMIN" && item.status === "PENDING" && (
-                                <button
-                                    disabled={updating}
-                                    onClick={() => onUpdate(item.requestId, "REJECTED")}
-                                    className="px-6 py-4 rounded-2xl bg-red-600 text-white text-lg font-semibold hover:bg-red-700 disabled:opacity-50"
-                                >
-                                    {updating ? "Đang cập nhật..." : "Từ chối"}
-                                </button>
-                            )}
-
-                            {role === "ADMIN" && item.status === "APPROVED" && (
-                                <button
-                                    disabled={updating}
-                                    onClick={() => onUpdate(item.requestId, "COMPLETED")}
-                                    className="px-6 py-4 rounded-2xl bg-emerald-600 text-white text-lg font-semibold hover:bg-emerald-700 disabled:opacity-50"
-                                >
-                                    {updating ? "Đang cập nhật..." : "Hoàn tất"}
-                                </button>
-                            )}
-
-                            {((role === "ADMIN" && item.status === "REJECTED") ||
-                                item.status === "COMPLETED") && (
-                                <div className="text-slate-400 text-lg">Không còn thao tác nào.</div>
-                            )}
+                                        <button
+                                            disabled={updating}
+                                            onClick={() => onUpdate(item.requestId, "REJECTED")}
+                                            className="px-6 py-4 rounded-2xl bg-red-600 text-white text-lg font-semibold"
+                                        >
+                                            Từ chối
+                                        </button>
+                                    </>
+                                )}
                         </div>
                     </div>
                 </div>
