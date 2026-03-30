@@ -239,8 +239,15 @@ function ProductDetailPage() {
   const maxStock = selectedVariantUI?.stockQuantity || 0;
 
   const handleAddToCart = async () => {
-    // FIX LỖI: Bắt buộc chọn tuỳ chọn nếu mua tròng kính
     const productCat = (productData.category || productData.productType || "").toLowerCase();
+    const selectedVariant = productData.variants[activeColor];
+    if (productCat === "frame") {
+      // Go directly to prescription page
+      navigate(`/prescription/${product.id}?variantId=${selectedVariant.variantId}`);
+      return;
+    }
+
+    // FIX LỖI: Bắt buộc chọn tuỳ chọn nếu mua tròng kính
     if (productCat === "lens" && !lensOption) {
       showToast("Vui lòng chọn phương thức nhập độ kính!");
       return;
@@ -253,7 +260,6 @@ function ProductDetailPage() {
       cart = [];
     }
     
-    const selectedVariant = productData.variants[activeColor];
     if (!selectedVariant) {
       showToast("Vui lòng chọn màu sắc");
       return;
@@ -538,24 +544,15 @@ function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Lens / Frame options */}
-              {(product.category === "frame" ||
-                product.category === "lens") && (
+              {/* Lens options */}
+              {product.category === "lens" && (
                 <div>
-                  {product.category === "frame" && (
-                    <FramePurchaseOptions
-                      product={product}
-                      navigate={navigate}
-                    />
-                  )}
-                  {product.category === "lens" && (
-                    <LensPurchaseOptions
-                      lensOption={lensOption}
-                      setLensOption={setLensOption}
-                      prescription={prescription}
-                      setPrescription={setPrescription}
-                    />
-                  )}
+                  <LensPurchaseOptions
+                    lensOption={lensOption}
+                    setLensOption={setLensOption}
+                    prescription={prescription}
+                    setPrescription={setPrescription}
+                  />
                 </div>
               )}
 
@@ -778,39 +775,6 @@ function ProductDetailPage() {
         </section>
       </div>
     </>
-  );
-}
-
-/* ─── Frame purchase options ─── */
-function FramePurchaseOptions({ product, navigate }) {
-  return (
-    <div className="space-y-3">
-      <button
-        onClick={() => navigate(`/prescription/${product.id}`)}
-        className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100/70 hover:border-indigo-300 transition-all group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-            <FiEye size={17} className="text-indigo-600" />
-          </div>
-          <div className="text-left">
-            <p className="font-semibold text-indigo-900 text-sm">
-              Mua kèm tròng có độ
-            </p>
-            <p className="text-[11px] text-indigo-400 mt-0.5">
-              Cắt kính theo đơn thuốc của bạn
-            </p>
-          </div>
-        </div>
-        <FiChevronRight
-          size={16}
-          className="text-indigo-400 group-hover:translate-x-0.5 transition-transform"
-        />
-      </button>
-      <p className="text-[10px] text-center text-stone-300 uppercase tracking-[0.25em] font-medium">
-        — hoặc mua gọng không độ —
-      </p>
-    </div>
   );
 }
 

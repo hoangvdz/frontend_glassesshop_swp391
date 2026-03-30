@@ -1,6 +1,6 @@
-export default function FrameSummary({ product }) {
+export default function FrameSummary({ product, variantId }) {
   if (!product) return null;
-  const variant = product.variants?.[0] || {};
+  const variant = product.variants?.find(v => String(v.variantId) === String(variantId)) || product.variants?.[0] || {};
 
   return (
     <div className="bg-white rounded-lg p-6 h-fit sticky top-6 border border-gray-100 shadow-sm">
@@ -16,7 +16,7 @@ export default function FrameSummary({ product }) {
       <div className="space-y-1 mb-4">
         <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans">Gọng kính</p>
         <p className="font-semibold text-gray-800 text-lg leading-tight">{product.name}</p>
-        <p className="text-sm text-gray-500">{product.brand}</p>
+        <p className="text-sm text-gray-500">{product.brand} {variant.color ? `· ${variant.color}` : ""}</p>
       </div>
 
       <div className="h-px bg-gray-100 my-5" />
@@ -30,7 +30,7 @@ export default function FrameSummary({ product }) {
         <div>
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-1">Tạm tính</p>
           <span className="font-bold text-2xl text-amber-500">
-            {(product.price || 0).toLocaleString("vi-VN")}
+            {(variant.price || product.price || 0).toLocaleString("vi-VN")}
             <span className="text-sm ml-1">₫</span>
           </span>
         </div>

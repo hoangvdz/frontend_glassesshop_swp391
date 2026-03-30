@@ -95,17 +95,20 @@ function CheckoutPage() {
       user = null;
     }
 
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
+    // Allow guest checkout — don't redirect to login
+    // we'll just check if there's a local cart if no user
     const fetchCart = async () => {
       try {
-        const data = await getCartByUserService(user.userId);
-        console.log("=== RAW CART DATA FROM SERVER ===", data);
+        let cartData = [];
+        if (user) {
+          const res = await getCartByUserService(user.userId);
+          cartData = Array.isArray(res) ? res : res?.data || [];
+        } else {
+          // GUEST FLOW: Load from localStorage
+          cartData = JSON.parse(localStorage.getItem("cart")) || [];
+        }
 
-        const cartData = Array.isArray(data) ? data : data?.data || [];
+        console.log("=== CART DATA ===", cartData);
 
         const checkLocalPreorder = (vId) => {
           try {
@@ -146,9 +149,7 @@ function CheckoutPage() {
           },
         }));
 
-        // ✅ update UI
         setCartItems(mapped);
-        // ✅ update localStorage (GIỮ cache)
         localStorage.setItem("cart", JSON.stringify(mapped));
         window.dispatchEvent(new Event("storage"));
 
@@ -159,7 +160,7 @@ function CheckoutPage() {
     };
 
     fetchCart();
-    setFormData((prev) => ({ ...prev, fullName: user.name || "" }));
+    if (user) setFormData((prev) => ({ ...prev, fullName: user.name || "" }));
   }, [navigate]);
 
   const total = cartItems.reduce(

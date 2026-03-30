@@ -10,6 +10,8 @@ const sphOptions = generateOptions(-10.0, 8.0, 0.25);
 const cylOptions = generateOptions(-6.0, 0, 0.25);
 const axisOptions = Array.from({ length: 181 }, (_, i) => i);
 const addOptions = generateOptions(0, 4.0, 0.25);
+const prismOptions = generateOptions(0, 5.0, 0.5);
+const baseOptions = ["Base In", "Base Out", "Base Up", "Base Down"];
 
 export default function PrescriptionTable({ form, errors, updateEye }) {
   return (
@@ -23,6 +25,12 @@ export default function PrescriptionTable({ form, errors, updateEye }) {
               <th className="px-4 py-3 text-center font-semibold text-stone-700 uppercase tracking-wider text-[10px]">CYL</th>
               <th className="px-4 py-3 text-center font-semibold text-stone-700 uppercase tracking-wider text-[10px]">AXIS</th>
               <th className="px-4 py-3 text-center font-semibold text-stone-700 uppercase tracking-wider text-[10px]">ADD</th>
+              {form.prism && (
+                <>
+                  <th className="px-4 py-3 text-center font-semibold text-stone-700 uppercase tracking-wider text-[10px]">Prism</th>
+                  <th className="px-4 py-3 text-center font-semibold text-stone-700 uppercase tracking-wider text-[10px]">Base</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
@@ -90,6 +98,26 @@ function EyeRow({ label, eye, form, errors, updateEye }) {
           placeholder="Add"
         />
       </td>
+      {form.prism && (
+        <>
+          <td className="px-2 py-4">
+            <Cell 
+              value={data.prism} 
+              onChange={(v) => updateEye(eye, "prism", v)} 
+              options={prismOptions} 
+              placeholder="Prism"
+            />
+          </td>
+          <td className="px-2 py-4">
+            <Cell 
+              value={data.base} 
+              onChange={(v) => updateEye(eye, "base", v)} 
+              options={baseOptions} 
+              placeholder="Base"
+            />
+          </td>
+        </>
+      )}
     </tr>
   );
 }
