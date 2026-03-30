@@ -176,6 +176,11 @@ function AdminSidebar({ collapsed }) {
               "Orders",
             )}
           </div>
+
+            {renderItem("/dashboard/return-requests",
+                <FiEye size={18} />,
+                "Return Requests")}
+
           <div className="relative">
             {renderItem(
               "/dashboard/preoders",
