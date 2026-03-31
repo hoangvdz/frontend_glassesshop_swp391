@@ -82,9 +82,17 @@ export default function LoginPage() {
       if (decoded.role === "ADMIN" || decoded.role === "OPERATIONAL_STAFF")
         navigate("/dashboard");
       else navigate(from);
-    } catch {
-      setError("Lỗi kết nối máy chủ. Vui lòng thử lại.");
-    } finally {
+    } catch (error) {
+
+        if (error.response) {
+            const status = error.response.status;
+             if (status === 401) {
+                setError("Sai email hoặc mật khẩu");
+            } else if (status === 403) {
+                setError("Tài khoản bị khóa");
+            }
+        }
+    }finally {
       setLoading(false);
     }
   };
