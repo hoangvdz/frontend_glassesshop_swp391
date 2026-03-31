@@ -301,25 +301,38 @@ function OrderHistoryPage() {
                     )}
 
                     {/* Đã giao (Completed) */}
-                    {statusInfo.code === 3 && (
-                      <>
-                        <Link
-                          to={`/return-request?orderItemId=${firstItem.orderItemId}`}
-                          className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-colors text-sm"
-                        >
-                          Return/Exchange Request
-                        </Link>
-                        {firstItem && (
-                          <Link
-                            to={`/product/${firstItem.productId}#review-form`}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md shadow-blue-500/20"
-                          >
-                            <FiCheckCircle />
-                            Review Product
-                          </Link>
-                        )}
-                      </>
-                    )}
+                      {statusInfo.code === 3 && (
+                          <>
+                              {!returnRequest ? (
+                                  <Link
+                                      to={`/return-request?orderItemId=${firstItem.orderItemId}`}
+                                      className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-colors text-sm"
+                                  >
+                                      Return/Exchange Request
+                                  </Link>
+                              ) : (
+                                  <button
+                                      disabled
+                                      className="px-5 py-2.5 bg-stone-100 border border-stone-200 text-stone-500 font-semibold rounded-xl text-sm cursor-not-allowed"
+                                  >
+                                      {returnRequest.status === "PENDING" && "Request Submitted"}
+                                      {returnRequest.status === "APPROVED" && "Approved"}
+                                      {returnRequest.status === "REJECTED" && "Rejected"}
+                                      {returnRequest.status === "COMPLETED" && "Completed"}
+                                  </button>
+                              )}
+
+                              {firstItem && (
+                                  <Link
+                                      to={`/product/${firstItem.productId}#review-form`}
+                                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md shadow-blue-500/20"
+                                  >
+                                      <FiCheckCircle />
+                                      Review Product
+                                  </Link>
+                              )}
+                          </>
+                      )}
 
                     {/* Đã hủy (Cancelled) */}
                     {statusInfo.code === 4 && (

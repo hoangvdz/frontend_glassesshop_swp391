@@ -25,7 +25,6 @@ function ReturnRequestManagementPage() {
 
             const res = await getAllReturnRequestsApi();
             const data = res?.data?.data || [];
-
             setRequests(data);
         } catch (err) {
             console.error("Error loading return requests:", err);
@@ -47,7 +46,10 @@ function ReturnRequestManagementPage() {
                 String(item.orderId || "").includes(q) ||
                 String(item.orderItemId || "").includes(q) ||
                 (item.reason || "").toLowerCase().includes(q) ||
-                (item.description || "").toLowerCase().includes(q);
+                (item.description || "").toLowerCase().includes(q) ||
+                (item.rejectionReason || "").toLowerCase().includes(q) ||
+                (item.requestType || "").toLowerCase().includes(q) ||
+                String(item.replacementOrderId || "").includes(q);
 
             return matchStatus && matchKeyword;
         });
@@ -58,7 +60,6 @@ function ReturnRequestManagementPage() {
 
         if (newStatus === "REJECTED") {
             const reason = window.prompt("Enter rejection reason:");
-
             if (reason === null) return;
 
             if (!reason.trim()) {
@@ -85,7 +86,13 @@ function ReturnRequestManagementPage() {
                 )
             );
 
-            alert("Status updated successfully");
+            if (newStatus === "APPROVED" && updated?.replacementOrderId) {
+                alert(
+                    `Request approved successfully. Replacement order #${updated.replacementOrderId} has been created.`
+                );
+            } else {
+                alert("Status updated successfully");
+            }
         } catch (err) {
             console.error("Error updating status:", err);
             const msg = err?.response?.data?.message || "Failed to update status";
@@ -168,14 +175,12 @@ function ReturnRequestManagementPage() {
                                 Return Request Management
                             </h1>
                             <p className="text-stone-500 mt-1">
-                                Staff can approve requests, Admin can reject or complete them
+                                Staff can approve requests, while Admin can reject or complete them
                             </p>
                         </div>
 
                         <div className="text-sm">
-              <span className="font-semibold text-stone-700">
-                Current Role:
-              </span>{" "}
+                            <span className="font-semibold text-stone-700">Current Role: </span>
                             <span className="px-2 py-1 rounded-lg bg-stone-100 text-stone-800">
                 {role || "UNKNOWN"}
               </span>
@@ -224,24 +229,26 @@ function ReturnRequestManagementPage() {
 
                 <div className="p-6 overflow-x-auto">
                     {filteredRequests.length === 0 ? (
-                        <div className="text-stone-500">
-                            No return requests found.
-                        </div>
+                        <div className="text-stone-500">No return requests found.</div>
                     ) : (
-                        <table className="w-full min-w-[1100px] border-separate border-spacing-y-3">
+                        <table className="w-full min-w-[1300px] border-separate border-spacing-y-3">
                             <thead>
                             <tr className="text-left text-sm text-stone-500">
                                 <th className="px-4">Request ID</th>
                                 <th className="px-4">Order ID</th>
                                 <th className="px-4">Order Item ID</th>
+                                <th className="px-4">Type</th>
                                 <th className="px-4">Reason</th>
                                 <th className="px-4">Description</th>
+                                <th className="px-4">Rejection Reason</th>
+                                <th className="px-4">Replacement Order</th>
                                 <th className="px-4">Status</th>
                                 <th className="px-4">Created At</th>
                                 <th className="px-4">Resolved At</th>
                                 <th className="px-4">Actions</th>
                             </tr>
                             </thead>
+
                             <tbody>
                             {filteredRequests.map((item) => (
                                 <tr
@@ -260,16 +267,24 @@ function ReturnRequestManagementPage() {
                                         #{item.orderItemId ?? "N/A"}
                                     </td>
 
+                                    <td className="px-4 py-4 text-stone-700">
+                                        {item.requestType || "-"}
+                                    </td>
+
                                     <td className="px-4 py-4 text-stone-700 max-w-[220px]">
-                                        <div className="line-clamp-2">
-                                            {item.reason || "-"}
-                                        </div>
+                                        <div className="line-clamp-2">{item.reason || "-"}</div>
                                     </td>
 
                                     <td className="px-4 py-4 text-stone-600 max-w-[260px]">
-                                        <div className="line-clamp-3">
-                                            {item.description || "-"}
-                                        </div>
+                                        <div className="line-clamp-3">{item.description || "-"}</div>
+                                    </td>
+
+                                    <td className="px-4 py-4 text-stone-600 max-w-[220px]">
+                                        <div className="line-clamp-2">{item.rejectionReason || "-"}</div>
+                                    </td>
+
+                                    <td className="px-4 py-4 text-stone-700">
+                                        {item.replacementOrderId ? `#${item.replacementOrderId}` : "-"}
                                     </td>
 
                                     <td className="px-4 py-4">
@@ -281,9 +296,7 @@ function ReturnRequestManagementPage() {
                                     </td>
 
                                     <td className="px-4 py-4 text-stone-600 text-sm">
-                                        {item.resolvedAt
-                                            ? formatDateTime(item.resolvedAt)
-                                            : "-"}
+                                        {item.resolvedAt ? formatDateTime(item.resolvedAt) : "-"}
                                     </td>
 
                                     <td className="px-4 py-4">{renderActions(item)}</td>
