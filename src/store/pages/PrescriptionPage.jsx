@@ -9,11 +9,12 @@ import SubmitBar from "../components/prescription/SubmitBar";
 import { getProductByIdApi } from "../api/productApi";
 import { getAllProducts } from "../services/productService";
 import { addToCartApi } from "../api/cartApi";
+
 import {
-  getMyPrescriptionsApi,
-  savePrescriptionApi,
-  deletePrescriptionApi
-} from "../api/prescriptionApi";
+  deleteUserPrescription,
+  getMyUserPrescriptions,
+  saveUserPrescription,
+} from "../services/userPrescriptionService";
 
 export default function PrescriptionPage() {
   const { id } = useParams();
@@ -56,7 +57,9 @@ export default function PrescriptionPage() {
         } else {
           setLoadingLenses(true);
           const allProducts = await getAllProducts();
-          const filteredLenses = allProducts.filter(p => (p.category || p.productType || "").toLowerCase() === "lens");
+          const filteredLenses = allProducts.filter(
+            (p) => (p.category || p.productType || "").toLowerCase() === "lens",
+          );
           setLenses(filteredLenses);
           setLoadingLenses(false);
         }
@@ -75,8 +78,9 @@ export default function PrescriptionPage() {
     const fetchPrescriptions = async () => {
       setLoadingRx(true);
       try {
-        const res = await getMyPrescriptionsApi();
-        const data = res.data?.data || res.data || [];
+        const res = await getMyUserPrescriptions();
+        const data = res || [];
+        console.log(res);
         setSavedPrescriptions(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error loading saved prescriptions:", err);
@@ -88,37 +92,58 @@ export default function PrescriptionPage() {
     fetchPrescriptions();
   }, []);
 
+  const format = (val) =>
+    val !== null && val !== undefined ? Number(val).toFixed(2) : "";
+
   /* ---------- APPLY SAVED PRESCRIPTION ---------- */
   const applySavedPrescription = (rx) => {
-    setForm((prev) => ({
-      ...prev,
+    console.log(rx);
+
+    const hasPrism =
+      rx.prismLeft != null ||
+      rx.prismRight != null ||
+      rx.baseLeft != null ||
+      rx.baseRight != null;
+
+    setForm({
       right: {
-        sph: rx.sphRight != null ? String(rx.sphRight) : "",
-        cyl: rx.cylRight != null ? String(rx.cylRight) : "",
-        axis: rx.axisRight != null ? String(rx.axisRight) : "",
-        add: rx.addRight != null ? String(rx.addRight) : "",
+        sph: format(rx.sphRight),
+        cyl: format(rx.cylRight),
+        axis: rx.axisRight ?? "",
+        add: format(rx.addRight),
+        prism: format(rx.prismRight),
+        base: rx.baseRight ?? "",
       },
       left: {
-        sph: rx.sphLeft != null ? String(rx.sphLeft) : "",
-        cyl: rx.cylLeft != null ? String(rx.cylLeft) : "",
-        axis: rx.axisLeft != null ? String(rx.axisLeft) : "",
-        add: rx.addLeft != null ? String(rx.addLeft) : "",
+        sph: format(rx.sphLeft),
+        cyl: format(rx.cylLeft),
+        axis: rx.axisLeft ?? "",
+        add: format(rx.addLeft),
+        prism: format(rx.prismLeft),
+        base: rx.baseLeft ?? "",
       },
       pd: rx.pd != null ? String(rx.pd) : "",
-    }));
+      twoPD: false,
+      prism: hasPrism,
+      savePrescription: false,
+    });
+
     setErrors({});
   };
-
   /* ---------- DELETE PRESCRIPTION ---------- */
   const handleDeletePrescription = async (rxId) => {
     if (!rxId) return;
-    const confirmDelete = window.confirm("Are you sure you want to delete this prescription from your account?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this prescription from your account?",
+    );
     if (!confirmDelete) return;
 
     try {
-      await deletePrescriptionApi(rxId);
+      await deleteUserPrescription(rxId);
       // Xóa thành công thì lọc cái đơn đó ra khỏi màn hình
-      setSavedPrescriptions((prev) => prev.filter((rx) => rx.id !== rxId && rx.prescriptionId !== rxId));
+      setSavedPrescriptions((prev) =>
+        prev.filter((rx) => rx.id !== rxId && rx.prescriptionId !== rxId),
+      );
       alert("Prescription deleted successfully!");
     } catch (error) {
       console.error("Delete prescription error:", error);
@@ -167,7 +192,10 @@ export default function PrescriptionPage() {
   };
 
   const handleBuyFrameOnly = async () => {
-    const variant = product.variants?.find(v => String(v.variantId) === String(variantIdFromUrl)) || product.variants?.[0];
+    const variant =
+      product.variants?.find(
+        (v) => String(v.variantId) === String(variantIdFromUrl),
+      ) || product.variants?.[0];
     const variantId = variant?.variantId;
     const productId = product.productId || product.id;
     const finalPrice = variant?.price || product.price || 0;
@@ -176,7 +204,11 @@ export default function PrescriptionPage() {
     setSubmitting(true);
     try {
       let cart = [];
-      try { cart = JSON.parse(localStorage.getItem("cart")) || []; } catch { /* ignore */ }
+      try {
+        cart = JSON.parse(localStorage.getItem("cart")) || [];
+      } catch {
+        /* ignore */
+      }
 
       const cartItem = {
         cartItemId: Date.now(),
@@ -196,23 +228,27 @@ export default function PrescriptionPage() {
       window.dispatchEvent(new Event("storage"));
 
       if (localStorage.getItem("token")) {
-          if (isOutOfStock) {
-            try {
-              const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
-              preorders[variant.variantId] = true;
-              localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
-            } catch (e) {
-              // ignore
-            }
+        if (isOutOfStock) {
+          try {
+            const preorders =
+              JSON.parse(localStorage.getItem("frontend_preorders")) || {};
+            preorders[variant.variantId] = true;
+            localStorage.setItem(
+              "frontend_preorders",
+              JSON.stringify(preorders),
+            );
+          } catch (e) {
+            // ignore
           }
-          const payload = {
-            productId,
-            variantId,
-            quantity: 1,
-            isLens: false,
-            isPreorder: isOutOfStock
-          };
-          await addToCartApi(payload);
+        }
+        const payload = {
+          productId,
+          variantId,
+          quantity: 1,
+          isLens: false,
+          isPreorder: isOutOfStock,
+        };
+        await addToCartApi(payload);
       }
       alert("Frame added to cart!");
       navigate("/checkout");
@@ -231,16 +267,23 @@ export default function PrescriptionPage() {
 
     if (Object.keys(v).length > 0) return;
 
-    const toNum = (val) => (val === "" || val === null || val === undefined ? null : parseFloat(val));
-    const toInt = (val) => (val === "" || val === null || val === undefined ? null : parseInt(val, 10));
+    const toNum = (val) =>
+      val === "" || val === null || val === undefined ? null : parseFloat(val);
+    const toInt = (val) =>
+      val === "" || val === null || val === undefined
+        ? null
+        : parseInt(val, 10);
 
-    const variant = product.variants?.find(v => String(v.variantId) === String(variantIdFromUrl)) || product.variants?.[0];
+    const variant =
+      product.variants?.find(
+        (v) => String(v.variantId) === String(variantIdFromUrl),
+      ) || product.variants?.[0];
     const lensVariant = lensProduct?.variants?.[0];
 
     const variantId = variant?.variantId;
     const lensVariantId = lensVariant?.variantId;
-    
-    const productId = product.productId || product.id; 
+
+    const productId = product.productId || product.id;
 
     const prescriptionData = {
       sphLeft: toNum(form.left.sph),
@@ -262,12 +305,16 @@ export default function PrescriptionPage() {
     setSubmitting(true);
     try {
       let cart = [];
-      try { cart = JSON.parse(localStorage.getItem("cart")) || []; } catch { /* ignore */ }
-      
+      try {
+        cart = JSON.parse(localStorage.getItem("cart")) || [];
+      } catch {
+        /* ignore */
+      }
+
       const framePrice = variant?.price || product.price || 0;
       const lensPrice = lensVariant?.price || lensProduct?.price || 0;
       const finalPrice = framePrice + lensPrice;
-      
+
       const cartItem = {
         cartItemId: Date.now(), // Temp ID for guest
         productId: productId,
@@ -280,12 +327,14 @@ export default function PrescriptionPage() {
         isPreOrder: variant?.stockQuantity === 0,
         isLens: true,
         prescription: prescriptionData,
-        lensProduct: lensProduct ? {
-          id: lensProduct.id || lensProduct.productId,
-          name: lensProduct.name,
-          variantId: lensVariantId,
-          price: lensPrice
-        } : null
+        lensProduct: lensProduct
+          ? {
+              id: lensProduct.id || lensProduct.productId,
+              name: lensProduct.name,
+              variantId: lensVariantId,
+              price: lensPrice,
+            }
+          : null,
       };
 
       cart.push(cartItem);
@@ -293,30 +342,39 @@ export default function PrescriptionPage() {
       window.dispatchEvent(new Event("storage"));
 
       if (localStorage.getItem("token")) {
-          if (form.savePrescription) {
-            try { await savePrescriptionApi(prescriptionData); } catch (e) { console.error("Failed to save prescription", e); }
+        if (form.savePrescription) {
+          try {
+            const res = await saveUserPrescription(prescriptionData);
+            console.log(res);
+          } catch (e) {
+            console.error("Failed to save prescription", e);
           }
-          
-          const isOutOfStock = variant?.stockQuantity === 0;
-          if (isOutOfStock) {
-            try {
-              const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
-              preorders[variant.variantId] = true;
-              localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
-            } catch (e) {
-              // ignore
-            }
-          }
+        }
 
-          const framePayload = {
-            productId: productId,
-            variantId: variantId,
-            quantity: 1,
-            isLens: true,
-            isPreorder: isOutOfStock,
-            ...prescriptionData,
-          };
-          await addToCartApi(framePayload);
+        const isOutOfStock = variant?.stockQuantity === 0;
+        if (isOutOfStock) {
+          try {
+            const preorders =
+              JSON.parse(localStorage.getItem("frontend_preorders")) || {};
+            preorders[variant.variantId] = true;
+            localStorage.setItem(
+              "frontend_preorders",
+              JSON.stringify(preorders),
+            );
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        const framePayload = {
+          productId: productId,
+          variantId: variantId,
+          quantity: 1,
+          isLens: true,
+          isPreorder: isOutOfStock,
+          ...prescriptionData,
+        };
+        await addToCartApi(framePayload);
       }
 
       alert("Product added to cart!");
@@ -336,38 +394,62 @@ export default function PrescriptionPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-6 flex-1">
         <div className="space-y-4">
-           <FrameSummary 
-              product={product} 
-              variantId={variantIdFromUrl} 
-           />
-           {lensProduct && (
-             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm" style={{ animation: "slideUp .4s ease" }}>
-                <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">Selected Lens</p>
-                <div className="flex items-center gap-4">
-                   <div className="w-16 h-16 bg-stone-50 rounded-lg overflow-hidden border border-stone-100">
-                      <img src={lensProduct.variants?.[0]?.imageUrl || lensProduct.img || "https://placehold.co/100"} className="w-full h-full object-contain p-2" />
-                   </div>
-                   <div className="flex-1">
-                      <p className="font-semibold text-gray-800 text-sm leading-tight">{lensProduct.name}</p>
-                      <p className="text-xs text-blue-600 font-bold mt-1">{(lensProduct.price || lensProduct.variants?.[0]?.price || 0).toLocaleString("vi-VN")}₫</p>
-                   </div>
+          <FrameSummary product={product} variantId={variantIdFromUrl} />
+          {lensProduct && (
+            <div
+              className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm"
+              style={{ animation: "slideUp .4s ease" }}
+            >
+              <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">
+                Selected Lens
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-stone-50 rounded-lg overflow-hidden border border-stone-100">
+                  <img
+                    src={
+                      lensProduct.variants?.[0]?.imageUrl ||
+                      lensProduct.img ||
+                      "https://placehold.co/100"
+                    }
+                    className="w-full h-full object-contain p-2"
+                  />
                 </div>
-                <button
-                  onClick={() => navigate(`/prescription/${id}?variantId=${variantIdFromUrl}`)}
-                  className="w-full mt-4 py-2 border border-stone-200 rounded-lg text-[11px] font-semibold text-stone-500 hover:bg-stone-50 transition-all active:scale-[0.98]"
-                >
-                  Change Lens
-                </button>
-             </div>
-           )}
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800 text-sm leading-tight">
+                    {lensProduct.name}
+                  </p>
+                  <p className="text-xs text-blue-600 font-bold mt-1">
+                    {(
+                      lensProduct.price ||
+                      lensProduct.variants?.[0]?.price ||
+                      0
+                    ).toLocaleString("vi-VN")}
+                    ₫
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() =>
+                  navigate(`/prescription/${id}?variantId=${variantIdFromUrl}`)
+                }
+                className="w-full mt-4 py-2 border border-stone-200 rounded-lg text-[11px] font-semibold text-stone-500 hover:bg-stone-50 transition-all active:scale-[0.98]"
+              >
+                Change Lens
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="relative">
           {!lensId ? (
             <div style={{ animation: "fadeIn .5s ease" }}>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Select Lens</h1>
-                <p className="text-stone-500 mt-2 text-sm">Please select a lens type that suits your needs</p>
+                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
+                  Select Lens
+                </h1>
+                <p className="text-stone-500 mt-2 text-sm">
+                  Please select a lens type that suits your needs
+                </p>
               </div>
 
               {loadingLenses ? (
@@ -383,18 +465,40 @@ export default function PrescriptionPage() {
                   >
                     <div className="flex items-center gap-5 relative z-10">
                       <div className="w-20 h-20 bg-blue-800 rounded-xl flex items-center justify-center border border-blue-700">
-                         <svg className="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                        <svg
+                          className="w-8 h-8 text-blue-200"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                          />
+                        </svg>
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-white leading-snug">Buy Frame Only</h3>
-                        <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold">No prescription lenses included</p>
+                        <h3 className="font-bold text-white leading-snug">
+                          Buy Frame Only
+                        </h3>
+                        <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold">
+                          No prescription lenses included
+                        </p>
                         <div className="mt-2 text-sm font-black text-white">
                           Keep original price
                         </div>
                       </div>
                     </div>
                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                       <svg className="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-4.1L5.69 5.69C7.05 4.63 8.75 4 10.5 4c4.41 0 8 3.59 8 8 0 1.85-.63 3.55-1.69 4.9z" /></svg>
+                      <svg
+                        className="w-20 h-20 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-4.1L5.69 5.69C7.05 4.63 8.75 4 10.5 4c4.41 0 8 3.59 8 8 0 1.85-.63 3.55-1.69 4.9z" />
+                      </svg>
                     </div>
                   </button>
 
@@ -403,20 +507,32 @@ export default function PrescriptionPage() {
                     return (
                       <button
                         key={lId}
-                        onClick={() => navigate(`/prescription/${id}?variantId=${variantIdFromUrl}&lensId=${lId}`)}
+                        onClick={() =>
+                          navigate(
+                            `/prescription/${id}?variantId=${variantIdFromUrl}&lensId=${lId}`,
+                          )
+                        }
                         className="group p-5 bg-white border border-stone-200 rounded-2xl text-left hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 active:scale-[0.98]"
                       >
                         <div className="flex items-center gap-5">
                           <div className="w-20 h-20 bg-stone-50 rounded-xl overflow-hidden border border-stone-100 group-hover:scale-105 transition-transform duration-300">
-                            <img 
-                              src={lens.imageUrl || lens.img || "https://placehold.co/150"} 
-                              alt={lens.name} 
-                              className="w-full h-full object-contain p-3" 
+                            <img
+                              src={
+                                lens.imageUrl ||
+                                lens.img ||
+                                "https://placehold.co/150"
+                              }
+                              alt={lens.name}
+                              className="w-full h-full object-contain p-3"
                             />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-bold text-stone-800 leading-snug group-hover:text-indigo-600 transition-colors">{lens.name}</h3>
-                            <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold opacity-70">{lens.brand}</p>
+                            <h3 className="font-bold text-stone-800 leading-snug group-hover:text-indigo-600 transition-colors">
+                              {lens.name}
+                            </h3>
+                            <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold opacity-70">
+                              {lens.brand}
+                            </p>
                             <div className="mt-2 text-sm font-black text-blue-600">
                               {(lens.price || 0).toLocaleString("vi-VN")}₫
                             </div>
@@ -446,7 +562,7 @@ export default function PrescriptionPage() {
                   </p>
                   <div className="flex flex-wrap gap-2.5">
                     {savedPrescriptions.map((rx, idx) => {
-                      const rxId = rx.id || rx.prescriptionId; 
+                      const rxId = rx.id || rx.prescriptionId;
                       return (
                         <div
                           key={rxId || idx}
@@ -456,7 +572,8 @@ export default function PrescriptionPage() {
                             onClick={() => applySavedPrescription(rx)}
                             className="px-4 py-2.5 text-indigo-700 text-[13px] hover:bg-indigo-50 transition-colors font-semibold text-left"
                           >
-                             Prescription #{idx + 1} — OD: {rx.sphRight ?? "—"} / OS: {rx.sphLeft ?? "—"}
+                            Prescription #{idx + 1} — OD: {rx.sphRight ?? "—"} /
+                            OS: {rx.sphLeft ?? "—"}
                           </button>
                           {rxId && (
                             <button
@@ -476,8 +593,10 @@ export default function PrescriptionPage() {
 
               <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
                 <div className="flex justify-between items-center mb-10">
-                  <h2 className="text-xl font-bold text-stone-900 tracking-tight">Detailed Eye Specifications</h2>
-                   {loadingRx && (
+                  <h2 className="text-xl font-bold text-stone-900 tracking-tight">
+                    Detailed Eye Specifications
+                  </h2>
+                  {loadingRx && (
                     <div className="flex items-center gap-2 text-xs text-stone-400">
                       <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600"></div>
                       Loading profile...
@@ -495,7 +614,11 @@ export default function PrescriptionPage() {
                   <div className="h-px bg-stone-100" />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <PDSection form={form} errors={errors} updateField={updateField} />
+                    <PDSection
+                      form={form}
+                      errors={errors}
+                      updateField={updateField}
+                    />
                     <ExtrasSection form={form} updateField={updateField} />
                   </div>
 
@@ -505,19 +628,21 @@ export default function PrescriptionPage() {
                       id="saveRx"
                       className="w-5 h-5 rounded-lg border-stone-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-all"
                       checked={form.savePrescription}
-                      onChange={(e) => setForm({ ...form, savePrescription: e.target.checked })}
+                      onChange={(e) =>
+                        setForm({ ...form, savePrescription: e.target.checked })
+                      }
                     />
-                    <label htmlFor="saveRx" className="text-sm font-semibold text-stone-700 cursor-pointer select-none">
+                    <label
+                      htmlFor="saveRx"
+                      className="text-sm font-semibold text-stone-700 cursor-pointer select-none"
+                    >
                       Save this prescription to my profile for future use
                     </label>
                   </div>
                 </div>
               </div>
 
-              <SubmitBar 
-                onSubmit={handleSubmit} 
-                submitting={submitting} 
-              />
+              <SubmitBar onSubmit={handleSubmit} submitting={submitting} />
             </div>
           )}
         </div>
