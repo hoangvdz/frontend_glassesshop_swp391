@@ -4,7 +4,16 @@ import {
   getStockVariantById,
   updateStockService,
 } from "../services/preOrderService";
-import { FiPackage, FiCheck, FiSearch, FiFilter, FiX, FiEye, FiClock, FiAlertCircle } from "react-icons/fi";
+import {
+  FiPackage,
+  FiCheck,
+  FiSearch,
+  FiFilter,
+  FiX,
+  FiEye,
+  FiClock,
+  FiAlertCircle,
+} from "react-icons/fi";
 import { updateOrderStatus } from "../services/orderService";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "../../context/ToastContext";
@@ -172,21 +181,29 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
             Cancelled
           </span>
         ) : (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-            order.step === 6 
-              ? "bg-green-50 text-green-700 border-green-200" 
-              : order.step === 0 
-                ? "bg-yellow-50 text-yellow-700 border-yellow-200" 
-                : "bg-blue-50 text-blue-700 border-blue-200"
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              order.step === 6 
-                ? "bg-green-500" 
-                : order.step === 0 
-                  ? "bg-yellow-400" 
-                  : "bg-blue-400"
-            }`} />
-            {order.step === 6 ? "Completed" : order.step === 0 ? "Pending" : "Processing"}
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+              order.step === 6
+                ? "bg-green-50 text-green-700 border-green-200"
+                : order.step === 0
+                  ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                  : "bg-blue-50 text-blue-700 border-blue-200"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                order.step === 6
+                  ? "bg-green-500"
+                  : order.step === 0
+                    ? "bg-yellow-400"
+                    : "bg-blue-400"
+              }`}
+            />
+            {order.step === 6
+              ? "Completed"
+              : order.step === 0
+                ? "Pending"
+                : "Processing"}
           </span>
         )}
       </td>
@@ -195,7 +212,7 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
       <td className="px-5 py-4 text-sm text-gray-400 whitespace-nowrap">
         {order.createdAt}
       </td>
-
+      <td className="px-5 py-4 text-right">
         <div className="flex justify-end">
           <div className="relative group/tip">
             <button
@@ -209,6 +226,7 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
             </span>
           </div>
         </div>
+      </td>
     </tr>
   );
 });
@@ -434,7 +452,11 @@ export default function AdminPreorders() {
           cancelled: true,
           history: [
             ...(v.history || []),
-            { step: v.step, date: fmtDate(), note: "Admin cancelled the order." },
+            {
+              step: v.step,
+              date: fmtDate(),
+              note: "Admin cancelled the order.",
+            },
           ],
         };
       });
@@ -452,7 +474,9 @@ export default function AdminPreorders() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Pre-order Management</h1>
+          <h1 className="text-xl font-bold text-gray-800">
+            Pre-order Management
+          </h1>
           <p className="text-sm text-gray-500 mt-0.5">
             Track and process custom eyeglass production
           </p>
@@ -636,10 +660,10 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
       // 1. Lấy kho mới nhất và thông tin variant đầy đủ từ server
       const variantRes = await getStockVariantById(order.variantId);
       const currentStock = variantRes?.stockQuantity ?? 0;
-      
+
       const qtyToDeduct = order.items?.[0]?.quantity || 0;
       const newQuantity = Math.max(0, currentStock - qtyToDeduct);
-      
+
       // 2. Chuẩn bị payload đầy đủ như EditProductModal
       const variantPayload = {
         frameSize: variantRes?.frameSize || "",
@@ -650,19 +674,21 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
         active: true,
       };
 
-
-      
       // 3. Cập nhật kho mới với đầy đủ thông tin variant
       await updateStockService(order.variantId, newQuantity, variantPayload);
-      
+
       // 4. Cập nhật trạng thái đơn hàng sang PROCESSING
       await updateOrderStatus(order.orderId, "PROCESSING");
-      
+
       showToast(`Processed successfully!`);
-      setTimeout(() => window.location.reload(), 1500); 
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
       console.error("Lỗi xử lý:", error);
-      showToast("Error processing pre-order: " + (error.response?.data?.message || error.message), "error");
+      showToast(
+        "Error processing pre-order: " +
+          (error.response?.data?.message || error.message),
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -694,15 +720,26 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                 <p className="text-xs text-gray-500">Order Code: {order.id}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400"><FiX size={18} /></button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full text-gray-400"
+            >
+              <FiX size={18} />
+            </button>
           </div>
 
           {/* Body */}
           <div className="p-6 space-y-6 flex-1 overflow-y-auto max-h-[70vh]">
             <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <img src={order.avatar} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" alt="" />
+              <img
+                src={order.avatar}
+                className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
+                alt=""
+              />
               <div>
-                <p className="font-bold text-gray-800 text-sm">{order.customer}</p>
+                <p className="font-bold text-gray-800 text-sm">
+                  {order.customer}
+                </p>
                 <p className="text-xs text-gray-400">{order.email}</p>
               </div>
             </div>
@@ -712,15 +749,27 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                 <FiPackage size={12} /> Pre-ordered Products
               </p>
               {order.items.map((it, idx) => (
-                <div key={idx} className="flex gap-4 p-3 rounded-xl border border-gray-100 bg-white">
-                  <img src={it.img} className="w-14 h-14 rounded-lg object-cover border border-gray-100" />
+                <div
+                  key={idx}
+                  className="flex gap-4 p-3 rounded-xl border border-gray-100 bg-white"
+                >
+                  <img
+                    src={it.img}
+                    className="w-14 h-14 rounded-lg object-cover border border-gray-100"
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-800 text-sm truncate">{it.name}</p>
-                    <p className="text-xs text-gray-500 font-medium">Color: {order.color} | Qty: {it.quantity}</p>
+                    <p className="font-semibold text-gray-800 text-sm truncate">
+                      {it.name}
+                    </p>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Color: {order.color} | Qty: {it.quantity}
+                    </p>
                     <div className="mt-1">
-                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.stock >= it.quantity ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                         In stock: {order.stock}
-                       </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.stock >= it.quantity ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                      >
+                        In stock: {order.stock}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -728,30 +777,42 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
-              <FiAlertCircle className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
+              <FiAlertCircle
+                className="text-amber-500 flex-shrink-0 mt-0.5"
+                size={16}
+              />
               <div className="text-xs text-amber-800 leading-relaxed">
-                <strong>Note:</strong> When you click "Approve Order", the system will move the order status to <strong>Packaging</strong>. This order can then be further processed in the Order Management page.
+                <strong>Note:</strong> When you click "Approve Order", the
+                system will move the order status to <strong>Packaging</strong>.
+                This order can then be further processed in the Order Management
+                page.
               </div>
             </div>
           </div>
 
           {/* Footer */}
           <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex gap-3">
-            <button 
-               onClick={onClose} 
-               className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 border border-gray-200 rounded-xl hover:bg-white transition-colors"
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 border border-gray-200 rounded-xl hover:bg-white transition-colors"
             >
               BACK
             </button>
-            
+
             {order.step === 0 && !order.cancelled && (
-              <button 
-               disabled={loading || order.stock < (order.items?.[0]?.quantity || 0)}
-               onClick={handleApprove}
-               className="flex-[2] px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:grayscale"
-            >
-              {loading ? "PROCESSING..." : (order.stock < (order.items?.[0]?.quantity || 0) ? "NOT ENOUGH STOCK" : "APPROVE ORDER")}
-            </button>
+              <button
+                disabled={
+                  loading || order.stock < (order.items?.[0]?.quantity || 0)
+                }
+                onClick={handleApprove}
+                className="flex-[2] px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:grayscale"
+              >
+                {loading
+                  ? "PROCESSING..."
+                  : order.stock < (order.items?.[0]?.quantity || 0)
+                    ? "NOT ENOUGH STOCK"
+                    : "APPROVE ORDER"}
+              </button>
             )}
 
             {(order.step > 0 || order.cancelled) && (
