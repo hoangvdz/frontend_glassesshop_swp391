@@ -169,8 +169,21 @@ function CheckoutPage() {
   const shippingFee = calculateShippingFee(formData.city, total);
   const totalWithShipping = total + shippingFee;
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        let newValue = value;
+
+        // 🔥 CHỈ CHO NHẬP SỐ
+        if (name === "phone") {
+            newValue = value.replace(/\D/g, "");
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]: newValue,
+        }));
+    };
   const showToast = (msg) => {
     setToast({ visible: true, message: msg });
     setTimeout(() => setToast({ visible: false, message: "" }), 3000);
@@ -318,6 +331,7 @@ function CheckoutPage() {
                 <input
                   type="tel"
                   name="phone"
+                  inputMode="numeric"
                   required
                   value={formData.phone}
                   onChange={handleChange}
