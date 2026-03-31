@@ -24,6 +24,9 @@ import OrderHistoryPage from "./store/pages/OrderHistoryPage.jsx";
 import AdminPreorder from "./admin/pages/AdminPreorder.jsx";
 import PaymentResultPage from "./store/pages/PaymentResultPage.jsx";
 import AdminRoute from "./shared/common/guard/AdminRoute.jsx";
+import ReturnRequestManagementPage from "./store/pages/ReturnRequestManagementPage.jsx";
+import AdminReturnRequest from "./admin/pages/AdminReturnRequest.jsx";
+
 function App() {
   return (
     <div>
@@ -63,6 +66,8 @@ function App() {
             element={<AdminPrescription />}
           />
           <Route path="/dashboard/preoders" element={<AdminPreorder />} />
+          <Route path="/dashboard/return-requests" element={<ReturnRequestManagementPage />} />
+          <Route path="/dashboard/return-requests" element={<AdminReturnRequest />} />
         </Route>
       </Routes>
     </div>

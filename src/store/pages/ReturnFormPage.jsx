@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiUploadCloud, FiChevronLeft } from "react-icons/fi";
-import { submitServiceRequestApi } from "../api/serviceRequestApi";
+import { createReturnRequestApi } from "../api/returnRequestApi";
 
 function ReturnFormPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const queryParams = new URLSearchParams(location.search);
-  const orderItemId = queryParams.get("orderItemId");
+    const location = useLocation();
+    const navigate = useNavigate();
+    const queryParams = new URLSearchParams(location.search);
+    const orderItemId = queryParams.get("orderItemId");
 
-  const [formData, setFormData] = useState({
-    reason: "",
-    details: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        reason: "",
+        details: "",
+    });
+    const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -120,9 +120,7 @@ function ReturnFormPage() {
             </button>
           </form>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 export default ReturnFormPage;
