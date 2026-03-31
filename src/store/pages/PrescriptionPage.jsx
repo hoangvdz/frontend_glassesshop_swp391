@@ -11,11 +11,12 @@ import { getAllProducts } from "../services/productService";
 import { addToCartApi } from "../api/cartApi";
 
 import {
-  deleteUserPrescription,
-  getMyUserPrescriptions,
-  saveUserPrescription,
-} from "../services/userPrescriptionService";
-
+  getMyPrescriptionsApi,
+  savePrescriptionApi,
+  deletePrescriptionApi
+} from "../api/prescriptionApi";
+import { FiCheck } from "react-icons/fi";
+import { useToast } from "../../context/ToastContext";
 export default function PrescriptionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -32,6 +33,15 @@ export default function PrescriptionPage() {
   const [savedPrescriptions, setSavedPrescriptions] = useState([]);
   const [loadingRx, setLoadingRx] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { showToast } = useToast();
+
+  const handleSuccess = (msg) => {
+    showToast(msg);
+    setTimeout(() => {
+      navigate("/checkout");
+    }, 1200);
+  };
+
 
   const [form, setForm] = useState({
     right: { sph: "", cyl: "", axis: "", add: "", prism: "", base: "" },
@@ -141,13 +151,11 @@ export default function PrescriptionPage() {
     try {
       await deleteUserPrescription(rxId);
       // Xóa thành công thì lọc cái đơn đó ra khỏi màn hình
-      setSavedPrescriptions((prev) =>
-        prev.filter((rx) => rx.id !== rxId && rx.prescriptionId !== rxId),
-      );
-      alert("Prescription deleted successfully!");
+      setSavedPrescriptions((prev) => prev.filter((rx) => rx.id !== rxId && rx.prescriptionId !== rxId));
+      showToast("Prescription deleted successfully!");
     } catch (error) {
       console.error("Delete prescription error:", error);
-      alert("Cannot delete prescription right now. Please try again later.");
+      showToast("Cannot delete prescription right now. Please try again later.", "error");
     }
   };
 
@@ -250,12 +258,10 @@ export default function PrescriptionPage() {
         };
         await addToCartApi(payload);
       }
-      alert("Frame added to cart!");
-      navigate("/checkout");
+      handleSuccess("Added 1 items to cart!");
     } catch (err) {
       console.error(err);
-      alert("Frame saved to temporary cart!");
-      navigate("/checkout");
+      handleSuccess("Frame saved to temporary cart!");
     } finally {
       setSubmitting(false);
     }
@@ -312,32 +318,42 @@ export default function PrescriptionPage() {
       }
 
       const framePrice = variant?.price || product.price || 0;
-      const lensPrice = lensVariant?.price || lensProduct?.price || 0;
-      const finalPrice = framePrice + lensPrice;
-
-      const cartItem = {
+      
+      const cartItemFrame = {
         cartItemId: Date.now(), // Temp ID for guest
         productId: productId,
         name: product.name,
         brand: product.brand,
         imageUrl: variant?.imageUrl || product.imageUrl || product.img,
-        price: finalPrice,
+        price: framePrice,
+        unitPrice: framePrice, // For CheckoutPage mapping compatibility
         quantity: 1,
         variant: variant,
         isPreOrder: variant?.stockQuantity === 0,
         isLens: true,
         prescription: prescriptionData,
-        lensProduct: lensProduct
-          ? {
-              id: lensProduct.id || lensProduct.productId,
-              name: lensProduct.name,
-              variantId: lensVariantId,
-              price: lensPrice,
-            }
-          : null,
       };
 
-      cart.push(cartItem);
+      cart.push(cartItemFrame);
+
+      if (lensProduct) {
+        const lensPrice = lensVariant?.price || lensProduct?.price || 0;
+        const cartItemLens = {
+          cartItemId: Date.now() + 1, // Temp ID for guest
+          productId: lensProduct.id || lensProduct.productId,
+          name: lensProduct.name,
+          brand: lensProduct.brand,
+          imageUrl: lensVariant?.imageUrl || lensProduct.imageUrl || lensProduct.img,
+          price: lensPrice,
+          unitPrice: lensPrice,
+          quantity: 1,
+          variant: lensVariant,
+          isPreOrder: lensVariant?.stockQuantity === 0,
+          isLens: false, 
+        };
+        cart.push(cartItemLens);
+      }
+
       localStorage.setItem("cart", JSON.stringify(cart));
       window.dispatchEvent(new Event("storage"));
 
@@ -366,31 +382,42 @@ export default function PrescriptionPage() {
           }
         }
 
-        const framePayload = {
-          productId: productId,
-          variantId: variantId,
-          quantity: 1,
-          isLens: true,
-          isPreorder: isOutOfStock,
-          ...prescriptionData,
-        };
-        await addToCartApi(framePayload);
+          const framePayload = {
+            productId: productId,
+            variantId: variantId,
+            quantity: 1,
+            isLens: true,
+            isPreorder: isOutOfStock,
+            ...prescriptionData,
+          };
+          await addToCartApi(framePayload);
+
+          if (lensProduct) {
+             const lensOutOfStock = lensVariant?.stockQuantity === 0;
+             const lensPayload = {
+                productId: lensProduct.id || lensProduct.productId,
+                variantId: lensVariantId,
+                quantity: 1,
+                isLens: false,
+                isPreorder: lensOutOfStock
+             };
+             await addToCartApi(lensPayload);
+          }
       }
 
-      alert("Product added to cart!");
-      navigate("/checkout");
+      handleSuccess("Added 1 items to cart!");
     } catch (err) {
       console.error("Lỗi thêm vào giỏ hàng:", err);
-      alert("Saved to temporary cart!");
-      navigate("/checkout");
+      handleSuccess("Saved to temporary cart!");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <HeaderBar />
+    <>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <HeaderBar />
 
       <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-6 flex-1">
         <div className="space-y-4">
@@ -648,5 +675,6 @@ export default function PrescriptionPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

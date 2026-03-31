@@ -14,6 +14,7 @@ import {
   FiEdit2,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "../../context/ToastContext";
 import { createProduct } from "../services/productService";
 
 /* ─────────────────────────────────────────────
@@ -343,6 +344,7 @@ function AddProductModal({ onClose, onAdd }) {
   const [completed, setCompleted] = useState(false);
   const [direction, setDirection] = useState(1);
   const [form, setForm] = useState(EMPTY_FORM);
+  const { showToast } = useToast();
 
   const cat = CATEGORY_MAP[form.type];
   const accent = cat ? CC[cat.color] : CC.blue;
@@ -400,7 +402,7 @@ function AddProductModal({ onClose, onAdd }) {
 
   const handleSubmit = async () => {
     if (!form.name || !form.type || !form.price) {
-      alert("Missing information!");
+      showToast("Missing information!", "error");
       return;
     }
     try {
@@ -410,7 +412,7 @@ function AddProductModal({ onClose, onAdd }) {
       onAdd?.(newProduct);
     } catch (err) {
       console.error(err);
-      alert("Failed to create product!");
+      showToast("Failed to create product!", "error");
     }
   };
 

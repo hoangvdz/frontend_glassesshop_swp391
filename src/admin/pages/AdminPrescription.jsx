@@ -5,6 +5,7 @@ import {
   declinePrescriptionApi,
   createOfflinePrescriptionApi,
 } from "../api/prescriptionApi";
+import { useToast } from "../../context/ToastContext";
 import {
   FiSearch,
   FiFilter,
@@ -696,6 +697,7 @@ function AdminPrescription() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+  const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [viewing, setViewing] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -879,9 +881,10 @@ function AdminPrescription() {
       setViewing((v) =>
         v ? { ...v, status: "approved", reviewNote: note } : null,
       );
+      showToast("Prescription approved successfully.");
     } catch (err) {
       console.error("Lỗi duyệt đơn thuốc:", err);
-      alert("Prescription approval failed: " + (err?.response?.data?.message || err.message));
+      showToast("Prescription approval failed: " + (err?.response?.data?.message || err.message), "error");
     }
   }, []);
 
@@ -897,9 +900,10 @@ function AdminPrescription() {
       setViewing((v) =>
         v ? { ...v, status: "declined", reviewNote: note } : null,
       );
+      showToast("Prescription declined successfully.");
     } catch (err) {
       console.error("Lỗi từ chối đơn thuốc:", err);
-      alert("Prescription decline failed: " + (err?.response?.data?.message || err.message));
+      showToast("Prescription decline failed: " + (err?.response?.data?.message || err.message), "error");
     }
   }, []);
 
@@ -908,9 +912,10 @@ function AdminPrescription() {
       const res = await createOfflinePrescriptionApi(rxData);
       // Reload data from API after adding
       fetchPrescriptions();
+      showToast("Prescription created successfully.");
     } catch (err) {
       console.error("Lỗi tạo đơn thuốc offline:", err);
-      alert("Prescription creation failed: " + (err?.response?.data?.message || err.message));
+      showToast("Prescription creation failed: " + (err?.response?.data?.message || err.message), "error");
     }
   }, [fetchPrescriptions]);
 

@@ -529,6 +529,47 @@ function AdminOverview() {
           />
         </motion.div>
       </section>
+
+      {/* ── CANCELLED ORDERS ── */}
+      {cancelledOrders.length > 0 && (
+        <section className="mt-10">
+          <motion.div
+            {...fadeUp(0.35)}
+            className="bg-white rounded-3xl border border-red-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-base font-semibold text-red-800 flex items-center gap-2">
+                  <FiX className="text-red-500" /> Cancelled Orders
+                </h2>
+                <p className="text-xs text-red-400 mt-0.5">
+                  Orders that were not successful
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {cancelledOrders.map((order, i) => (
+                <div key={order.orderId} className="flex items-center justify-between p-4 bg-red-50/30 rounded-2xl border border-red-50 hover:bg-red-50 transition-colors">
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold">
+                        {order.fullName?.charAt(0) || "U"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{order.orderCode}</p>
+                        <p className="text-xs text-gray-500">{order.fullName}</p>
+                      </div>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-sm font-bold text-red-600">{(order.finalPrice || 0).toLocaleString()} ₫</p>
+                      <p className="text-[10px] text-gray-400">{new Date(order.orderDate).toLocaleDateString()}</p>
+                   </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { FiStar } from "react-icons/fi";
+import { useToast } from "../../context/ToastContext";
 
 function OrderFeedbackPage() {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const { showToast } = useToast();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(`Thank you for your ${rating} star rating!`);
+    showToast(`Thank you for your ${rating} star rating!`);
   };
 
   return (

@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // API
 import { deleteProduct } from "../services/productService";
 import { getAllProducts } from "../services/productService";
+import { useToast } from "../../context/ToastContext";
 
 /* ─────────────────────────────────────────
    Memoised row — only re-renders when its
@@ -79,7 +80,6 @@ const ProductRow = memo(
               <p className="font-medium text-gray-800 truncate leading-tight">
                 {product.name}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">#{product.id}</p>
             </div>
           </div>
         </td>
@@ -165,6 +165,7 @@ function AdminProducts() {
   const [selected, setSelected] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
+  const { showToast } = useToast();
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -279,7 +280,7 @@ function AdminProducts() {
       console.error("Delete error: ", err);
       const message = err.response?.data?.message || "Delete failed!";
 
-      alert(message);
+      showToast(message, "error");
     }
 
     setConfirmDelete(null);
