@@ -61,15 +61,6 @@ const statCards = [
     ring: "ring-yellow-100",
     change: "-2.1%",
   },
-  {
-    key: "growth",
-    label: "Growth",
-    icon: FiTrendingUp,
-    color: "purple",
-    bg: "bg-purple-50",
-    text: "text-purple-600",
-    ring: "ring-purple-100",
-  },
 ];
 
 /* ── order status badge ── */

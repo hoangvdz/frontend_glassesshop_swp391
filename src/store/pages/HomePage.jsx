@@ -24,23 +24,23 @@ import { products } from "../data/shopMock";
 const sliderData = [ 
   {
     id: 1,
-    title: "Mắt kính hiện đại",
-    subtitle: "Bộ sưu tập 2026",
-    desc: "Thiết kế tối giản, tinh tế cho sự thoải mái hàng ngày.",
+    title: "Modern Eyewear",
+    subtitle: "2026 Collection",
+    desc: "Minimalist and elegant designs for everyday comfort.",
     image: glassesImg1,
   },
   {
     id: 2,
-    title: "Quang học cao cấp",
-    subtitle: "Trải nghiệm",
-    desc: "Trải nghiệm tầm nhìn rõ nét với tròng kính công nghệ cao.",
+    title: "Premium Optics",
+    subtitle: "Experience",
+    desc: "Enjoy crystal-clear vision with advanced lens technology.",
     image: glassesImg2,
   },
   {
     id: 3,
-    title: "Phiên bản giới hạn",
-    subtitle: "Lựa chọn",
-    desc: "Bộ sưu tập giới hạn dành riêng cho mùa hè này.",
+    title: "Limited Edition",
+    subtitle: "Selection",
+    desc: "Exclusive summer collection crafted just for you.",
     image: glassesImg3,
   },
 ];
@@ -49,23 +49,23 @@ const sliderData = [
 const services = [
   {
     icon: <FiSettings size={22} />,
-    title: "Bảo dưỡng kính",
-    desc: "Vệ sinh và điều chỉnh miễn phí trọn đời.",
+    title: "Eyeglass Maintenance",
+    desc: "Free cleaning and adjustments for life.",
   },
   {
     icon: <FiTruck size={22} />,
-    title: "Giao hàng nhanh",
-    desc: "Miễn phí giao hàng cho đơn hàng trên 1 triệu đồng.",
+    title: "Fast Delivery",
+    desc: "Free delivery on orders over 1 million VND.",
   },
   {
     icon: <FiRepeat size={22} />,
-    title: "Thu cũ đổi mới",
-    desc: "Trợ giá hấp dẫn khi nâng cấp kính mới.",
+    title: "Trade-in Program",
+    desc: "Attractive discounts on new glasses upgrades.",
   },
   {
     icon: <FiEye size={22} />,
-    title: "Đo mắt miễn phí",
-    desc: "Kỹ thuật viên chuyên nghiệp, thiết bị hiện đại.",
+    title: "Free Eye Examination",
+    desc: "Professional technicians, state-of-the-art equipment.",
   },
 ];
 
@@ -293,12 +293,12 @@ function HomePage() {
               <div className="slide-in-d3 flex items-center gap-4">
                 <Link to="/shop">
                   <button className="px-6 py-2.5 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
-                    Khám phá ngay
+                    Discover
                   </button>
                 </Link>
                 <button className="text-stone-400 hover:text-white text-sm transition-colors flex items-center gap-1.5">
                   <span className="w-6 h-px bg-stone-500 inline-block" />
-                  Xem thêm
+                  View more
                 </button>
               </div>
             </div>
@@ -359,11 +359,11 @@ function HomePage() {
               className={`text-center mb-16 transition-all duration-700 ${rv("services-header")}`}
             >
               <p className="text-stone-400 text-[11px] tracking-[0.3em] uppercase font-medium mb-4">
-                Dịch vụ
+                Our Service
               </p>
 
               <h2 className="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight">
-                Cam kết của chúng tôi
+                Commitment
               </h2>
 
               <div className="w-16 h-[2px] bg-blue-600 mx-auto mt-6" />
@@ -418,22 +418,22 @@ function HomePage() {
 
           <div className="relative max-w-2xl mx-auto text-center px-6 z-10">
             <p className="text-blue-300 text-[11px] tracking-[0.3em] uppercase font-medium mb-5">
-              Bắt đầu hành trình của bạn
+              Start your journey
             </p>
             <h2 className="text-4xl md:text-5xl font-semibold text-white mb-4 leading-tight tracking-tight">
-              Tìm kiếm cặp kính hoàn hảo
+              Find the perfect pair of glasses
             </h2>
             <p className="text-stone-400 mb-10 text-sm max-w-sm mx-auto leading-relaxed">
-              Hàng ngàn mẫu gọng và tròng kính chất lượng cao. Đặt lịch đo mắt ngay hôm nay.
+              Thousands of high-quality frames and lenses. Book an eye exam today.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link to="/shop">
                 <button className="px-7 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
-                  Mua sắm ngay
+                 Shop now
                 </button>
               </Link>
               <button className="px-7 py-3 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
-                Tìm cửa hàng
+                Find a store
               </button>
             </div>
           </div>
