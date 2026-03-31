@@ -109,11 +109,6 @@ function Header() {
             to="/"
             className="group flex items-end text-2xl font-extrabold tracking-widest gap-4"
           >
-            <img
-              src="https://tse1.mm.bing.net/th/id/OIP.VNNzIRDW9nZsWGt1vmCCXwHaFL?rs=1&pid=ImgDetMain&o=7&rm=3"
-              alt="Falcon"
-              className="w-9 h-9"
-            />
             <span className="text-blue-600 group-hover:text-blue-500 transition-colors duration-300">
               FALCON
             </span>

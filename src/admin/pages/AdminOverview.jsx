@@ -14,7 +14,11 @@ import {
 
 import { useEffect, useState, useMemo } from "react";
 import { getAllOrders } from "../services/orderService";
-import { getCustomerCount, getOrdersCount, getTotalRevenue } from "../services/dashboardService";
+import {
+  getCustomerCount,
+  getOrdersCount,
+  getTotalRevenue,
+} from "../services/dashboardService";
 
 /* ── animation helpers ── */
 const fadeUp = (delay = 0) => ({
@@ -86,16 +90,17 @@ function AdminOverview() {
   const [customerCount, setCustomerCount] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [filter, setFilter] = useState("7days"); // mặc định 7 ngày
-  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersData, orderCountData, customerCountData, revData] = await Promise.all([
+        const [ordersData, orderCountData, customerCountData, revData] =
+          await Promise.all([
             getAllOrders(),
             getOrdersCount(),
             getCustomerCount(),
-            getTotalRevenue()
-        ]);
+            getTotalRevenue(),
+          ]);
 
         setOrderCount(orderCountData);
         setCustomerCount(customerCountData);
@@ -110,24 +115,34 @@ function AdminOverview() {
   }, []);
 
   const stats = useMemo(() => {
-    const deliveredOrders = orders.filter(o => o.status === "completed");
-    const avgValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
-    
+    const deliveredOrders = orders.filter((o) => o.status === "completed");
+    const avgValue =
+      deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
+
     // Simple growth logic: compare today vs yesterday if data exists
     const todayStr = new Date().toLocaleDateString("vi-VN");
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toLocaleDateString("vi-VN");
-    
-    const todayRevenue = orders.filter(o => o.createdAt === todayStr && o.status === "completed").reduce((s, o) => s + o.total, 0);
-    const yesterdayRevenue = orders.filter(o => o.createdAt === yesterdayStr && o.status === "completed").reduce((s, o) => s + o.total, 0);
-    
-    const growth = yesterdayRevenue > 0 ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100 : todayRevenue > 0 ? 100 : 0;
+
+    const todayRevenue = orders
+      .filter((o) => o.createdAt === todayStr && o.status === "completed")
+      .reduce((s, o) => s + o.total, 0);
+    const yesterdayRevenue = orders
+      .filter((o) => o.createdAt === yesterdayStr && o.status === "completed")
+      .reduce((s, o) => s + o.total, 0);
+
+    const growth =
+      yesterdayRevenue > 0
+        ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
+        : todayRevenue > 0
+          ? 100
+          : 0;
 
     return {
-        avgValue,
-        growth: growth.toFixed(1),
-        isGrowthUp: growth >= 0
+      avgValue,
+      growth: growth.toFixed(1),
+      isGrowthUp: growth >= 0,
     };
   }, [orders, totalRevenue]);
 
@@ -136,29 +151,33 @@ function AdminOverview() {
     const categories = [];
     const values = [];
     const now = new Date();
-    
+
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(now.getDate() - i);
       const localeDateStr = d.toLocaleDateString("vi-VN");
-      categories.push(localeDateStr.split("/").slice(0, 2).join("/")); 
-      
+      categories.push(localeDateStr.split("/").slice(0, 2).join("/"));
+
       const dailyTotal = orders
-        .filter(o => {
-            const oDate = o.rawDate ? new Date(o.rawDate) : null;
-            if (!oDate) return false;
-            return oDate.toLocaleDateString("vi-VN") === localeDateStr && o.status === "completed";
+        .filter((o) => {
+          const oDate = o.rawDate ? new Date(o.rawDate) : null;
+          if (!oDate) return false;
+          return (
+            oDate.toLocaleDateString("vi-VN") === localeDateStr &&
+            o.status === "completed"
+          );
         })
         .reduce((sum, o) => {
-            const val = typeof o.total === 'number' ? o.total : parseFloat(o.total || 0);
-            return sum + (isNaN(val) ? 0 : val);
+          const val =
+            typeof o.total === "number" ? o.total : parseFloat(o.total || 0);
+          return sum + (isNaN(val) ? 0 : val);
         }, 0);
       values.push(dailyTotal);
     }
-    
+
     return {
       revenueChartSeries: [{ name: "Revenue", data: values }],
-      revenueChartCategories: categories
+      revenueChartCategories: categories,
     };
   }, [orders, filter]);
 
@@ -170,26 +189,28 @@ function AdminOverview() {
       .filter((order) => {
         const created = order.rawDate ? new Date(order.rawDate) : null;
         if (!created) return false;
-        
+
         const diffTime = Math.abs(now.getTime() - created.getTime());
         const diffDays = diffTime / (1000 * 60 * 60 * 24);
         return diffDays <= days;
       })
       .sort((a, b) => {
-          const dateA = a.rawDate ? new Date(a.rawDate) : new Date(0);
-          const dateB = b.rawDate ? new Date(b.rawDate) : new Date(0);
-          return dateB - dateA;
+        const dateA = a.rawDate ? new Date(a.rawDate) : new Date(0);
+        const dateB = b.rawDate ? new Date(b.rawDate) : new Date(0);
+        return dateB - dateA;
       })
       .slice(0, 5);
   }, [orders, filter]);
 
   const statusRatioData = useMemo(() => {
-      const statuses = ["completed", "pending", "shipped", "cancelled"];
-      const counts = statuses.map(s => orders.filter(o => o.status === s).length);
-      return {
-          labels: ["Completed", "Pending", "Shipping", "Cancelled"],
-          series: counts.some(v => v > 0) ? counts : [45, 25, 20, 10] // fallback to mock if no data
-      };
+    const statuses = ["completed", "pending", "shipped", "cancelled"];
+    const counts = statuses.map(
+      (s) => orders.filter((o) => o.status === s).length,
+    );
+    return {
+      labels: ["Completed", "Pending", "Shipping", "Cancelled"],
+      series: counts.some((v) => v > 0) ? counts : [45, 25, 20, 10], // fallback to mock if no data
+    };
   }, [orders]);
 
   const todayStrDisplay = new Date().toLocaleDateString("en-US", {
@@ -199,6 +220,10 @@ function AdminOverview() {
     day: "numeric",
   });
 
+  const cancelledOrders = useMemo(() => {
+    return orders.filter((o) => o.status === "cancelled");
+  }, [orders]);
+  
   return (
     <div className="px-8 pt-8 pb-16 bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen">
       {/* ── TITLE ── */}
@@ -229,15 +254,15 @@ function AdminOverview() {
           let up = true;
 
           if (card.key === "orders") val = orderCount.toLocaleString();
-          else if (card.key === "customers") val = customerCount.toLocaleString();
+          else if (card.key === "customers")
+            val = customerCount.toLocaleString();
           else if (card.key === "revenue") {
-              val = `${totalRevenue.toLocaleString("vi-VN")} ₫`;
-              subtext = `${stats.growth}% today`;
-              up = stats.isGrowthUp;
-          }
-          else if (card.key === "growth") {
-              val = `${Math.round(stats.avgValue).toLocaleString("vi-VN")} ₫`;
-              subtext = "per order";
+            val = `${totalRevenue.toLocaleString("vi-VN")} ₫`;
+            subtext = `${stats.growth}% today`;
+            up = stats.isGrowthUp;
+          } else if (card.key === "growth") {
+            val = `${Math.round(stats.avgValue).toLocaleString("vi-VN")} ₫`;
+            subtext = "per order";
           }
 
           return (
@@ -247,11 +272,13 @@ function AdminOverview() {
               className="bg-white rounded-3xl p-7 border border-gray-50 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                 <Icon size={80} />
+                <Icon size={80} />
               </div>
-              
+
               <div className="flex items-center justify-between relative z-10">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{card.label}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  {card.label}
+                </p>
                 <div
                   className={`w-12 h-12 flex items-center justify-center rounded-2xl ${card.bg} ${card.text} shadow-lg shadow-current/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
                 >
@@ -264,7 +291,9 @@ function AdminOverview() {
                   {val}
                 </p>
                 {subtext && (
-                  <div className={`flex items-center gap-1.5 mt-2 text-xs font-bold ${up ? "text-emerald-500" : "text-rose-500"}`}>
+                  <div
+                    className={`flex items-center gap-1.5 mt-2 text-xs font-bold ${up ? "text-emerald-500" : "text-rose-500"}`}
+                  >
                     {up ? <FiArrowUpRight /> : <FiArrowDownRight />}
                     <span>{subtext}</span>
                   </div>
@@ -292,15 +321,15 @@ function AdminOverview() {
               </p>
             </div>
             <div className="bg-gray-50 p-1 rounded-xl border border-gray-100 flex gap-1">
-                {["7days", "30days"].map(f => (
-                    <button 
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === f ? "bg-white text-blue-600 shadow-md" : "text-gray-400 hover:text-gray-600"}`}
-                    >
-                        {f === "7days" ? "7D" : "30D"}
-                    </button>
-                ))}
+              {["7days", "30days"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === f ? "bg-white text-blue-600 shadow-md" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  {f === "7days" ? "7D" : "30D"}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -331,15 +360,32 @@ function AdminOverview() {
                 categories: revenueChartCategories,
                 axisBorder: { show: false },
                 axisTicks: { show: false },
-                labels: { style: { fontSize: "11px", fontWeight: 600, colors: "#94a3b8" } },
+                labels: {
+                  style: {
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    colors: "#94a3b8",
+                  },
+                },
               },
               yaxis: {
                 labels: {
-                  style: { fontSize: "11px", fontWeight: 600, colors: "#94a3b8" },
-                  formatter: (v) => Math.abs(v) >= 1000000 ? (v / 1000000).toFixed(1) + "M" : v.toLocaleString("vi-VN"),
+                  style: {
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    colors: "#94a3b8",
+                  },
+                  formatter: (v) =>
+                    Math.abs(v) >= 1000000
+                      ? (v / 1000000).toFixed(1) + "M"
+                      : v.toLocaleString("vi-VN"),
                 },
               },
-              grid: { borderColor: "#f8fafc", strokeDashArray: 6, padding: { left: 0, right: 0 } },
+              grid: {
+                borderColor: "#f8fafc",
+                strokeDashArray: 6,
+                padding: { left: 0, right: 0 },
+              },
               tooltip: {
                 theme: "light",
                 y: { formatter: (val) => val.toLocaleString("vi-VN") + " ₫" },
@@ -361,10 +407,10 @@ function AdminOverview() {
               </p>
             </div>
             <Link
-                to="/dashboard/orders"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-gray-100"
+              to="/dashboard/orders"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-gray-100"
             >
-                <FiArrowUpRight size={20} />
+              <FiArrowUpRight size={20} />
             </Link>
           </div>
 
@@ -380,11 +426,16 @@ function AdminOverview() {
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <img
-                        src={order.avatar || `https://ui-avatars.com/api/?name=${order.customer}&background=random`}
-                        alt={order.customer}
-                        className="w-11 h-11 rounded-2xl object-cover ring-2 ring-white shadow-md group-hover:scale-105 transition-transform"
+                      src={
+                        order.avatar ||
+                        `https://ui-avatars.com/api/?name=${order.customer}&background=random`
+                      }
+                      alt={order.customer}
+                      className="w-11 h-11 rounded-2xl object-cover ring-2 ring-white shadow-md group-hover:scale-105 transition-transform"
                     />
-                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${order.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <div
+                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${order.status === "completed" ? "bg-emerald-500" : "bg-amber-500"}`}
+                    />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-800 leading-tight group-hover:text-blue-700 transition-colors">
@@ -410,12 +461,12 @@ function AdminOverview() {
                 </div>
               </motion.div>
             ))}
-            
+
             {recentOrdersFiltered.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-40 text-gray-300 opacity-50">
-                    <FiShoppingCart size={40} className="mb-2" />
-                    <p className="text-xs font-bold uppercase">No recent orders</p>
-                </div>
+              <div className="flex flex-col items-center justify-center h-40 text-gray-300 opacity-50">
+                <FiShoppingCart size={40} className="mb-2" />
+                <p className="text-xs font-bold uppercase">No recent orders</p>
+              </div>
             )}
           </div>
         </motion.div>
@@ -437,37 +488,55 @@ function AdminOverview() {
 
           <div className="flex-1 flex items-center justify-center">
             <Chart
-                type="donut"
-                height={320}
-                series={statusRatioData.series}
-                options={{
-                    labels: statusRatioData.labels,
-                    colors: ["#10b981", "#f59e0b", "#3b82f6", "#ef4444"],
-                    stroke: { width: 0 },
-                    plotOptions: {
-                        pie: {
-                            donut: {
-                                size: "75%",
-                                labels: {
-                                    show: true,
-                                    name: { fontSize: "14px", fontWeight: 800, color: "#64748b", offsetY: -5 },
-                                    value: { fontSize: "24px", fontWeight: 900, color: "#1e293b", offsetY: 5 },
-                                    total: {
-                                        show: true,
-                                        label: "TOTAL",
-                                        fontSize: "10px",
-                                        fontWeight: 900,
-                                        color: "#94a3b8",
-                                        formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0),
-                                    },
-                                },
-                            },
+              type="donut"
+              height={320}
+              series={statusRatioData.series}
+              options={{
+                labels: statusRatioData.labels,
+                colors: ["#10b981", "#f59e0b", "#3b82f6", "#ef4444"],
+                stroke: { width: 0 },
+                plotOptions: {
+                  pie: {
+                    donut: {
+                      size: "75%",
+                      labels: {
+                        show: true,
+                        name: {
+                          fontSize: "14px",
+                          fontWeight: 800,
+                          color: "#64748b",
+                          offsetY: -5,
                         },
+                        value: {
+                          fontSize: "24px",
+                          fontWeight: 900,
+                          color: "#1e293b",
+                          offsetY: 5,
+                        },
+                        total: {
+                          show: true,
+                          label: "TOTAL",
+                          fontSize: "10px",
+                          fontWeight: 900,
+                          color: "#94a3b8",
+                          formatter: (w) =>
+                            w.globals.seriesTotals.reduce((a, b) => a + b, 0),
+                        },
+                      },
                     },
-                    legend: { show: true, position: "bottom", fontSize: "12px", fontWeight: 700, labels: { colors: "#64748b" }, markers: { radius: 6 } },
-                    dataLabels: { enabled: false },
-                    tooltip: { theme: "light" }
-                }}
+                  },
+                },
+                legend: {
+                  show: true,
+                  position: "bottom",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  labels: { colors: "#64748b" },
+                  markers: { radius: 6 },
+                },
+                dataLabels: { enabled: false },
+                tooltip: { theme: "light" },
+              }}
             />
           </div>
         </motion.div>
@@ -479,14 +548,16 @@ function AdminOverview() {
         >
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-xl font-black text-gray-800">Growth Projection</h2>
+              <h2 className="text-xl font-black text-gray-800">
+                Growth Projection
+              </h2>
               <p className="text-sm text-gray-400 font-medium mt-1">
                 Cumulative revenue growth over time
               </p>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-black">
-                <FiTrendingUp size={14} />
-                <span>ACTIVE STOCKS</span>
+              <FiTrendingUp size={14} />
+              <span>ACTIVE STOCKS</span>
             </div>
           </div>
 
@@ -511,11 +582,21 @@ function AdminOverview() {
               xaxis: {
                 categories: revenueChartCategories,
                 axisBorder: { show: false },
-                labels: { style: { fontSize: "11px", fontWeight: 600, colors: "#94a3b8" } },
+                labels: {
+                  style: {
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    colors: "#94a3b8",
+                  },
+                },
               },
               yaxis: {
                 labels: {
-                  style: { fontSize: "11px", fontWeight: 600, colors: "#94a3b8" },
+                  style: {
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    colors: "#94a3b8",
+                  },
                   formatter: (v) => v.toLocaleString("vi-VN"),
                 },
               },
@@ -550,20 +631,29 @@ function AdminOverview() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {cancelledOrders.map((order, i) => (
-                <div key={order.orderId} className="flex items-center justify-between p-4 bg-red-50/30 rounded-2xl border border-red-50 hover:bg-red-50 transition-colors">
-                   <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold">
-                        {order.fullName?.charAt(0) || "U"}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">{order.orderCode}</p>
-                        <p className="text-xs text-gray-500">{order.fullName}</p>
-                      </div>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-sm font-bold text-red-600">{(order.finalPrice || 0).toLocaleString()} ₫</p>
-                      <p className="text-[10px] text-gray-400">{new Date(order.orderDate).toLocaleDateString()}</p>
-                   </div>
+                <div
+                  key={order.orderId}
+                  className="flex items-center justify-between p-4 bg-red-50/30 rounded-2xl border border-red-50 hover:bg-red-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold">
+                      {order.fullName?.charAt(0) || "U"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {order.orderCode}
+                      </p>
+                      <p className="text-xs text-gray-500">{order.fullName}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-red-600">
+                      {(order.finalPrice || 0).toLocaleString()} ₫
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      {new Date(order.orderDate).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>

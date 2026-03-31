@@ -17,16 +17,16 @@ const CATEGORIES = ["All", "frame", "lens", "accessory"];
 
 // Label hiển thị đẹp hơn cho từng category
 const CATEGORY_LABELS = {
-  All: "Tất cả",
-  frame: "Gọng kính",
-  lens: "Tròng kính",
-  accessory: "Phụ kiện",
+  All: "All",
+  frame: "Frame",
+  lens: "Lens",
+  accessory: "Accessory",
 };
 
 const SORT_OPTIONS = [
-  { label: "Mặc định", value: "default" },
-  { label: "Giá thấp → cao", value: "asc" },
-  { label: "Giá cao → thấp", value: "desc" },
+  { label: "Default", value: "default" },
+  { label: "Price Min → Max", value: "asc" },
+  { label: "Price Max → Min", value: "desc" },
 ];
 
 /* LoginModal — identical to HomePage */
@@ -67,18 +67,18 @@ function LoginModal({ isOpen, onClose, productName }) {
           </div>
           <div className="text-center mb-7">
             <h3 className="text-lg font-semibold text-stone-900 mb-2 tracking-tight">
-              Đăng nhập để tiếp tục
+              Login to continue
             </h3>
             <p className="text-sm text-stone-500 leading-relaxed">
               {productName ? (
                 <>
-                  Bạn cần đăng nhập để xem chi tiết sản phẩm{" "}
+                  You need to log in to view product details.{" "}
                   <span className="font-medium text-stone-700">
                     "{productName}"
                   </span>{" "}
                 </>
               ) : (
-                "Vui lòng đăng nhập để xem chi tiết sản phẩm."
+                "You need to log in to view product details."
               )}
             </p>
           </div>
@@ -108,7 +108,7 @@ function LoginModal({ isOpen, onClose, productName }) {
               onClick={onClose}
               className="hover:text-stone-700 transition-colors cursor-pointer"
             >
-              Tiếp tục xem sản phẩm
+              Continue browsing products
             </button>
           </p>
         </div>
@@ -269,7 +269,7 @@ function ShopPage() {
             </p>
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2">
               <h1 className="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight">
-                Cửa hàng
+                Store
               </h1>
               <p className="text-stone-400 text-sm">
                 {products.length} products
@@ -289,7 +289,7 @@ function ShopPage() {
               />
               <input
                 type="text"
-                placeholder="Tìm kiếm..."
+                placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-9 py-2.5 bg-stone-50 border border-stone-200 rounded-full text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-400 transition-colors"
@@ -392,7 +392,7 @@ function ShopPage() {
                         onClick={(e) => handleAddToCart(e, product)}
                         className="absolute bottom-3 left-1/2 -translate-x-1/2 translate-y-8 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-xs font-medium shadow-md whitespace-nowrap flex items-center gap-1.5"
                       >
-                        <FiShoppingBag size={12} /> Xem chi tiết
+                        <FiShoppingBag size={12} /> View Details
                       </button>
                     </div>
                     <div className="pl-4 pb-4">
@@ -413,10 +413,10 @@ function ShopPage() {
                 <FiSearch size={20} className="text-stone-400" />
               </div>
               <p className="text-stone-700 font-semibold mb-1 tracking-tight">
-                Không tìm thấy sản phẩm
+                No products found
               </p>
               <p className="text-stone-400 text-sm mb-6">
-                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+                Try changing your search filters or keywords.
               </p>
               <button
                 onClick={() => {
@@ -425,7 +425,7 @@ function ShopPage() {
                 }}
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-full transition-all active:scale-95"
               >
-                Xóa bộ lọc
+                Clear filters
               </button>
             </div>
           )}
@@ -440,7 +440,7 @@ function ShopPage() {
                 to="/"
                 className="text-stone-500 hover:text-stone-900 text-sm flex items-center gap-1.5 transition-colors group"
               >
-                Quay lại Trang chủ{" "}
+                Back{" "}
                 <FiArrowRight
                   size={14}
                   className="group-hover:translate-x-0.5 transition-transform"
@@ -466,10 +466,10 @@ function ShopPage() {
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button className="px-7 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
-                Đặt lịch ngay
+                Book your appointment now
               </button>
               <button className="px-7 py-3 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
-                Tìm cửa hàng
+                Find Store
               </button>
             </div>
           </div>
