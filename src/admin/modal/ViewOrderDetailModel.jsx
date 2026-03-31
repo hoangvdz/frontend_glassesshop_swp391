@@ -12,7 +12,6 @@ import {
   FiFileText,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STATUS_CONFIG = {
@@ -54,10 +53,127 @@ const STATUS_CONFIG = {
   },
 };
 
-function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionAction }) {
+// Định nghĩa các bước của đơn hàng
+const ORDER_STEPS = [
+  {
+    key: "pending",
+    label: "Order Placed",
+    icon: FiClock,
+    description: "Order received",
+  },
+  {
+    key: "processing",
+    label: "Processing",
+    icon: FiPackage,
+    description: "Packaging items",
+  },
+  {
+    key: "shipped",
+    label: "Shipped",
+    icon: FiTruck,
+    description: "On the way",
+  },
+  {
+    key: "completed",
+    label: "Delivered",
+    icon: FiCheckCircle,
+    description: "Order completed",
+  },
+];
+
+function OrderProgressStepper({ currentStatus }) {
+  const statusLower = (currentStatus || "pending")
+    .toString()
+    .toLowerCase()
+    .trim();
+  const isCancelled = statusLower === "cancelled";
+  const currentStepIndex = ORDER_STEPS.findIndex(
+    (step) => step.key === statusLower,
+  );
+
+  if (isCancelled) {
+    return (
+      <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+        <div className="flex items-center gap-2 text-red-700">
+          <FiXCircle size={18} />
+          <span className="font-semibold text-sm">Order Cancelled</span>
+        </div>
+        <p className="text-xs text-red-600 mt-1 ml-6">
+          This order has been cancelled
+        </p>
+      </div>
+    );
+  }
+
+  // Timestamps giả — bạn có thể truyền từ order data thực
+
+  return (
+    <div className="w-full mb-6 pb-8 pt-2">
+      <div className="relative flex justify-between items-center px-6">
+        {/* Connector lines */}
+        <div className="absolute left-10 right-10 top-1/2 -translate-y-1/2 h-[3px] bg-gray-100 rounded-full">
+          <div
+            className="absolute left-0 top-0 h-full bg-green-400 rounded-full transition-all duration-500 ease-in-out"
+            style={{
+              width: `${(Math.max(0, currentStepIndex) / (ORDER_STEPS.length - 1)) * 100}%`,
+            }}
+          />
+        </div>
+
+        {ORDER_STEPS.map((step, index) => {
+          const isCompleted = index < currentStepIndex;
+          const isCurrent = index === currentStepIndex;
+          const StepIcon = step.icon;
+
+          return (
+            <div
+              key={step.key}
+              className="relative z-10 flex flex-col items-center"
+            >
+              {/* Icon dot */}
+              <div
+                className={`
+                  w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors
+                  ${isCompleted
+                    ? "bg-green-500 border-green-500 text-white"
+                    : isCurrent
+                      ? "bg-blue-50 border-blue-500 text-blue-600"
+                      : "bg-white border-gray-200 text-gray-400"
+                  }
+                `}
+              >
+                {isCompleted ? (
+                  <FiCheckCircle size={16} />
+                ) : (
+                  <StepIcon size={14} />
+                )}
+              </div>
+
+              {/* Text underneath */}
+              <div className="absolute top-10 w-28 text-center flex flex-col items-center">
+                <span
+                  className={`text-[13px] font-semibold ${isCompleted
+                    ? "text-gray-800"
+                    : isCurrent
+                      ? "text-blue-600"
+                      : "text-gray-400"
+                    }`}
+                >
+                  {step.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
   const navigate = useNavigate();
-  const [adminNotes, setAdminNotes] = useState({});
-  const [actionLoading, setActionLoading] = useState(false);
+
+
 
   if (!order) return null;
 
@@ -67,7 +183,10 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
       return sum + (item.unitPrice || 0) * (item.quantity || 1);
     }, 0) || 0;
 
-  const currentStatus = (order.status || "pending").toString().toLowerCase().trim();
+  const currentStatus = (order.status || "pending")
+    .toString()
+    .toLowerCase()
+    .trim();
   const status = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending;
 
   // Kiểm tra đơn hàng có prescription không (Broad + Deep scan)
@@ -98,24 +217,24 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
       );
     });
 
-
-
   // Lọc ra các item có prescription data
   const prescriptionItems =
     order.orderItems?.filter(
-      (item) => 
-        item.itemType === "PRESCRIPTION" || 
-        item.prescription != null || 
-        item.fulfillmentType === "PRESCRIPTION"
+      (item) =>
+        item.itemType === "PRESCRIPTION" ||
+        item.prescription != null ||
+        item.fulfillmentType === "PRESCRIPTION",
     ) || [];
 
-  const allPrescriptionsApproved = 
-    prescriptionItems.length === 0 || 
-    prescriptionItems.every(item => item.prescription?.status === true);
+  const allPrescriptionsApproved =
+    prescriptionItems.length === 0 ||
+    prescriptionItems.every((item) => item.prescription?.status === true);
 
   // Nếu là đơn prescription + đang pending + chưa được duyệt toàn bộ → chặn chỉnh sửa status
   const isPrescriptionBlocked =
-    isPrescriptionOrder && !allPrescriptionsApproved && currentStatus === "pending";
+    isPrescriptionOrder &&
+    !allPrescriptionsApproved &&
+    currentStatus === "pending";
 
   // Kiểm tra đơn hàng có sản phẩm Pre-order không
   const isPreOrderOrder = order.orderItems?.some((item) => {
@@ -146,7 +265,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full max-w-3xl rounded-2xl shadow-xl max-h-[92vh] flex flex-col"
+          className="bg-white w-full max-w-4xl rounded-2xl shadow-xl max-h-[92vh] flex flex-col"
         >
           {/* ── Header ── */}
           <div className="flex items-start justify-between px-6 py-4 border-b border-gray-100">
@@ -176,7 +295,9 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                   </span>
                   <span className="flex items-center gap-1 text-xs text-gray-400">
                     <FiCalendar size={11} />{" "}
-                    {new Date(order.orderDate || order.createdAt).toLocaleString("vi-VN")}
+                    {new Date(
+                      order.orderDate || order.createdAt,
+                    ).toLocaleString("vi-VN")}
                   </span>
                 </div>
               </div>
@@ -191,6 +312,11 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
 
           {/* ── Body ── */}
           <div className="flex-1 overflow-y-auto">
+            {/* Progress Stepper - Hiển thị full width */}
+            <div className="px-6 pt-6 pb-2 bg-gradient-to-b from-gray-50/50 to-transparent">
+              <OrderProgressStepper currentStatus={currentStatus} />
+            </div>
+
             <div className="grid grid-cols-5 divide-x divide-gray-100 min-h-0">
               {/* Left — items */}
               <div className="col-span-3 px-6 py-5">
@@ -209,8 +335,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                       item.imageUrl ||
                       item.product?.imageUrl ||
                       `https://placehold.co/100x100?text=${itemName}`;
-                    const itemColor =
-                      item.variantColor || item.variant?.color;
+                    const itemColor = item.variantColor || item.variant?.color;
                     const itemSize =
                       item.variantSize || item.variant?.frameSize;
                     const itemPrice = item.unitPrice || 0;
@@ -236,8 +361,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
                             {itemColor && <span>Color: {itemColor}</span>}
                             {itemSize && <span>Size: {itemSize}</span>}
-                            {(item.isPreorder ||
-                              item.type === "PRE_ORDER") && (
+                            {(item.isPreorder || item.type === "PRE_ORDER") && (
                               <span className="text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md font-bold text-[9px]">
                                 PRE-ORDER
                               </span>
@@ -260,9 +384,9 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-semibold text-gray-800 text-sm">
-                            {(
-                              itemPrice * (item.quantity || 1)
-                            ).toLocaleString("vi-VN")}{" "}
+                            {(itemPrice * (item.quantity || 1)).toLocaleString(
+                              "vi-VN",
+                            )}{" "}
                             ₫
                           </p>
                         </div>
@@ -280,93 +404,96 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                     {prescriptionItems.map((item, idx) => {
                       const rx = item.prescription || {};
                       return (
-                      <div
-                        key={idx}
-                        className="bg-indigo-50/50 rounded-xl p-4 mb-3 border border-indigo-100"
-                      >
-                        <p className="text-xs font-medium text-indigo-700 mb-2">
-                          {item.productName || `Product ${idx + 1}`}
-                        </p>
-                        <div className="grid grid-cols-5 gap-1 text-[10px] font-semibold text-gray-400 uppercase text-center mb-1">
-                          <div className="text-left">Eye</div>
-                          <div>SPH</div>
-                          <div>CYL</div>
-                          <div>AXIS</div>
-                          <div>ADD</div>
-                        </div>
-                        <div className="grid grid-cols-5 gap-1 text-xs text-center font-mono text-gray-700 mb-1">
-                          <div className="text-left font-semibold text-gray-500">
-                            Right (OD)
+                        <div
+                          key={idx}
+                          className="bg-indigo-50/50 rounded-xl p-4 mb-3 border border-indigo-100"
+                        >
+                          <p className="text-xs font-medium text-indigo-700 mb-2">
+                            {item.productName || `Product ${idx + 1}`}
+                          </p>
+                          <div className="grid grid-cols-5 gap-1 text-[10px] font-semibold text-gray-400 uppercase text-center mb-1">
+                            <div className="text-left">Eye</div>
+                            <div>SPH</div>
+                            <div>CYL</div>
+                            <div>AXIS</div>
+                            <div>ADD</div>
                           </div>
-                          <div>{rx.sphRight ?? "—"}</div>
-                          <div>{rx.cylRight ?? "—"}</div>
-                          <div>
-                            {rx.axisRight != null
-                              ? `${rx.axisRight}°`
-                              : "—"}
-                          </div>
-                          <div>{rx.addRight ?? "—"}</div>
-                        </div>
-                        <div className="grid grid-cols-5 gap-1 text-xs text-center font-mono text-gray-700">
-                          <div className="text-left font-semibold text-gray-500">
-                            Left (OS)
-                          </div>
-                          <div>{rx.sphLeft ?? "—"}</div>
-                          <div>{rx.cylLeft ?? "—"}</div>
-                          <div>
-                            {rx.axisLeft != null
-                              ? `${rx.axisLeft}°`
-                              : "—"}
-                          </div>
-                          <div>{rx.addLeft ?? "—"}</div>
-                        </div>
-                        {rx.pd && (
-                          <div className="mt-2 text-xs text-gray-500">
-                            PD:{" "}
-                            <span className="font-semibold text-gray-700 font-mono">
-                              {rx.pd} mm
-                            </span>
-                          </div>
-                        )}
-                        
-                        {/* Hướng dẫn Duyệt đơn thuốc (Không xử lý trực tiếp) */}
-                        {currentStatus === "pending" && rx.status !== true && (
-                          <div className="mt-4 pt-4 border-t border-indigo-100/50">
-                            <div className="flex items-start gap-2 p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl">
-                              <FiAlertCircle size={14} className="text-indigo-500 mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="text-xs font-semibold text-indigo-700 mb-1">
-                                  Prescription approval required
-                                </p>
-                                <p className="text-[10px] text-indigo-600 leading-relaxed mb-2">
-                                  Approving/declining prescriptions is now managed on a dedicated page.
-                                </p>
-                                <button
-                                  onClick={() => {
-                                    onClose();
-                                    navigate("/dashboard/prescriptions");
-                                  }}
-                                  className="text-[10px] font-bold text-indigo-700 underline flex items-center gap-1 hover:text-indigo-800 transition-colors"
-                                >
-                                  Go to Prescription Management
-                                </button>
-                              </div>
+                          <div className="grid grid-cols-5 gap-1 text-xs text-center font-mono text-gray-700 mb-1">
+                            <div className="text-left font-semibold text-gray-500">
+                              Right (OD)
                             </div>
+                            <div>{rx.sphRight ?? "—"}</div>
+                            <div>{rx.cylRight ?? "—"}</div>
+                            <div>
+                              {rx.axisRight != null ? `${rx.axisRight}°` : "—"}
+                            </div>
+                            <div>{rx.addRight ?? "—"}</div>
                           </div>
-                        )}
+                          <div className="grid grid-cols-5 gap-1 text-xs text-center font-mono text-gray-700">
+                            <div className="text-left font-semibold text-gray-500">
+                              Left (OS)
+                            </div>
+                            <div>{rx.sphLeft ?? "—"}</div>
+                            <div>{rx.cylLeft ?? "—"}</div>
+                            <div>
+                              {rx.axisLeft != null ? `${rx.axisLeft}°` : "—"}
+                            </div>
+                            <div>{rx.addLeft ?? "—"}</div>
+                          </div>
+                          {rx.pd && (
+                            <div className="mt-2 text-xs text-gray-500">
+                              PD:{" "}
+                              <span className="font-semibold text-gray-700 font-mono">
+                                {rx.pd} mm
+                              </span>
+                            </div>
+                          )}
 
-                        {rx.status === true && (
-                          <div className="mt-2 flex items-center gap-1.5 text-emerald-600">
-                            <FiCheckCircle size={12} />
-                            <span className="text-[10px] font-bold uppercase">Toa thuốc đã được duyệt</span>
-                          </div>
-                        )}
-                        {rx.adminNote && (
-                          <div className="mt-2 text-[11px] text-gray-500 italic bg-white/50 p-2 rounded-lg border border-gray-100">
-                             Ghi chú: {rx.adminNote}
-                          </div>
-                        )}
-                      </div>
+                          {/* Hướng dẫn Duyệt đơn thuốc (Không xử lý trực tiếp) */}
+                          {currentStatus === "pending" &&
+                            rx.status !== true && (
+                              <div className="mt-4 pt-4 border-t border-indigo-100/50">
+                                <div className="flex items-start gap-2 p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl">
+                                  <FiAlertCircle
+                                    size={14}
+                                    className="text-indigo-500 mt-0.5 flex-shrink-0"
+                                  />
+                                  <div>
+                                    <p className="text-xs font-semibold text-indigo-700 mb-1">
+                                      Prescription approval required
+                                    </p>
+                                    <p className="text-[10px] text-indigo-600 leading-relaxed mb-2">
+                                      Approving/declining prescriptions is now
+                                      managed on a dedicated page.
+                                    </p>
+                                    <button
+                                      onClick={() => {
+                                        onClose();
+                                        navigate("/dashboard/prescriptions");
+                                      }}
+                                      className="text-[10px] font-bold text-indigo-700 underline flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                                    >
+                                      Go to Prescription Management
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                          {rx.status === true && (
+                            <div className="mt-2 flex items-center gap-1.5 text-emerald-600">
+                              <FiCheckCircle size={12} />
+                              <span className="text-[10px] font-bold uppercase">
+                                Toa thuốc đã được duyệt
+                              </span>
+                            </div>
+                          )}
+                          {rx.adminNote && (
+                            <div className="mt-2 text-[11px] text-gray-500 italic bg-white/50 p-2 rounded-lg border border-gray-100">
+                              Ghi chú: {rx.adminNote}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
@@ -439,9 +566,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                       </div>
                     )}
                     <div className="border-t border-gray-200 pt-2.5 flex justify-between">
-                      <span className="font-semibold text-gray-700">
-                        Total
-                      </span>
+                      <span className="font-semibold text-gray-700">Total</span>
                       <span className="font-bold text-blue-600 text-base">
                         {(
                           order.finalPrice ||
@@ -457,9 +582,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                 {/* Status + Actions */}
                 <div className="p-3 rounded-xl border border-gray-200 bg-gray-50 flex flex-col gap-3">
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full ${status.dot}`}
-                    />
+                    <div className={`w-2.5 h-2.5 rounded-full ${status.dot}`} />
                     <span className="text-sm font-medium text-gray-700">
                       Status: {status.label}
                     </span>
@@ -478,7 +601,9 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                             Prescriptions not approved
                           </p>
                           <p className="text-xs text-indigo-600 leading-relaxed mb-2">
-                            Needs approval for <strong>all</strong> prescriptions on the left before confirming this order.
+                            Needs approval for <strong>all</strong>{" "}
+                            prescriptions on the left before confirming this
+                            order.
                           </p>
                           <button
                             onClick={() => {
@@ -495,7 +620,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         onClick={() => {
                           if (
                             window.confirm(
-                              "Are you sure you want to cancel this order?"
+                              "Are you sure you want to cancel this order?",
                             )
                           ) {
                             onUpdateStatus("cancelled");
@@ -519,7 +644,8 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                             Order contains Pre-order products
                           </p>
                           <p className="text-xs text-amber-600 leading-relaxed mb-2">
-                            Please manage and process this order on the <strong>Pre-order Management</strong> page.
+                            Please manage and process this order on the{" "}
+                            <strong>Pre-order Management</strong> page.
                           </p>
                           <button
                             onClick={() => {
@@ -536,7 +662,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         onClick={() => {
                           if (
                             window.confirm(
-                              "Are you sure you want to cancel this pre-order?"
+                              "Are you sure you want to cancel this pre-order?",
                             )
                           ) {
                             onUpdateStatus("cancelled");
@@ -579,7 +705,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           onClick={() => {
                             if (
                               window.confirm(
-                                "Are you sure you want to cancel this order?"
+                                "Are you sure you want to cancel this order?",
                               )
                             ) {
                               onUpdateStatus("cancelled");

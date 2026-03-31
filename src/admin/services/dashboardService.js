@@ -1,10 +1,4 @@
-import {
-  getCustomerCountApi,
-  getOrdersCountApi,
-  getRevenueReportApi,
-  getDailyRevenueApi,
-  getCancelledOrdersApi,
-} from "../api/dashboardApi";
+import { getCustomerCountApi, getOrdersCountApi, getRevenueApi, getTotalRevenueApi } from "../api/dashboardApi";
 
 export const getOrdersCount = async () => {
   const res = await getOrdersCountApi();
@@ -14,19 +8,14 @@ export const getOrdersCount = async () => {
 export const getCustomerCount = async () => {
   const res = await getCustomerCountApi();
   return res.data.data;
-};
+}
 
-export const getRevenueReport = async (fromDate, toDate) => {
-  const res = await getRevenueReportApi(fromDate, toDate);
+export const getRevenue = async (fromDate, toDate) => {
+  const res = await getRevenueApi(fromDate, toDate);
   return res.data.data;
-};
+}
 
-export const getDailyRevenue = async (fromDate, toDate) => {
-  const res = await getDailyRevenueApi(fromDate, toDate);
+export const getTotalRevenue = async () => {
+  const res = await getTotalRevenueApi();
   return res.data.data;
-};
-
-export const getCancelledOrders = async (fromDate, toDate) => {
-  const res = await getCancelledOrdersApi(fromDate, toDate);
-  return res.data.data;
-};
+}

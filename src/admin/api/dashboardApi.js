@@ -16,3 +16,13 @@ export const getCancelledOrdersApi = async (fromDate, toDate) => {
   return axiosClient.get(`/admin/reports/orders/cancelled`, { params: { fromDate, toDate } });
 };
 
+export const getRevenueApi = async (fromDate, toDate) => {
+  return axiosClient.get(`/admin/reports/revenue`, {
+    params: { fromDate, toDate },
+  });
+};
+
+export const getTotalRevenueApi = async () => {
+  return axiosClient.get(`/admin/reports/total`);
+};
+

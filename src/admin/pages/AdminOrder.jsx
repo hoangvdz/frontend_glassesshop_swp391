@@ -175,6 +175,7 @@ function AdminOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
+
   const fetchOrders = useCallback(async () => {
     try {
       const data = await getAllOrders();
@@ -246,6 +247,7 @@ function AdminOrders() {
       if (!selectedOrder) return;
       try {
         const res = await updateOrderStatus(selectedOrder.id, newStatus);
+        console.log(res);
         if (res.success || res.status === 200 || res.data) {
           const updated = await getOrderById(selectedOrder.id);
           setSelectedOrder(updated);
