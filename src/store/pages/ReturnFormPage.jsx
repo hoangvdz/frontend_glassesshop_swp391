@@ -4,23 +4,24 @@ import { FiUploadCloud, FiChevronLeft } from "react-icons/fi";
 import { createReturnRequestApi } from "../api/returnRequestApi";
 
 function ReturnFormPage() {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const queryParams = new URLSearchParams(location.search);
-    const orderItemId = queryParams.get("orderItemId");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const orderItemId = queryParams.get("orderItemId");
 
-    const [formData, setFormData] = useState({
-        reason: "",
-        details: "",
-    });
-    const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    reason: "",
+    details: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    
     if (!orderItemId) {
-      alert("ERROR: Order item ID (orderItemId) not found in the URL. Please go back to the order page and click the Return/Exchange button again.");
+      alert(
+        "ERROR: Order item ID (orderItemId) not found in the URL. Please go back to the order page and click the Return/Exchange button again.",
+      );
       return;
     }
 
@@ -31,11 +32,8 @@ function ReturnFormPage() {
         requestType: "RETURN",
         reason: `Reason: ${formData.reason}. Details: ${formData.details}`,
       };
-      
 
-
-      const res = await submitServiceRequestApi(payload);
-
+      const res = await createReturnRequestApi(payload);
 
       if (res.data.success) {
         alert("Return/exchange request sent successfully!");
@@ -74,24 +72,34 @@ function ReturnFormPage() {
             Return/Exchange Request
           </h1>
           <p className="text-stone-500 mb-8 border-b border-stone-100 pb-6">
-            Item ID: <span className="font-semibold text-stone-900">#{orderItemId || "N/A"}</span>
+            Item ID:{" "}
+            <span className="font-semibold text-stone-900">
+              #{orderItemId || "N/A"}
+            </span>
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             {/* Reason Selection */}
             <div>
               <label className="block text-sm font-semibold text-stone-700 mb-2">
-                Reason for Return/Exchange <span className="text-red-500">*</span>
+                Reason for Return/Exchange{" "}
+                <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.reason}
-                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, reason: e.target.value })
+                }
                 className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-stone-400 transition-colors"
                 required
               >
-                <option value="" disabled>-- Select Reason --</option>
-                {reasons.map(r => (
-                  <option key={r.value} value={r.label}>{r.label}</option>
+                <option value="" disabled>
+                  -- Select Reason --
+                </option>
+                {reasons.map((r) => (
+                  <option key={r.value} value={r.label}>
+                    {r.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -99,13 +107,16 @@ function ReturnFormPage() {
             {/* Details */}
             <div>
               <label className="block text-sm font-semibold text-stone-700 mb-2">
-                Detailed description of the issue <span className="text-red-500">*</span>
+                Detailed description of the issue{" "}
+                <span className="text-red-500">*</span>
               </label>
               <textarea
                 rows="4"
                 placeholder="Please describe the problem you are experiencing in detail..."
                 value={formData.details}
-                onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, details: e.target.value })
+                }
                 className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-400 resize-none transition-colors"
                 required
               />
@@ -120,7 +131,8 @@ function ReturnFormPage() {
             </button>
           </form>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
-
 export default ReturnFormPage;
