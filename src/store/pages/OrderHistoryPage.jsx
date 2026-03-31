@@ -54,28 +54,40 @@ function OrderHistoryPage() {
     fetchOrders();
   }, []);
 
-  const getReturnStatusInfo = (status) => {
-    switch (status) {
-      case "PENDING":
-        return {
-          text: "Chờ xử lý",
-          color: "text-yellow-600",
-          bg: "bg-yellow-100",
-        };
-      case "APPROVED":
-        return { text: "Đã duyệt", color: "text-blue-600", bg: "bg-blue-100" };
-      case "REJECTED":
-        return { text: "Bị từ chối", color: "text-red-600", bg: "bg-red-100" };
-      case "COMPLETED":
-        return {
-          text: "Đã hoàn tất",
-          color: "text-green-600",
-          bg: "bg-green-100",
-        };
-      default:
-        return { text: status, color: "text-stone-600", bg: "bg-stone-100" };
-    }
-  };
+    const getReturnStatusInfo = (status) => {
+        switch (status) {
+            case "PENDING":
+                return {
+                    text: "Pending",
+                    color: "text-yellow-600",
+                    bg: "bg-yellow-100",
+                };
+            case "APPROVED":
+                return {
+                    text: "Approved",
+                    color: "text-blue-600",
+                    bg: "bg-blue-100",
+                };
+            case "REJECTED":
+                return {
+                    text: "Rejected",
+                    color: "text-red-600",
+                    bg: "bg-red-100",
+                };
+            case "COMPLETED":
+                return {
+                    text: "Completed",
+                    color: "text-green-600",
+                    bg: "bg-green-100",
+                };
+            default:
+                return {
+                    text: status,
+                    color: "text-stone-600",
+                    bg: "bg-stone-100",
+                };
+        }
+    };
 
   const handleCancelOrder = async (orderId) => {
     const isConfirm = window.confirm(
@@ -168,7 +180,10 @@ function OrderHistoryPage() {
             {filteredOrders.map((order, index) => {
               const statusInfo = getStatusInfo(order.status);
               const firstItem = order.items && order.items[0];
-
+                const returnRequest = firstItem ? returnMap[firstItem.orderItemId] : null;
+                const returnStatusInfo = returnRequest
+                    ? getReturnStatusInfo(returnRequest.status)
+                    : null;
               return (
                 <div
                   key={order.id}
@@ -224,7 +239,42 @@ function OrderHistoryPage() {
                       </div>
                     </div>
                   )}
+                    {/* THÔNG TIN YÊU CẦU ĐỔI TRẢ */}
+                    {returnRequest && (
+                        <div className="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <p className="text-sm font-semibold text-stone-800">
+                                    Return / Exchange Request
+                                </p>
+                                <span
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${returnStatusInfo.bg} ${returnStatusInfo.color}`}
+                                >
+                                {returnStatusInfo.text}
+                                </span>
+                            </div>
 
+                            {returnRequest.status === "REJECTED" && returnRequest.rejectionReason && (
+                                <div className="mt-3 text-sm text-red-600 font-medium">
+                                    <span className="font-semibold">Reason: </span>
+                                    {returnRequest.rejectionReason}
+                                </div>
+                            )}
+
+                            {returnRequest.status === "REJECTED" &&
+                                (returnRequest.rejectReason ||
+                                    returnRequest.rejectedReason ||
+                                    returnRequest.adminNote ||
+                                    returnRequest.note) && (
+                                    <p className="mt-3 text-sm text-red-600 font-medium">
+                                        <span className="font-semibold">Admin rejection reason:</span>{" "}
+                                        {returnRequest.rejectReason ||
+                                            returnRequest.rejectedReason ||
+                                            returnRequest.adminNote ||
+                                            returnRequest.note}
+                                    </p>
+                                )}
+                        </div>
+                    )}
                   {/* CÁC NÚT CHỨC NĂNG */}
                   <div className="flex flex-wrap gap-3 justify-end pt-2">
                     {/* Chờ xác nhận (Pending) */}

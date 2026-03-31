@@ -70,10 +70,10 @@ function AdminReturnRequest() {
                 setSelectedRequest((prev) => ({ ...prev, ...updated }));
             }
 
-            alert("Cập nhật trạng thái thành công");
+            alert("Status updated successfully");
         } catch (err) {
-            console.error("Lỗi update status:", err);
-            alert(err?.response?.data?.message || "Cập nhật trạng thái thất bại");
+            console.error("Error update status:", err);
+            alert(err?.response?.data?.message || "Failed to update status");
         } finally {
             setUpdating(false);
         }
@@ -90,19 +90,19 @@ function AdminReturnRequest() {
     return (
         <div className="p-10 bg-[#f8fafc] min-h-screen">
             <div className="mb-8">
-                <h1 className="text-[42px] font-bold text-slate-900">Quản lý đổi/trả</h1>
+                <h1 className="text-[42px] font-bold text-slate-900">Return Request Management</h1>
                 <p className="text-slate-500 text-xl mt-2">
-                    Theo dõi và xử lý yêu cầu đổi/trả từ khách hàng
+                    Monitor and manage customer return/exchange requests
                 </p>
             </div>
 
             <div className="grid grid-cols-5 gap-4 mb-8">
                 {[
-                    ["ALL", "Tất cả"],
-                    ["PENDING", "Chờ xử lý"],
-                    ["APPROVED", "Đã duyệt"],
-                    ["COMPLETED", "Hoàn tất"],
-                    ["REJECTED", "Từ chối"],
+                    ["ALL", "All"],
+                    ["PENDING", "Pending"],
+                    ["APPROVED", "Approved"],
+                    ["COMPLETED", "Completed"],
+                    ["REJECTED", "Rejected"],
                 ].map(([value, label]) => (
                     <button
                         key={value}
@@ -130,7 +130,7 @@ function AdminReturnRequest() {
                         <input
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
-                            placeholder="Tìm request, mã đơn, lý do..."
+                            placeholder="Search request ID, order ID, reason..."
                             className="w-full h-14 rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-lg outline-none"
                         />
                     </div>
@@ -141,21 +141,21 @@ function AdminReturnRequest() {
                 </div>
 
                 {loading ? (
-                    <div className="p-10 text-slate-500 text-lg">Đang tải dữ liệu...</div>
+                    <div className="p-10 text-slate-500 text-lg">Loading data...</div>
                 ) : filteredRequests.length === 0 ? (
-                    <div className="p-10 text-slate-500 text-lg">Không có yêu cầu đổi/trả nào.</div>
+                    <div className="p-10 text-slate-500 text-lg">No return requests found.</div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                             <tr className="text-slate-500 text-lg border-b border-slate-100">
-                                <th className="text-left px-8 py-5">Mã request</th>
-                                <th className="text-left px-8 py-5">Mã đơn</th>
-                                <th className="text-left px-8 py-5">Mã item</th>
-                                <th className="text-left px-8 py-5">Lý do</th>
-                                <th className="text-left px-8 py-5">Trạng thái</th>
-                                <th className="text-left px-8 py-5">Ngày tạo</th>
-                                <th className="text-center px-8 py-5">Chi tiết</th>
+                                <th className="text-left px-8 py-5">Request ID</th>
+                                <th className="text-left px-8 py-5">Order ID</th>
+                                <th className="text-left px-8 py-5">Item ID</th>
+                                <th className="text-left px-8 py-5">Reason</th>
+                                <th className="text-left px-8 py-5">Status</th>
+                                <th className="text-left px-8 py-5">Created At</th>
+                                <th className="text-center px-8 py-5">Details</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -210,7 +210,7 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
                 <div className="px-8 py-6 border-b border-slate-200 flex items-start justify-between">
                     <div>
                         <div className="flex items-center gap-4">
-                            <h2 className="text-[38px] font-bold text-slate-900">Chi tiết yêu cầu đổi/trả</h2>
+                            <h2 className="text-[38px] font-bold text-slate-900">Return Request Details</h2>
                             <StatusBadge status={item.status} />
                         </div>
                         <div className="mt-3 text-slate-500 text-xl">
@@ -228,23 +228,23 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
 
                 <div className="grid grid-cols-2">
                     <div className="p-8 border-r border-slate-200">
-                        <h3 className="text-[28px] font-semibold text-slate-900 mb-6">Thông tin yêu cầu</h3>
+                        <h3 className="text-[28px] font-semibold text-slate-900 mb-6">Request Information</h3>
 
                         <div className="space-y-5 text-[20px]">
                             <div>
-                                <div className="text-slate-500 mb-1">Lý do</div>
+                                <div className="text-slate-500 mb-1">Reason</div>
                                 <div className="font-medium text-slate-900">{item.reason || "-"}</div>
                             </div>
 
                             <div>
-                                <div className="text-slate-500 mb-1">Mô tả chi tiết</div>
+                                <div className="text-slate-500 mb-1">Detailed Description</div>
                                 <div className="font-medium text-slate-900 whitespace-pre-line">
                                     {item.description || "-"}
                                 </div>
                             </div>
 
                             <div>
-                                <div className="text-slate-500 mb-1">Ảnh minh họa</div>
+                                <div className="text-slate-500 mb-1">Image</div>
                                 <div className="font-medium text-slate-900">
                                     {item.imageUrl ? (
                                         <a
@@ -253,10 +253,10 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
                                             rel="noreferrer"
                                             className="text-blue-600 underline"
                                         >
-                                            Xem ảnh
+                                            View Image
                                         </a>
                                     ) : (
-                                        "Không có ảnh"
+                                        "No image"
                                     )}
                                 </div>
                             </div>
@@ -264,23 +264,23 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
                     </div>
 
                     <div className="p-8">
-                        <h3 className="text-[28px] font-semibold text-slate-900 mb-6">Xử lý yêu cầu</h3>
+                        <h3 className="text-[28px] font-semibold text-slate-900 mb-6">Process Request</h3>
 
                         <div className="space-y-5 text-[20px] mb-8">
                             <div>
-                                <div className="text-slate-500 mb-1">Ngày tạo</div>
+                                <div className="text-slate-500 mb-1">Created At</div>
                                 <div className="font-medium text-slate-900">{formatDateTime(item.requestedAt)}</div>
                             </div>
 
                             <div>
-                                <div className="text-slate-500 mb-1">Ngày xử lý</div>
+                                <div className="text-slate-500 mb-1">Resolved At</div>
                                 <div className="font-medium text-slate-900">
                                     {item.resolvedAt ? formatDateTime(item.resolvedAt) : "-"}
                                 </div>
                             </div>
 
                             <div>
-                                <div className="text-slate-500 mb-1">Role hiện tại</div>
+                                <div className="text-slate-500 mb-1">Current Role</div>
                                 <div className="font-medium text-slate-900">{role || "UNKNOWN"}</div>
                             </div>
                         </div>
@@ -294,7 +294,7 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
                                             onClick={() => onUpdate(item.requestId, "APPROVED")}
                                             className="px-6 py-4 rounded-2xl bg-blue-600 text-white text-lg font-semibold"
                                         >
-                                            Đồng ý
+                                            Approve
                                         </button>
 
                                         <button
@@ -302,7 +302,7 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
                                             onClick={() => onUpdate(item.requestId, "REJECTED")}
                                             className="px-6 py-4 rounded-2xl bg-red-600 text-white text-lg font-semibold"
                                         >
-                                            Từ chối
+                                            Reject
                                         </button>
                                     </>
                                 )}
@@ -315,7 +315,7 @@ function ReturnRequestModal({ item, role, updating, onClose, onUpdate }) {
                         onClick={onClose}
                         className="px-8 py-3 rounded-2xl border border-slate-300 text-slate-700 text-lg font-medium hover:bg-slate-50"
                     >
-                        Đóng
+                        Close
                     </button>
                 </div>
             </div>
@@ -352,13 +352,13 @@ function formatDateTime(value) {
 function getConfirmText(status) {
     switch (status) {
         case "APPROVED":
-            return "Bạn có chắc muốn duyệt yêu cầu này?";
+            return "Are you sure you want to approve this request?";
         case "REJECTED":
-            return "Bạn có chắc muốn từ chối yêu cầu này?";
+            return "Are you sure you want to reject this request?";
         case "COMPLETED":
-            return "Bạn có chắc muốn hoàn tất yêu cầu này?";
+            return "Are you sure you want to complete this request?";
         default:
-            return "Bạn có chắc muốn cập nhật trạng thái?";
+            return "Are you sure you want to update the status?";
     }
 }
 
