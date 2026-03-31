@@ -7,11 +7,12 @@ import {
   getProductByIdApi,
   updateProductApi,
   updateVariantApi,
+  updateVariantQuantityApi,
 } from "../api/productApi";
 
 const mapProduct = (p) => {
   const totalStock =
-    p.variants?.reduce((sum, v) => sum + v.stockQuantity, 0) ?? 0;
+    p.variants?.reduce((sum, v) => sum + (v.stockQuantity ?? v.quantity ?? v.stock ?? 0), 0) ?? 0;
 
   return {
     id: p.productId,
@@ -24,6 +25,7 @@ const mapProduct = (p) => {
     img:
       p.variants?.[0]?.imageUrl ||
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTj1_Gp9JZ246p0IK04AFBLjWqfTwYWt-nD9w&s",
+    variants: p.variants || [], // 🔥 TRẢ VỀ VARIANTS ĐỂ HIỂN THỊ TRONG DASHBOARD
   };
 };
 
@@ -70,7 +72,7 @@ export const getProductById = async (id) => {
     name: p.name || "",
     brand: p.brand || "",
     description: p.description || "",
-    price: p.price || "",
+    price: p.price ?? "",
 
     isPrescriptionSupported: true,
     variants:
@@ -119,6 +121,12 @@ export const updateProduct = async (id, form) => {
 
 export const updateVariant = async (id, quantity, data) => {
   const res = await updateVariantApi(id, quantity, data);
+
+  return res.data.data;
+};
+
+export const updateVariantQuantity = async (id, quantity) => {
+  const res = await updateVariantQuantityApi(id, quantity);
 
   return res.data.data;
 };

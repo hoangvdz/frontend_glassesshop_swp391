@@ -26,108 +26,156 @@ import { useToast } from "../../context/ToastContext";
 ───────────────────────────────────────── */
 const ProductRow = memo(
   ({ product, isSelected, onSelect, onEdit, onDelete }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
     const renderStock = (stock) => {
       if (stock === 0)
         return (
-          <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 border border-red-200 font-medium">
-          Out of stock
+          <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 border border-red-200 font-medium whitespace-nowrap">
+            Out of stock
           </span>
         );
       if (stock <= 10)
         return (
-          <span className="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+          <span className="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium whitespace-nowrap">
             Low stock ({stock})
           </span>
         );
       return (
-        <span className="px-3 py-1 text-xs rounded-full bg-green-50 text-green-700 border border-green-200 font-medium">
+        <span className="px-3 py-1 text-xs rounded-full bg-green-50 text-green-700 border border-green-200 font-medium whitespace-nowrap">
           In stock ({stock})
         </span>
       );
     };
 
     return (
-      <tr className={isSelected ? "bg-blue-50/40" : "hover:bg-gray-50/60"}>
-        {/* Checkbox */}
-        <td className="px-4 py-4">
-          <div className="flex justify-center">
-            <div
-              onClick={() => onSelect(product.id)}
-              className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center cursor-pointer
+      <>
+        <tr className={isSelected ? "bg-blue-50/40" : "hover:bg-gray-50/60"}>
+          {/* Checkbox */}
+          <td className="px-4 py-4">
+            <div className="flex justify-center">
+              <div
+                onClick={() => onSelect(product.id)}
+                className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center cursor-pointer
               ${isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300 hover:border-blue-400"}`}
+              >
+                {isSelected && (
+                  <FiCheck size={10} strokeWidth={3} className="text-white" />
+                )}
+              </div>
+            </div>
+          </td>
+
+          {/* Product */}
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-3">
+              <img
+                src={
+                  product.img
+                    ? product.img
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=0f172a&color=fff&bold=true`
+                }
+                className="w-10 h-10 rounded-xl border border-gray-100 object-cover shadow-sm flex-shrink-0"
+                alt={product.name}
+                loading="lazy"
+              />
+              <div className="min-w-0">
+                <p className="font-medium text-gray-800 truncate leading-tight">
+                  {product.name}
+                </p>
+                {product.variants?.length > 0 && (
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-tight flex items-center gap-1 mt-1 transition-colors"
+                  >
+                    {product.variants.length} Variants
+                    {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                  </button>
+                )}
+              </div>
+            </div>
+          </td>
+
+          {/* Category */}
+          <td className="px-6 py-4">
+            <span className="px-2.5 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-medium">
+              {product?.category || product?.type || "N/A"}
+            </span>
+          </td>
+
+          {/* Price */}
+          <td className="px-6 py-4 text-right font-semibold text-gray-800">
+            {product.price.toLocaleString("en-US")} ₫
+          </td>
+
+          {/* Stock */}
+          <td className="px-6 py-4 text-center">{renderStock(product.stock)}</td>
+
+          {/* Actions */}
+          <td className="px-6 py-4">
+            <div className="flex justify-end gap-1">
+              <div className="relative group">
+                <button
+                  onClick={() => onEdit(product)}
+                  className="p-2 rounded-lg text-blue-600 hover:bg-blue-50"
+                >
+                  <FiEdit2 size={15} />
+                </button>
+                <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+                  Edit
+                </span>
+              </div>
+
+              <div className="relative group">
+                <button
+                  onClick={() => onDelete(product.id)}
+                  className="p-2 rounded-lg text-red-500 hover:bg-red-50"
+                >
+                  <FiTrash2 size={15} />
+                </button>
+                <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+                  Delete
+                </span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.tr
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-gray-50/50"
             >
-              {isSelected && (
-                <FiCheck size={10} strokeWidth={3} className="text-white" />
-              )}
-            </div>
-          </div>
-        </td>
-
-        {/* Product */}
-        <td className="px-6 py-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={
-                product.img
-                  ? product.img
-                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=0f172a&color=fff&bold=true`
-              }
-              className="w-10 h-10 rounded-xl border border-gray-100 object-cover shadow-sm flex-shrink-0"
-              alt={product.name}
-              loading="lazy"
-            />
-            <div className="min-w-0">
-              <p className="font-medium text-gray-800 truncate leading-tight">
-                {product.name}
-              </p>
-            </div>
-          </div>
-        </td>
-
-        {/* Category */}
-        <td className="px-6 py-4">
-          <span className="px-2.5 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-medium">
-            {product?.category || product?.type || "N/A"}
-          </span>
-        </td>
-
-        {/* Price */}
-        <td className="px-6 py-4 text-right font-semibold text-gray-800">
-          {product.price.toLocaleString("en-US")} ₫
-        </td>
-
-        {/* Stock */}
-        <td className="px-6 py-4 text-center">{renderStock(product.stock)}</td>
-
-        {/* Actions */}
-        <td className="px-6 py-4">
-          <div className="flex justify-end gap-1">
-            <div className="relative group">
-              <button
-                onClick={() => onEdit(product)}
-                className="p-2 rounded-lg text-blue-600 hover:bg-blue-50"
-              >
-                <FiEdit2 size={15} />
-              </button>
-              <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-                Edit
-              </span>
-            </div>
-
-            <div className="relative group">
-              <button
-                onClick={() => onDelete(product.id)}
-                className="p-2 rounded-lg text-red-500 hover:bg-red-50"
-              >
-                <FiTrash2 size={15} />
-              </button>
-              <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-                Delete
-              </span>
-            </div>
-          </div>
-        </td>
-      </tr>
+              <td colSpan={6} className="px-10 py-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {product.variants.map((v, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-2 bg-white rounded-xl border border-gray-100 shadow-sm"
+                    >
+                      <img
+                        src={v.imageUrl || "https://placehold.co/40"}
+                        className="w-10 h-10 rounded-lg object-cover border border-gray-50"
+                        alt=""
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold text-gray-800 truncate">
+                          {v.color || "No color"}
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          Qty: {v.stockQuantity} · {v.frameSize || "No size"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </td>
+            </motion.tr>
+          )}
+        </AnimatePresence>
+      </>
     );
   },
 );

@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiChevronLeft } from "react-icons/fi";
+import { 
+    FiChevronLeft, 
+    FiAlertCircle, 
+    FiCheckCircle, 
+    FiRotateCcw, 
+    FiEdit3, 
+    FiHelpCircle,
+    FiPackage,
+    FiShield
+} from "react-icons/fi";
 import {
     createReturnRequestApi,
     getReturnRequestByOrderItemApi,
 } from "../api/returnRequestApi";
+import { motion } from "framer-motion";
 
 function ReturnFormPage() {
     const location = useLocation();
@@ -36,37 +46,13 @@ function ReturnFormPage() {
             }
         };
 
-        if (orderItemId) {
-            checkExisting();
-        } else {
-            setChecking(false);
-        }
+        if (orderItemId) checkExisting();
+        else setChecking(false);
     }, [orderItemId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (existingRequest) {
-            alert("A request has already been submitted for this item.");
-            return;
-        }
-
-        if (!orderItemId) {
-            alert(
-                "ERROR: Order item ID (orderItemId) not found in the URL. Please go back and try again.",
-            );
-            return;
-        }
-
-        if (!formData.reason.trim()) {
-            alert("Please select a reason.");
-            return;
-        }
-
-        if (!formData.details.trim()) {
-            alert("Please enter a detailed description.");
-            return;
-        }
+        if (existingRequest || !orderItemId || !formData.reason.trim() || !formData.details.trim()) return;
 
         setSubmitting(true);
         try {
@@ -75,23 +61,12 @@ function ReturnFormPage() {
                 reason: formData.reason,
                 description: formData.details,
                 imageUrl: "",
-                requestType: formData.requestType, // RETURN / EXCHANGE
+                requestType: formData.requestType,
             };
-
             const res = await createReturnRequestApi(payload);
-
-            if (res?.data?.success) {
-                alert(
-                    `${formData.requestType === "EXCHANGE" ? "Exchange" : "Return"} request submitted successfully!`,
-                );
-                navigate("/my-orders");
-            } else {
-                alert("Failed: " + (res?.data?.message || "Unknown"));
-            }
+            if (res?.data?.success) navigate("/my-orders");
         } catch (error) {
-            console.error("Return request API error:", error);
-            const errorMsg = error.response?.data?.message || error.message;
-            alert("Error sending request: " + errorMsg);
+            console.error("Error:", error);
         } finally {
             setSubmitting(false);
         }
@@ -105,31 +80,30 @@ function ReturnFormPage() {
     ];
 
     if (checking) {
-        return <div className="pt-24 text-center">Loading...</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="w-6 h-6 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+            </div>
+        );
     }
 
     if (existingRequest) {
         return (
-            <div className="min-h-screen bg-stone-50 pt-24 px-6">
-                <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-stone-200 p-8 shadow-sm">
-                    <h1 className="text-2xl font-bold text-stone-900 mb-4">
-                        Return/Exchange Request
-                    </h1>
-
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                        <p className="text-sm font-semibold text-amber-700">
-                            A request has already been submitted for this item.
-                        </p>
-                        <p className="text-sm text-stone-600 mt-2">
-                            You cannot submit another request.
-                        </p>
+            <div className="min-h-screen bg-[#fcfcfc] pt-24 px-6">
+                <div className="max-w-md mx-auto bg-white rounded-2xl p-8 shadow-sm border border-slate-100 text-center">
+                    <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <FiAlertCircle size={32} className="text-amber-500" />
                     </div>
-
+                    <h1 className="text-lg font-bold text-slate-900 mb-2">Request Already Exists</h1>
+                    <p className="text-sm text-slate-500 leading-relaxed mb-8 font-medium">
+                        You have already submitted a request for this item. 
+                        Please wait for our team to review your current Case #{existingRequest.requestId}.
+                    </p>
                     <button
                         onClick={() => navigate("/my-orders")}
-                        className="mt-6 px-5 py-2.5 bg-blue-600 text-white rounded-xl"
+                        className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-800 transition-all"
                     >
-                        Back to Orders
+                        Return to Orders
                     </button>
                 </div>
             </div>
@@ -137,93 +111,97 @@ function ReturnFormPage() {
     }
 
     return (
-        <div className="min-h-screen bg-stone-50 pt-24 pb-16 px-6">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-[#fcfcfc] pt-24 pb-20 px-6 font-sans">
+            <div className="max-w-xl mx-auto">
                 <button
                     onClick={() => navigate(-1)}
-                    className="inline-flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors mb-6 text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors mb-8 text-[11px] font-bold uppercase tracking-widest"
                 >
-                    <FiChevronLeft /> Back
+                    <FiChevronLeft /> Back to Order
                 </button>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-8">
-                    <h1 className="text-2xl font-bold text-stone-900 mb-2 tracking-tight">
-                        Return/Exchange Request
-                    </h1>
-                    <p className="text-stone-500 mb-8 border-b border-stone-100 pb-6">
-                        Item ID:{" "}
-                        <span className="font-semibold text-stone-900">
-              #{orderItemId || "N/A"}
-            </span>
-                    </p>
-
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+                    <div className="flex items-center gap-4 mb-10 pb-6 border-b border-slate-50">
+                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                            <FiRotateCcw size={22} />
+                        </div>
                         <div>
-                            <label className="block text-sm font-semibold text-stone-700 mb-2">
-                                Request Type <span className="text-red-500">*</span>
+                            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Return & Exchange</h1>
+                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">Item Ref: #{orderItemId}</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        <div>
+                            <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                                <FiShield /> Request Type 
                             </label>
-                            <select
-                                value={formData.requestType}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, requestType: e.target.value })
-                                }
-                                className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-stone-400 transition-colors"
-                                required
-                            >
-                                <option value="RETURN">Return</option>
-                                <option value="EXCHANGE">Exchange</option>
-                            </select>
+                            <div className="grid grid-cols-2 gap-3">
+                                {["RETURN", "EXCHANGE"].map((type) => (
+                                    <button
+                                        key={type}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, requestType: type })}
+                                        className={`py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${
+                                            formData.requestType === type 
+                                            ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100"
+                                            : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"
+                                        }`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-stone-700 mb-2">
-                                Reason for Return/Exchange <span className="text-red-500">*</span>
+                            <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                                <FiHelpCircle /> Reason for Request
                             </label>
                             <select
                                 value={formData.reason}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, reason: e.target.value })
-                                }
-                                className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-stone-400 transition-colors"
+                                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                                className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-blue-200 transition-all appearance-none"
                                 required
                             >
-                                <option value="" disabled>
-                                    -- Select Reason --
-                                </option>
+                                <option value="" disabled>-- Select Reason --</option>
                                 {reasons.map((r) => (
-                                    <option key={r.value} value={r.value}>
-                                        {r.label}
-                                    </option>
+                                    <option key={r.value} value={r.value}>{r.label}</option>
                                 ))}
                             </select>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-stone-700 mb-2">
-                                Detailed description of the issue <span className="text-red-500">*</span>
+                            <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                                <FiEdit3 /> More Details 
                             </label>
                             <textarea
                                 rows="4"
-                                placeholder="Please describe the problem you are experiencing in detail..."
+                                placeholder="Describe the issue you're facing..."
                                 value={formData.details}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, details: e.target.value })
-                                }
-                                className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-400 resize-none transition-colors"
+                                onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-700 outline-none focus:bg-white focus:border-blue-200 transition-all resize-none leading-normal"
                                 required
                             />
                         </div>
 
+                        <div className="bg-slate-50/50 rounded-xl p-4 flex gap-3 border border-dashed border-slate-200">
+                            <FiPackage className="text-slate-400 mt-0.5 flex-shrink-0" size={14} />
+                            <p className="text-[10px] font-semibold text-slate-400 leading-relaxed uppercase tracking-tighter italic">
+                                Once submitted, we will process your request within 2-3 business days. Tracking is available in history.
+                            </p>
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={submitting}
-                            className={`w-full py-4 mt-4 text-white font-bold rounded-xl transition-colors text-sm uppercase tracking-widest ${
-                                submitting
-                                    ? "bg-stone-300 cursor-not-allowed"
-                                    : "bg-blue-600 hover:bg-blue-700"
+                            disabled={submitting || !formData.reason || !formData.details}
+                            className={`w-full py-4 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all ${
+                                submitting || !formData.reason || !formData.details
+                                    ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                                    : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-200 active:scale-[0.98]"
                             }`}
                         >
-                            {submitting ? "Sending Request..." : "Send Request"}
+                            {submitting ? "Processing..." : "Submit My Request"}
                         </button>
                     </form>
                 </div>

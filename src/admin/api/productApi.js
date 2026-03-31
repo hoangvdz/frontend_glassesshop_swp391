@@ -30,6 +30,12 @@ export const updateVariantApi = async (id, quantity, data) => {
   );
 };
 
+export const updateVariantQuantityApi = async (id, quantity) => {
+  return adminClient.put(
+    `/admin/products/variants/updateQuantity/${id}?quantity=${quantity}`,
+  );
+};
+
 export const createVariantApi = async (id, data) => {
   return adminClient.post(`/admin/products/${id}/variants`, data);
 };

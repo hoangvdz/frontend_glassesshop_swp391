@@ -99,15 +99,14 @@ function MiniPipeline({ currentStep, cancelled }) {
           <div key={s.id} className="flex items-center">
             <div
               className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] border transition-all
-              ${
-                cancelled && currentStep <= s.id
+              ${cancelled && currentStep <= s.id
                   ? "bg-gray-100 border-gray-200 text-gray-300"
                   : done
                     ? "bg-green-500 border-green-500 text-white"
                     : active
                       ? `${cx.bg} ${cx.border} ${cx.text} border`
                       : "bg-gray-50 border-gray-200 text-gray-300"
-              }`}
+                }`}
               title={s.label}
             >
               {done ? <FiCheck size={9} /> : i + 1}
@@ -182,22 +181,20 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
           </span>
         ) : (
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-              order.step === 6
-                ? "bg-green-50 text-green-700 border-green-200"
-                : order.step === 0
-                  ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                  : "bg-blue-50 text-blue-700 border-blue-200"
-            }`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${order.step === 6
+              ? "bg-green-50 text-green-700 border-green-200"
+              : order.step === 0
+                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                : "bg-blue-50 text-blue-700 border-blue-200"
+              }`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                order.step === 6
-                  ? "bg-green-500"
-                  : order.step === 0
-                    ? "bg-yellow-400"
-                    : "bg-blue-400"
-              }`}
+              className={`w-1.5 h-1.5 rounded-full ${order.step === 6
+                ? "bg-green-500"
+                : order.step === 0
+                  ? "bg-yellow-400"
+                  : "bg-blue-400"
+                }`}
             />
             {order.step === 6
               ? "Completed"
@@ -244,9 +241,11 @@ export default function AdminPreorders() {
   const { showToast } = useToast();
   const itemsPerPage = 7;
   const mapStatusToStep = (status) => {
-    switch (status) {
+    const s = String(status || "").toUpperCase();
+    switch (s) {
       case "PENDING":
         return 0;
+      case "PROCESSING":
       case "CONFIRMED":
         return 1;
       case "PRESCRIPTION_CHECKED":
@@ -282,7 +281,8 @@ export default function AdminPreorders() {
           return {
             productId: item.productId,
             variantId: item.variantId,
-            color: item.variantColor,
+            color: item.color,
+            quantity: item.quantity, // ✅ đưa ra ngoài để tiện dùng
             id: item.orderCode,
             orderId: item.orderId,
 
@@ -299,7 +299,7 @@ export default function AdminPreorders() {
 
             items: [
               {
-                name: item.productName,
+                name: item.productName || "Product",
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
                 img: item.imageUrl || "https://placehold.co/50",
@@ -355,6 +355,11 @@ export default function AdminPreorders() {
   /* ── filter ── */
   const filtered = useMemo(() => {
     return orders.filter((o) => {
+      // 🟢 Logic: Once approved (step > 0), it should move to Order Management, 
+      // so we filter it out if we just want to see "Waiting for Approval" items.
+      // But we check stepFilter first.
+      if (stepFilter === "all" && o.step > 0 && !o.cancelled) return false;
+
       const matchSearch =
         o.id.toLowerCase().includes(search.toLowerCase()) ||
         o.customer.toLowerCase().includes(search.toLowerCase()) ||
@@ -657,25 +662,19 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
     if (!window.confirm("Approve this pre-order and deduct inventory?")) return;
     setLoading(true);
     try {
-      // 1. Lấy kho mới nhất và thông tin variant đầy đủ từ server
+      // 1. Lấy kho mới nhất từ server
       const variantRes = await getStockVariantById(order.variantId);
-      const currentStock = variantRes?.stockQuantity ?? 0;
+      const currentStock = variantRes?.stockQuantity ?? variantRes?.quantity ?? 0;
 
-      const qtyToDeduct = order.items?.[0]?.quantity || 0;
+      // ✅ Tính toán số lượng kho thực tế sau khi trừ
+      const qtyToDeduct = Number(order.quantity) || 0;
       const newQuantity = Math.max(0, currentStock - qtyToDeduct);
 
-      // 2. Chuẩn bị payload đầy đủ như EditProductModal
-      const variantPayload = {
-        frameSize: variantRes?.frameSize || "",
-        color: variantRes?.color || "",
-        material: variantRes?.material || "",
-        imageUrl: variantRes?.imageUrl || "",
-        status: "AVAILABLE",
-        active: true,
-      };
+      console.log(`Deducting ${qtyToDeduct} from ${currentStock}. New stock: ${newQuantity}`);
 
-      // 3. Cập nhật kho mới với đầy đủ thông tin variant
-      await updateStockService(order.variantId, newQuantity, variantPayload);
+      // 2. Cập nhật kho mới - CHỈ CẦN variantId và newQuantity
+      await updateStockService(order.variantId, newQuantity);
+
 
       // 4. Cập nhật trạng thái đơn hàng sang PROCESSING
       await updateOrderStatus(order.orderId, "PROCESSING");
@@ -686,7 +685,7 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
       console.error("Lỗi xử lý:", error);
       showToast(
         "Error processing pre-order: " +
-          (error.response?.data?.message || error.message),
+        (error.response?.data?.message || error.message),
         "error",
       );
     } finally {
@@ -802,14 +801,14 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
             {order.step === 0 && !order.cancelled && (
               <button
                 disabled={
-                  loading || order.stock < (order.items?.[0]?.quantity || 0)
+                  loading || order.stock < (order.quantity || 0)
                 }
                 onClick={handleApprove}
                 className="flex-[2] px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:grayscale"
               >
                 {loading
                   ? "PROCESSING..."
-                  : order.stock < (order.items?.[0]?.quantity || 0)
+                  : order.stock < (order.quantity || 0)
                     ? "NOT ENOUGH STOCK"
                     : "APPROVE ORDER"}
               </button>
