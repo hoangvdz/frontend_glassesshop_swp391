@@ -119,7 +119,7 @@ export const updateProduct = async (id, form) => {
 
 export const updateVariant = async (id, quantity, data) => {
   const res = await updateVariantApi(id, quantity, data);
-  console.log(res.data.data);
+
   return res.data.data;
 };
 

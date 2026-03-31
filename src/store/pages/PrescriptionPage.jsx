@@ -61,7 +61,7 @@ export default function PrescriptionPage() {
           setLoadingLenses(false);
         }
       } catch (err) {
-        console.error("Lỗi lấy thông tin:", err);
+        console.error("Error fetching info:", err);
         navigate("/shop");
       } finally {
         setLoading(false);
@@ -79,7 +79,7 @@ export default function PrescriptionPage() {
         const data = res.data?.data || res.data || [];
         setSavedPrescriptions(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Lỗi tải đơn thuốc đã lưu:", err);
+        console.error("Error loading saved prescriptions:", err);
         setSavedPrescriptions([]);
       } finally {
         setLoadingRx(false);
@@ -112,17 +112,17 @@ export default function PrescriptionPage() {
   /* ---------- DELETE PRESCRIPTION ---------- */
   const handleDeletePrescription = async (rxId) => {
     if (!rxId) return;
-    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa đơn thuốc này khỏi tài khoản không?");
+    const confirmDelete = window.confirm("Are you sure you want to delete this prescription from your account?");
     if (!confirmDelete) return;
 
     try {
       await deletePrescriptionApi(rxId);
       // Xóa thành công thì lọc cái đơn đó ra khỏi màn hình
       setSavedPrescriptions((prev) => prev.filter((rx) => rx.id !== rxId && rx.prescriptionId !== rxId));
-      alert("Đã xóa đơn thuốc thành công!");
+      alert("Prescription deleted successfully!");
     } catch (error) {
-      console.error("Lỗi xóa đơn thuốc:", error);
-      alert("Không thể xóa đơn thuốc lúc này. Vui lòng thử lại sau.");
+      console.error("Delete prescription error:", error);
+      alert("Cannot delete prescription right now. Please try again later.");
     }
   };
 
@@ -153,15 +153,15 @@ export default function PrescriptionPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.right.sph) e.rightSph = "Bắt buộc";
-    if (!form.left.sph) e.leftSph = "Bắt buộc";
-    if (!form.pd) e.pd = "Bắt buộc";
+    if (!form.right.sph) e.rightSph = "Required";
+    if (!form.left.sph) e.leftSph = "Required";
+    if (!form.pd) e.pd = "Required";
 
     if (form.right.cyl && !form.right.axis)
-      e.rightAxis = "Trục cần thiết nếu nhập CYL";
+      e.rightAxis = "Axis is required if CYL is entered";
 
     if (form.left.cyl && !form.left.axis)
-      e.leftAxis = "Trục cần thiết nếu nhập CYL";
+      e.leftAxis = "Axis is required if CYL is entered";
 
     return e;
   };
@@ -176,7 +176,7 @@ export default function PrescriptionPage() {
     setSubmitting(true);
     try {
       let cart = [];
-      try { cart = JSON.parse(localStorage.getItem("cart")) || []; } catch {}
+      try { cart = JSON.parse(localStorage.getItem("cart")) || []; } catch { /* ignore */ }
 
       const cartItem = {
         cartItemId: Date.now(),
@@ -201,7 +201,9 @@ export default function PrescriptionPage() {
               const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
               preorders[variant.variantId] = true;
               localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
-            } catch(e){}
+            } catch (e) {
+              // ignore
+            }
           }
           const payload = {
             productId,
@@ -212,11 +214,11 @@ export default function PrescriptionPage() {
           };
           await addToCartApi(payload);
       }
-      alert("Đã thêm gọng kính vào giỏ hàng!");
+      alert("Frame added to cart!");
       navigate("/checkout");
     } catch (err) {
       console.error(err);
-      alert("Đã lưu gọng kính vào giỏ hàng tạm thời!");
+      alert("Frame saved to temporary cart!");
       navigate("/checkout");
     } finally {
       setSubmitting(false);
@@ -260,7 +262,7 @@ export default function PrescriptionPage() {
     setSubmitting(true);
     try {
       let cart = [];
-      try { cart = JSON.parse(localStorage.getItem("cart")) || []; } catch {}
+      try { cart = JSON.parse(localStorage.getItem("cart")) || []; } catch { /* ignore */ }
       
       const framePrice = variant?.price || product.price || 0;
       const lensPrice = lensVariant?.price || lensProduct?.price || 0;
@@ -292,7 +294,7 @@ export default function PrescriptionPage() {
 
       if (localStorage.getItem("token")) {
           if (form.savePrescription) {
-            try { await savePrescriptionApi(prescriptionData); } catch (e) { }
+            try { await savePrescriptionApi(prescriptionData); } catch (e) { console.error("Failed to save prescription", e); }
           }
           
           const isOutOfStock = variant?.stockQuantity === 0;
@@ -301,7 +303,9 @@ export default function PrescriptionPage() {
               const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
               preorders[variant.variantId] = true;
               localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
-            } catch(e){}
+            } catch (e) {
+              // ignore
+            }
           }
 
           const framePayload = {
@@ -315,11 +319,11 @@ export default function PrescriptionPage() {
           await addToCartApi(framePayload);
       }
 
-      alert("Sản phẩm đã được thêm vào giỏ hàng!");
+      alert("Product added to cart!");
       navigate("/checkout");
     } catch (err) {
       console.error("Lỗi thêm vào giỏ hàng:", err);
-      alert("Đã lưu vào giỏ hàng tạm thời!");
+      alert("Saved to temporary cart!");
       navigate("/checkout");
     } finally {
       setSubmitting(false);
@@ -338,21 +342,21 @@ export default function PrescriptionPage() {
            />
            {lensProduct && (
              <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm" style={{ animation: "slideUp .4s ease" }}>
-                <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">Tròng kính đã chọn</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">Selected Lens</p>
                 <div className="flex items-center gap-4">
                    <div className="w-16 h-16 bg-stone-50 rounded-lg overflow-hidden border border-stone-100">
                       <img src={lensProduct.variants?.[0]?.imageUrl || lensProduct.img || "https://placehold.co/100"} className="w-full h-full object-contain p-2" />
                    </div>
                    <div className="flex-1">
                       <p className="font-semibold text-gray-800 text-sm leading-tight">{lensProduct.name}</p>
-                      <p className="text-xs text-amber-600 font-bold mt-1">{(lensProduct.price || lensProduct.variants?.[0]?.price || 0).toLocaleString("vi-VN")}₫</p>
+                      <p className="text-xs text-blue-600 font-bold mt-1">{(lensProduct.price || lensProduct.variants?.[0]?.price || 0).toLocaleString("vi-VN")}₫</p>
                    </div>
                 </div>
                 <button
                   onClick={() => navigate(`/prescription/${id}?variantId=${variantIdFromUrl}`)}
                   className="w-full mt-4 py-2 border border-stone-200 rounded-lg text-[11px] font-semibold text-stone-500 hover:bg-stone-50 transition-all active:scale-[0.98]"
                 >
-                  Thay đổi tròng kính
+                  Change Lens
                 </button>
              </div>
            )}
@@ -362,8 +366,8 @@ export default function PrescriptionPage() {
           {!lensId ? (
             <div style={{ animation: "fadeIn .5s ease" }}>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Chọn tròng kính</h1>
-                <p className="text-stone-500 mt-2 text-sm">Vui lòng chọn một loại tròng kính phù hợp với nhu cầu của bạn</p>
+                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Select Lens</h1>
+                <p className="text-stone-500 mt-2 text-sm">Please select a lens type that suits your needs</p>
               </div>
 
               {loadingLenses ? (
@@ -375,17 +379,17 @@ export default function PrescriptionPage() {
                   {/* Option: No Lens (Frame Only) */}
                   <button
                     onClick={handleBuyFrameOnly}
-                    className="group p-5 bg-stone-900 border border-stone-800 rounded-2xl text-left hover:bg-stone-800 hover:shadow-xl transition-all duration-300 active:scale-[0.98] relative overflow-hidden"
+                    className="group p-5 bg-blue-900 border border-blue-800 rounded-2xl text-left hover:bg-blue-800 hover:shadow-xl transition-all duration-300 active:scale-[0.98] relative overflow-hidden"
                   >
                     <div className="flex items-center gap-5 relative z-10">
-                      <div className="w-20 h-20 bg-stone-800 rounded-xl flex items-center justify-center border border-stone-700">
-                         <svg className="w-8 h-8 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                      <div className="w-20 h-20 bg-blue-800 rounded-xl flex items-center justify-center border border-blue-700">
+                         <svg className="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-white leading-snug">Chỉ mua gọng kính</h3>
-                        <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold">Không kèm tròng có độ</p>
+                        <h3 className="font-bold text-white leading-snug">Buy Frame Only</h3>
+                        <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold">No prescription lenses included</p>
                         <div className="mt-2 text-sm font-black text-white">
-                          Giữ giá gốc
+                          Keep original price
                         </div>
                       </div>
                     </div>
@@ -413,7 +417,7 @@ export default function PrescriptionPage() {
                           <div className="flex-1">
                             <h3 className="font-bold text-stone-800 leading-snug group-hover:text-indigo-600 transition-colors">{lens.name}</h3>
                             <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold opacity-70">{lens.brand}</p>
-                            <div className="mt-2 text-sm font-black text-amber-500">
+                            <div className="mt-2 text-sm font-black text-blue-600">
                               {(lens.price || 0).toLocaleString("vi-VN")}₫
                             </div>
                           </div>
@@ -428,17 +432,17 @@ export default function PrescriptionPage() {
             <div style={{ animation: "fadeIn .5s ease" }}>
               <div className="flex items-baseline justify-between mb-6">
                 <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
-                  Thông số đơn thuốc
+                  Prescription Details
                 </h1>
                 <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase font-bold tracking-widest">
-                  Bước cuối cùng
+                  Final Step
                 </span>
               </div>
 
               {savedPrescriptions.length > 0 && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-8 shadow-sm">
                   <p className="text-xs font-bold text-indigo-900 uppercase tracking-widest mb-4 opacity-70">
-                    Sử dụng đơn thuốc đã lưu
+                    Use Saved Prescription
                   </p>
                   <div className="flex flex-wrap gap-2.5">
                     {savedPrescriptions.map((rx, idx) => {
@@ -452,13 +456,13 @@ export default function PrescriptionPage() {
                             onClick={() => applySavedPrescription(rx)}
                             className="px-4 py-2.5 text-indigo-700 text-[13px] hover:bg-indigo-50 transition-colors font-semibold text-left"
                           >
-                             Đơn #{idx + 1} — OD: {rx.sphRight ?? "—"} / OS: {rx.sphLeft ?? "—"}
+                             Prescription #{idx + 1} — OD: {rx.sphRight ?? "—"} / OS: {rx.sphLeft ?? "—"}
                           </button>
                           {rxId && (
                             <button
                               onClick={() => handleDeletePrescription(rxId)}
                               className="px-3 flex items-center justify-center text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border-l border-indigo-50"
-                              title="Xóa"
+                              title="Remove"
                             >
                               ✕
                             </button>
@@ -472,11 +476,11 @@ export default function PrescriptionPage() {
 
               <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
                 <div className="flex justify-between items-center mb-10">
-                  <h2 className="text-xl font-bold text-stone-900 tracking-tight">Thông số mắt chi tiết</h2>
+                  <h2 className="text-xl font-bold text-stone-900 tracking-tight">Detailed Eye Specifications</h2>
                    {loadingRx && (
                     <div className="flex items-center gap-2 text-xs text-stone-400">
                       <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600"></div>
-                      Đang tải hồ sơ...
+                      Loading profile...
                     </div>
                   )}
                 </div>
@@ -504,7 +508,7 @@ export default function PrescriptionPage() {
                       onChange={(e) => setForm({ ...form, savePrescription: e.target.checked })}
                     />
                     <label htmlFor="saveRx" className="text-sm font-semibold text-stone-700 cursor-pointer select-none">
-                      Lưu thông số này vào hồ sơ để sử dụng cho lần sau
+                      Save this prescription to my profile for future use
                     </label>
                   </div>
                 </div>

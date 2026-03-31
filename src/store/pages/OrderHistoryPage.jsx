@@ -12,11 +12,11 @@ import { getMyOrders, cancelOrder } from "../services/orderService";
 // Dữ liệu mẫu (Mock Data)
 
 const TABS = [
-  { id: "All", label: "Tất cả" },
-  { id: "PENDING", label: "Chờ xác nhận" },
-  { id: "SHIPPING", label: "Đang giao" },
-  { id: "COMPLETED", label: "Đã giao" },
-  { id: "CANCELLED", label: "Đã hủy" },
+  { id: "All", label: "All" },
+  { id: "PENDING", label: "Pending" },
+  { id: "SHIPPING", label: "Shipping" },
+  { id: "COMPLETED", label: "Completed" },
+  { id: "CANCELLED", label: "Cancelled" },
 ];
 
 function OrderHistoryPage() {
@@ -38,7 +38,7 @@ function OrderHistoryPage() {
 
   const handleCancelOrder = async (orderId) => {
     const isConfirm = window.confirm(
-      "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+      "Are you sure you want to cancel this order?",
     );
 
     if (isConfirm) {
@@ -53,12 +53,12 @@ function OrderHistoryPage() {
                 : order,
             ),
           );
-          alert("Hủy đơn hàng thành công!");
+          alert("Order cancelled successfully!");
         }
       } catch (error) {
         console.error("Lỗi khi hủy đơn:", error);
         alert(
-          "Hủy thất bại: " + (error.response?.data?.message || "Lỗi hệ thống"),
+          "Cancellation failed: " + (error.response?.data?.message || "System error"),
         );
       }
     }
@@ -67,16 +67,16 @@ function OrderHistoryPage() {
   const getStatusInfo = (status) => {
   switch (status) {
     case "SHIPPING":
-      return { text: "Đang giao hàng", code: 2, color: "text-amber-500" };
+      return { text: "Shipping", code: 2, color: "text-blue-500" };
     case "PROCESSING":
-      return { text: "Đang đóng gói", code: 1.5, color: "text-blue-500" };
+      return { text: "Processing", code: 1.5, color: "text-blue-500" };
     case "COMPLETED":
-      return { text: "Giao thành công", code: 3, color: "text-green-600" };
+      return { text: "Delivered", code: 3, color: "text-green-600" };
     case "CANCELLED":
-      return { text: "Đã hủy", code: 4, color: "text-red-500" };
+      return { text: "Cancelled", code: 4, color: "text-red-500" };
     case "PENDING":
     default:
-      return { text: "Chờ xác nhận", code: 1, color: "text-stone-500" };
+      return { text: "Pending", code: 1, color: "text-stone-500" };
   }
 };
 
@@ -92,7 +92,7 @@ function OrderHistoryPage() {
 
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-stone-900 mb-6 tracking-tight uppercase">
-          Đơn hàng của bạn
+          Your Orders
         </h1>
 
         {/* ── TABS NAVIGATION ── */}
@@ -102,7 +102,7 @@ function OrderHistoryPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 min-w-[120px] py-3 text-sm font-medium rounded-xl transition-all duration-300 ${activeTab === tab.id
-                ? "bg-stone-900 text-white shadow-md"
+                ? "bg-blue-600 text-white shadow-md"
                 : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
                 }`}
             >
@@ -117,7 +117,7 @@ function OrderHistoryPage() {
             <div className="w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center text-stone-300 mb-4">
               <FiBox size={32} />
             </div>
-            <p className="text-stone-500 font-medium">Không có đơn hàng nào.</p>
+            <p className="text-stone-500 font-medium">No orders found.</p>
           </div>
         ) : (
           /* ── DANH SÁCH ĐƠN HÀNG ── */
@@ -142,7 +142,7 @@ function OrderHistoryPage() {
                         #{order.id}
                       </p>
                       <p className="text-xs md:text-sm text-stone-500 mt-1">
-                        Đặt ngày {order.date}
+                        Ordered on {order.date}
                       </p>
                     </div>
                     <div className="text-right">
@@ -152,7 +152,7 @@ function OrderHistoryPage() {
                         {statusInfo.text}
                       </p>
                       <p className="font-bold text-stone-900 text-base md:text-lg mt-1">
-                        {order.total?.toLocaleString("vi-VN")}₫
+                        {order.total?.toLocaleString("en-US")}₫
                       </p>
                     </div>
                   </div>
@@ -176,7 +176,7 @@ function OrderHistoryPage() {
                           {firstItem.name}
                         </p>
                         <p className="text-xs md:text-sm text-stone-500 mt-1">
-                          Số lượng: {firstItem.quantity}
+                          Quantity: {firstItem.quantity}
                         </p>
                       </div>
                     </div>
@@ -190,7 +190,7 @@ function OrderHistoryPage() {
                         onClick={() => handleCancelOrder(order.orderId)}
                         className="px-5 py-2.5 bg-white border border-stone-200 text-stone-600 font-medium rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors text-sm flex items-center gap-2"
                       >
-                        <FiAlertCircle /> Hủy đơn hàng
+                        <FiAlertCircle /> Cancel Order
                       </button>
                     )}
 
@@ -198,10 +198,10 @@ function OrderHistoryPage() {
                     {(statusInfo.code === 2 || statusInfo.code === 1.5 || statusInfo.code === 1) && (
                       <Link
                         to={`/shipping-progress/${order.orderId}`}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white font-semibold rounded-xl hover:bg-stone-800 transition-colors text-sm shadow-md"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md"
                       >
                         <FiTruck />
-                        Theo dõi tiến độ
+                        Track Progress
                       </Link>
                     )}
 
@@ -212,15 +212,15 @@ function OrderHistoryPage() {
                           to={`/return-request?orderItemId=${firstItem.orderItemId}`}
                           className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-colors text-sm"
                         >
-                          Yêu cầu Đổi/Trả
+                          Return/Exchange Request
                         </Link>
                         {firstItem && (
                           <Link
                             to={`/product/${firstItem.productId}#review-form`}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors text-sm shadow-md shadow-amber-500/20"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md shadow-blue-500/20"
                           >
                             <FiCheckCircle />
-                            Đánh giá sản phẩm
+                            Review Product
                           </Link>
                         )}
                       </>
@@ -232,7 +232,7 @@ function OrderHistoryPage() {
                         to="/shop"
                         className="px-5 py-2.5 bg-stone-100 text-stone-700 font-semibold rounded-xl hover:bg-stone-200 transition-colors text-sm flex items-center gap-2"
                       >
-                        <FiShoppingBag /> Mua lại
+                        <FiShoppingBag /> Buy Again
                       </Link>
                     )}
                   </div>

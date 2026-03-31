@@ -35,14 +35,14 @@ export default function PrescriptionTable({ form, errors, updateEye }) {
           </thead>
           <tbody className="divide-y divide-stone-100">
             <EyeRow 
-              label="OD (Phải)" 
+              label="OD (Right)" 
               eye="right" 
               form={form} 
               errors={errors} 
               updateEye={updateEye} 
             />
             <EyeRow 
-              label="OS (Trái)" 
+              label="OS (Left)" 
               eye="left" 
               form={form} 
               errors={errors} 

@@ -49,8 +49,7 @@ export const getOrderById = async (id) => {
   const o = res.data?.data || res.data;
   const items = o.orderItems || o.items || [];
   
-  // LOG SIÊU CHI TIẾT ĐỂ DEBUG
-  console.log("!!! FULL DATA OF SELECTED ORDER !!!", JSON.stringify(o, null, 2));
+
   
   const hasPrescription = checkIfHasPrescription(items);
 

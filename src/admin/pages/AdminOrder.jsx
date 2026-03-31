@@ -43,23 +43,23 @@ const isOrderPrescription = (order) => {
 /* ── status config ── */
 const statusMap = {
   completed: {
-    label: "Hoàn thành",
+    label: "Completed",
     className: "bg-green-50 text-green-700 border border-green-200",
   },
   pending: {
-    label: "Chờ xử lý",
+    label: "Pending",
     className: "bg-yellow-50 text-yellow-700 border border-yellow-200",
   },
   processing: {
-    label: "Đang đóng gói",
+    label: "Processing",
     className: "bg-orange-50 text-orange-700 border border-orange-200",
   },
   shipped: {
-    label: "Đang giao",
+    label: "Shipping",
     className: "bg-blue-50 text-blue-700 border border-blue-200",
   },
   cancelled: {
-    label: "Đã huỷ",
+    label: "Cancelled",
     className: "bg-red-50 text-red-700 border border-red-200",
   },
 };
@@ -117,7 +117,7 @@ const OrderRow = memo(({ order, onView }) => {
 
       {/* Total */}
       <td className="px-6 py-4 text-right font-semibold text-gray-800">
-        {order.total.toLocaleString("vi-VN")} ₫
+        {order.total.toLocaleString("en-US")} ₫
       </td>
 
       {/* Status */}
@@ -135,7 +135,7 @@ const OrderRow = memo(({ order, onView }) => {
           )}
           {isOrderPrescription(order) && (
             <span className="px-2 py-0.5 text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md font-bold uppercase tracking-tight">
-              Toa thuốc
+              Prescription
             </span>
           )}
         </div>
@@ -157,7 +157,7 @@ const OrderRow = memo(({ order, onView }) => {
               <FiEye size={16} />
             </button>
             <span className="pointer-events-none absolute bottom-full mb-2 right-0 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-              Xem chi tiết
+              View Details
             </span>
           </div>
         </div>
@@ -299,9 +299,9 @@ function AdminOrders() {
       {/* ── HEADER ── */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Quản lý đơn hàng</h1>
+          <h1 className="text-xl font-bold text-gray-800">Order Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {filteredOrders.length} / {orders.length} đơn hàng
+            {filteredOrders.length} / {orders.length} orders
           </p>
         </div>
       </div>
@@ -310,42 +310,42 @@ function AdminOrders() {
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {[
           {
-            label: "Tất cả",
+            label: "All",
             value: stats.total,
             color: "bg-gray-100 text-gray-700",
             active: status === "all",
             key: "all",
           },
           {
-            label: "Chờ xử lý",
+            label: "Pending",
             value: stats.pending,
             color: "bg-yellow-50 text-yellow-700",
             active: status === "pending",
             key: "pending",
           },
           {
-            label: "Đóng gói",
+            label: "Packaging",
             value: stats.processing,
             color: "bg-orange-50 text-orange-700",
             active: status === "processing",
             key: "processing",
           },
           {
-            label: "Đang giao",
+            label: "Shipping",
             value: stats.shipped,
             color: "bg-blue-50 text-blue-700",
             active: status === "shipped",
             key: "shipped",
           },
           {
-            label: "Hoàn thành",
+            label: "Completed",
             value: stats.completed,
             color: "bg-green-50 text-green-700",
             active: status === "completed",
             key: "completed",
           },
           {
-            label: "Đã hủy",
+            label: "Cancelled",
             value: stats.cancelled,
             color: "bg-red-50 text-red-700",
             active: status === "cancelled",
@@ -385,7 +385,7 @@ function AdminOrders() {
             />
             <input
               type="text"
-              placeholder="Tìm mã đơn hoặc khách hàng..."
+              placeholder="Search order code or customer..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -413,10 +413,10 @@ function AdminOrders() {
               }}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 text-gray-700"
             >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="completed">Hoàn thành</option>
-              <option value="pending">Chờ xử lý</option>
-              <option value="cancelled">Đã huỷ</option>
+              <option value="all">All status</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Cancelled</option>
             </select>
 
             {activeFilters > 0 && (
@@ -428,7 +428,7 @@ function AdminOrders() {
                 }}
                 className="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded-md hover:bg-red-50"
               >
-                Xoá bộ lọc
+                Clear Filters
               </button>
             )}
           </div>
@@ -440,10 +440,10 @@ function AdminOrders() {
             <thead>
               <tr className="text-xs uppercase text-gray-400 border-b border-gray-100 bg-gray-50/60">
                 <th className="w-[14%] text-left px-6 py-3.5 font-semibold tracking-wider">
-                  Mã đơn
+                  Order Code
                 </th>
                 <th className="w-[30%] text-left px-6 py-3.5 font-semibold tracking-wider">
-                  Khách hàng
+                  Customer
                 </th>
                 <th className="w-[15%] text-right px-6 py-3.5 font-semibold tracking-wider">
                   <span
@@ -454,14 +454,14 @@ function AdminOrders() {
                     }
                     className="cursor-pointer select-none hover:text-gray-700 normal-case inline-flex items-center justify-end gap-1"
                   >
-                    Tổng tiền <SortIcon sortOrder={sortOrder} />
+                    Total Amount <SortIcon sortOrder={sortOrder} />
                   </span>
                 </th>
                 <th className="w-[15%] text-center px-6 py-3.5 font-semibold tracking-wider">
-                  Trạng thái
+                  Status
                 </th>
                 <th className="w-[16%] text-center px-6 py-3.5 font-semibold tracking-wider">
-                  Ngày tạo
+                  Created At
                 </th>
                 <th className="w-[10%] px-6 py-3.5" />
               </tr>
@@ -478,7 +478,7 @@ function AdminOrders() {
                         className="text-gray-200"
                       />
                       <p className="text-sm text-gray-400">
-                        Không tìm thấy đơn hàng phù hợp
+                        No matching orders found
                       </p>
                       {activeFilters > 0 && (
                         <button
@@ -488,7 +488,7 @@ function AdminOrders() {
                           }}
                           className="text-sm text-blue-500 hover:underline"
                         >
-                          Xoá bộ lọc
+                          Clear Filters
                         </button>
                       )}
                     </div>
@@ -507,7 +507,7 @@ function AdminOrders() {
         {!isEmpty && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
             <p className="text-xs text-gray-400">
-              Hiển thị{" "}
+              Showing{" "}
               <span className="font-medium text-gray-600">
                 {(safeCurrentPage - 1) * itemsPerPage + 1}–
                 {Math.min(
@@ -515,11 +515,11 @@ function AdminOrders() {
                   filteredOrders.length,
                 )}
               </span>{" "}
-              trong{" "}
+              of{" "}
               <span className="font-medium text-gray-600">
                 {filteredOrders.length}
               </span>{" "}
-              đơn hàng
+              orders
             </p>
 
             {totalPages > 1 && (

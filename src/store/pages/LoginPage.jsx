@@ -83,7 +83,7 @@ export default function LoginPage() {
         navigate("/dashboard");
       else navigate(from);
     } catch {
-      setError("Lỗi kết nối máy chủ. Vui lòng thử lại.");
+      setError("Server connection error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -128,7 +128,7 @@ export default function LoginPage() {
       navigate(from);
     } catch (err) {
       console.error("Google login error:", err); // ❗ thêm log
-      setError("Đăng nhập Google thất bại.");
+      setError("Google login failed.");
     }
   };
 
@@ -146,7 +146,7 @@ export default function LoginPage() {
         .lp-anim-5  { animation: lp-fade-up .55s .40s cubic-bezier(.22,1,.36,1) both; }
         .lp-panel   { animation: lp-fade-in .4s ease both; }
         .lp-input   { transition: border-color .18s, box-shadow .18s, background .18s; }
-        .lp-input:focus { outline:none; border-color:#d97706; box-shadow:0 0 0 3px rgba(217,119,6,.13); background:#fff; }
+        .lp-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.13); background:#fff; }
         .lp-btn     { transition: background .18s, transform .1s, box-shadow .18s; }
         .lp-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
         .lp-btn:active { transform:translateY(0); }
@@ -202,7 +202,7 @@ export default function LoginPage() {
 
           {/* center: quote */}
           <div className="relative z-10 px-10 pb-2 flex-1 flex flex-col justify-center">
-            <GlassesDecor className="w-44 text-amber-400 mb-8 opacity-60" />
+            <GlassesDecor className="w-44 text-blue-400 mb-8 opacity-60" />
             <h2
               className="text-white leading-tight mb-5"
               style={{
@@ -211,33 +211,33 @@ export default function LoginPage() {
                 lineHeight: 1.15,
               }}
             >
-              Tầm nhìn{" "}
-              <span className="not-italic" style={{ color: "#f59e0b" }}>
-                rõ ràng
+              Clear{" "}
+              <span className="not-italic" style={{ color: "#2563eb" }}>
+                Vision
               </span>
               ,<br />
-              phong cách <span style={{ color: "#f59e0b" }}>bất tận</span>.
+              Endless <span style={{ color: "#2563eb" }}>Style</span>.
             </h2>
             <p
               className="text-sm leading-relaxed"
               style={{ color: "rgba(255,255,255,.5)", maxWidth: 340 }}
             >
-              Kính được chế tác riêng theo số mắt và phong cách của bạn. Mỗi cặp
-              là một tuyên ngôn thẩm mỹ.
+              Glasses crafted specifically for your prescription and style. Each
+              pair is an aesthetic statement.
             </p>
 
             {/* stats row */}
             <div className="flex gap-8 mt-10">
               {[
-                ["500+", "Mẫu kính"],
-                ["10K+", "Khách hàng"],
-                ["5★", "Đánh giá"],
+                ["500+", "Frames"],
+                ["10K+", "Customers"],
+                ["5★", "Reviews"],
               ].map(([v, l]) => (
                 <div key={l}>
                   <p
                     className="text-white font-bold text-xl"
                     style={{
-                      color: "#f59e0b",
+                      color: "#2563eb",
                     }}
                   >
                     {v}
@@ -259,7 +259,7 @@ export default function LoginPage() {
               className="h-px w-full mb-5"
               style={{
                 background:
-                  "linear-gradient(to right, transparent, rgba(217,119,6,.4), transparent)",
+                  "linear-gradient(to right, transparent, rgba(37,99,235,.4), transparent)",
               }}
             />
             <p
@@ -283,9 +283,9 @@ export default function LoginPage() {
             <div className="lp-anim-0 mb-8">
               <p
                 className="text-xs font-medium tracking-widest mb-2"
-                style={{ color: "#d97706", letterSpacing: ".18em" }}
+                style={{ color: "#2563eb", letterSpacing: ".18em" }}
               >
-                CHÀO MỪNG TRỞ LẠI
+                WELCOME BACK
               </p>
               <h1
                 className="text-gray-900 font-bold leading-tight"
@@ -293,13 +293,13 @@ export default function LoginPage() {
                   fontSize: "2rem",
                 }}
               >
-                Đăng nhập
+                Login
                 <br />
                 <span
                   className="font-medium"
                   style={{ color: "#6b7280", fontSize: "1.4rem" }}
                 >
-                  vào tài khoản của bạn
+                  to your account
                 </span>
               </h1>
             </div>
@@ -359,14 +359,14 @@ export default function LoginPage() {
                     className="block text-xs font-medium"
                     style={{ color: "#6b7280", letterSpacing: ".04em" }}
                   >
-                    Mật khẩu
+                    Password
                   </label>
                   <button
                     type="button"
                     className="text-xs font-medium transition-colors hover:opacity-80"
-                    style={{ color: "#d97706" }}
+                    style={{ color: "#2563eb" }}
                   >
-                    Quên mật khẩu?
+                    Forgot password?
                   </button>
                 </div>
                 <div className="relative">
@@ -422,7 +422,7 @@ export default function LoginPage() {
                   disabled={loading}
                   className="lp-btn w-full py-3.5 rounded-xl text-sm font-semibold text-white relative overflow-hidden"
                   style={{
-                    background: loading ? "#9ca3af" : "#111111",
+                    background: loading ? "#9ca3af" : "#2563eb",
                     letterSpacing: ".04em",
                   }}
                 >
@@ -443,10 +443,10 @@ export default function LoginPage() {
                         />
                         <path d="M12 2v4" strokeOpacity="1" />
                       </svg>
-                      Đang đăng nhập…
+                      Logging in…
                     </span>
                   ) : (
-                    "Đăng nhập"
+                    "Login"
                   )}
                 </button>
               </div>
@@ -459,7 +459,7 @@ export default function LoginPage() {
                 className="text-xs font-medium"
                 style={{ color: "#9ca3af" }}
               >
-                hoặc tiếp tục với
+                or continue with
               </span>
               <div className="flex-1 h-px" style={{ background: "#e5e7eb" }} />
             </div>
@@ -468,7 +468,7 @@ export default function LoginPage() {
             <div className="lp-anim-5 flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogle}
-                onError={() => setError("Đăng nhập Google thất bại.")}
+                onError={() => setError("Google login failed.")}
                 width="368"
                 theme="outline"
                 size="large"
@@ -482,13 +482,13 @@ export default function LoginPage() {
               className="lp-anim-5 text-center text-sm mt-7"
               style={{ color: "#9ca3af" }}
             >
-              Chưa có tài khoản?{" "}
+              Don't have an account?{" "}
               <Link
                 to="/register"
                 className="font-semibold transition-colors hover:opacity-80"
-                style={{ color: "#d97706" }}
+                style={{ color: "#2563eb" }}
               >
-                Đăng ký ngay
+                Register now
               </Link>
             </p>
           </div>

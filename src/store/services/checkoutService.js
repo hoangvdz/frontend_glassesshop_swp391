@@ -25,12 +25,12 @@ export const checkoutOrder = async (
     if (response.data?.success) {
       return response.data.data; // trả về order
     } else {
-      throw new Error(response.data?.message || "Đặt hàng thất bại");
+      throw new Error(response.data?.message || "Checkout failed");
     }
   } catch (error) {
       console.error("LOI CHECKOUT:", error.response?.data);
       const backendMessage = error.response?.data?.message || JSON.stringify(error.response?.data) || error.message;
-      throw new Error(`Lỗi từ Backend: ${backendMessage}`);
+      throw new Error(`Backend error: ${backendMessage}`);
   }
 };
 
@@ -38,8 +38,6 @@ export const checkoutOrder = async (
 export const createVNPayPayment = async (amount, orderId) => {
   try {
     const res = await createPaymentApi(amount, orderId);
-
-    console.log("VNPay response:", res);
 
     return res.data.paymentUrl;
   } catch (error) {

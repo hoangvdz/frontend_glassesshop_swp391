@@ -7,7 +7,7 @@ function Header() {
   const navigate = useNavigate();
 
   const MENU_ITEMS = [
-    { label: "Cửa Hàng", path: "/shop" },
+    { label: "Cửa hàng", path: "/shop" },
     { label: "Về chúng tôi", path: "/about" },
     { label: "Liên hệ", path: "/contact" },
   ];
@@ -111,7 +111,7 @@ function Header() {
               alt="Falcon"
               className="w-9 h-9 "
             />
-            <span className="text-amber-500 group-hover:text-amber-500 transition-colors duration-300">
+            <span className="text-blue-600 group-hover:text-blue-500 transition-colors duration-300">
               FALCON
             </span>
             {/* <span className="text-amber-500 text-3xl ml-0.5 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
@@ -126,14 +126,14 @@ function Header() {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `relative pb-1.5 transition-all duration-300 ${isActive ? "text-amber-500" : "hover:text-amber-500"}`
+                  `relative pb-1.5 transition-all duration-300 ${isActive ? "text-blue-600" : "hover:text-blue-600"}`
                 }
               >
                 {({ isActive }) => (
                   <>
                     {item.label}
                     <span
-                      className={`absolute left-0 -bottom-0 h-[2px] bg-amber-500 rounded-full transition-all duration-300 ${isActive ? "w-full" : "w-0"}`}
+                      className={`absolute left-0 -bottom-0 h-[2px] bg-blue-600 rounded-full transition-all duration-300 ${isActive ? "w-full" : "w-0"}`}
                     />
                   </>
                 )}
@@ -145,7 +145,7 @@ function Header() {
               {/* ── NÚT LỊCH SỬ ĐƠN HÀNG ── */}
               <Link
                 to="/my-orders"
-                className="flex items-center gap-1.5 text-stone-500 hover:text-amber-500 transition-colors group"
+                className="flex items-center gap-1.5 text-stone-500 hover:text-blue-600 transition-colors group"
                 title="Đơn hàng của bạn"
               >
                 <FiClipboard
@@ -162,11 +162,11 @@ function Header() {
                     navigate("/checkout");
                     setShowUserMenu(false);
                   }}
-                  className="relative p-2 rounded-full hover:bg-stone-100 hover:text-amber-500 transition-colors"
+                  className="relative p-2 rounded-full hover:bg-stone-100 hover:text-blue-600 transition-colors"
                 >
                   <FiShoppingBag size={18} />
                   {cartCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full shadow">
+                    <span className="absolute -top-0.5 -right-0.5 bg-blue-600 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full shadow">
                       {cartCount}
                     </span>
                   )}
@@ -184,7 +184,7 @@ function Header() {
                   <img
                     src={`https://ui-avatars.com/api/?name=${currentUser.name || currentUser.email}&background=1c1917&color=fff&bold=true`}
                     alt="User"
-                    className="w-9 h-9 rounded-full border-2 border-stone-200 hover:border-amber-400 transition"
+                    className="w-9 h-9 rounded-full border-2 border-stone-200 hover:border-blue-400 transition"
                   />
                 </button>
 
@@ -203,7 +203,7 @@ function Header() {
                     <Link
                       to="/my-orders"
                       onClick={() => setShowUserMenu(false)}
-                      className="block w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 hover:text-amber-500 transition-colors tracking-normal font-medium capitalize border-b border-stone-50"
+                      className="block w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 hover:text-blue-600 transition-colors tracking-normal font-medium capitalize border-b border-slate-50"
                     >
                       Đơn hàng của tôi
                     </Link>
@@ -220,7 +220,7 @@ function Header() {
             ) : (
               <button
                 onClick={() => navigate("/login")}
-                className="bg-stone-900 text-white px-5 py-2 rounded-full text-xs font-semibold tracking-wider hover:bg-amber-500 transition-all duration-300 ml-2"
+                className="bg-blue-600 text-white px-5 py-2 rounded-full text-xs font-semibold tracking-wider hover:bg-blue-700 transition-all duration-300 ml-2"
               >
                 Đăng nhập
               </button>
@@ -231,7 +231,7 @@ function Header() {
           <div className="md:hidden flex items-center gap-3">
             <Link
               to="/my-orders"
-              className="text-stone-600 hover:text-amber-500 p-2"
+              className="text-stone-600 hover:text-blue-600 p-2"
             >
               <FiClipboard size={20} />
             </Link>
@@ -242,7 +242,7 @@ function Header() {
             >
               <FiShoppingBag size={20} />
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold w-4 h-4 min-w-[16px] min-h-[16px] flex items-center justify-center rounded-full shadow">
+                <span className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 min-w-[16px] min-h-[16px] flex items-center justify-center rounded-full shadow">
                   {cartCount}
                 </span>
               )}

@@ -29,20 +29,20 @@ const mapStatus = (status) => {
 const mapStatusLabel = (status) => {
   switch (status) {
     case "PENDING":
-      return "Chờ xác nhận";
+      return "Pending";
     case "PROCESSING":
-      return "Đang đóng gói";
+      return "Processing";
     case "DELIVERING":
     case "SHIPPING":
-      return "Đang giao hàng";
+      return "Shipping";
     case "DELIVERED":
     case "COMPLETED":
-      return "Giao thành công";
+      return "Delivered";
     case "CANCELED":
     case "CANCELLED":
-      return "Đã hủy";
+      return "Cancelled";
     default:
-      return status || "Chờ xác nhận";
+      return status || "Pending";
   }
 };
 
@@ -55,7 +55,7 @@ export const getMyOrders = async () => {
   return rawOrders.map((order) => ({
     id: order.orderCode,
     orderId: order.orderId, // ✅ Cần dùng để gọi API update
-    date: new Date(order.orderDate).toLocaleDateString("vi-VN"),
+    date: new Date(order.orderDate).toLocaleDateString("en-US"),
     status: mapStatus(order.status),
     total: order.finalPrice,
 
@@ -101,7 +101,7 @@ export const getOrderDetails = async (id) => {
 
   return {
     id: order.orderCode,
-    date: new Date(order.orderDate).toLocaleDateString("vi-VN"),
+    date: new Date(order.orderDate).toLocaleDateString("en-US"),
     status: statusCode,
     rawStatus: mapStatusLabel(order.status),
   };

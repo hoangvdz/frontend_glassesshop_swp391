@@ -14,7 +14,7 @@ function ShippingProgressPage() {
         const data = await getOrderDetails(id);
         setOrder(data);
       } catch (err) {
-        console.error("Lỗi lấy tiến độ:", err);
+        console.error("Error fetching progress:", err);
       } finally {
         setLoading(false);
       }
@@ -25,34 +25,34 @@ function ShippingProgressPage() {
   const steps = [
     {
       id: 0,
-      title: "Đã xác nhận",
+      title: "Confirmed",
       icon: <FiCheck size={20} />,
-      desc: "Đơn hàng đã được xác nhận",
+      desc: "Order has been confirmed",
     },
     {
       id: 1,
-      title: "Đang đóng gói",
+      title: "Packaging",
       icon: <FiPackage size={20} />,
-      desc: "Đang chuẩn bị hàng",
+      desc: "Preparing items",
     },
     {
       id: 2,
-      title: "Đang giao hàng",
+      title: "Shipping",
       icon: <FiTruck size={20} />,
-      desc: "Shipper đang giao hàng",
+      desc: "Shipper is delivering",
     },
     {
       id: 3,
-      title: "Giao thành công",
+      title: "Delivered",
       icon: <FiHome size={20} />,
-      desc: "Đơn hàng đã được giao",
+      desc: "Order has been delivered",
     },
   ];
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -60,9 +60,9 @@ function ShippingProgressPage() {
   if (!order) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50">
-        <p className="text-stone-500 mb-4">Không tìm thấy thông tin đơn hàng</p>
-        <Link to="/my-orders" className="text-amber-600 font-medium">
-          Quay lại danh sách
+        <p className="text-stone-500 mb-4">Order information not found</p>
+        <Link to="/my-orders" className="text-blue-600 font-medium">
+          Back to list
         </Link>
       </div>
     );
@@ -75,22 +75,22 @@ function ShippingProgressPage() {
           to="/my-orders"
           className="inline-flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors mb-6 text-sm font-medium"
         >
-          <FiChevronLeft /> Quay lại đơn hàng của tôi
+          <FiChevronLeft /> Back to my orders
         </Link>
 
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-stone-100">
             <div>
               <h1 className="text-2xl font-bold text-stone-900 tracking-tight">
-                Tiến độ giao hàng
+                Shipping Progress
               </h1>
               <p className="text-stone-500 mt-1">
-                Đơn hàng{" "}
+                Order{" "}
                 <span className="font-semibold text-stone-900">#{order.id}</span>{" "}
-                • Đặt ngày {order.date}
+                • Ordered on {order.date}
               </p>
             </div>
-            <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-xl text-sm font-bold border border-amber-100">
+            <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-bold border border-blue-100">
               {order.rawStatus}
             </div>
           </div>
@@ -100,7 +100,7 @@ function ShippingProgressPage() {
             {/* Đường line kết nối (Màn hình ngang) */}
             <div className="hidden md:block absolute top-6 left-[12.5%] w-[75%] h-1 bg-stone-100 -z-0">
               <div
-                className="h-full bg-amber-500 transition-all duration-700 ease-in-out"
+                className="h-full bg-blue-600 transition-all duration-700 ease-in-out"
                 style={{
                   width: `${(order.status / (steps.length - 1)) * 100}%`,
                 }}
@@ -119,7 +119,7 @@ function ShippingProgressPage() {
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${
                       isActive
-                        ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30 scale-110"
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110"
                         : "bg-stone-100 text-stone-400"
                     }`}
                   >
@@ -138,7 +138,7 @@ function ShippingProgressPage() {
                     </p>
                     {isCurrent && (
                       <span className="inline-block mt-2 px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded uppercase tracking-wider">
-                        Hiện tại
+                        Current
                       </span>
                     )}
                   </div>

@@ -8,12 +8,12 @@ export default function HeaderBar() {
 
       <button className="flex items-center gap-2 text-sm  hover:bg-gray-100 rounded-full transition" onClick={() => navigate("/")}>
         <ArrowLeft size={18}/>
-        Quay lại
+        Back
       </button>
 
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <HelpCircle size={16}/>
-        Tìm hiểu thêm về đơn thuốc điện tử
+        Learn more about digital prescriptions
       </div>
 
       <button>

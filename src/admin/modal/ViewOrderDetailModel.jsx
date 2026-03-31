@@ -17,37 +17,37 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const STATUS_CONFIG = {
   pending: {
-    label: "Chờ xử lý",
+    label: "Pending",
     icon: <FiClock size={13} />,
     badge: "bg-yellow-50 text-yellow-700 border border-yellow-200",
     dot: "bg-yellow-400",
   },
   processing: {
-    label: "Đang đóng gói",
+    label: "Packaging",
     icon: <FiPackage size={13} />,
     badge: "bg-orange-50 text-orange-700 border border-orange-200",
     dot: "bg-orange-400",
   },
   shipped: {
-    label: "Đang vận chuyển",
+    label: "Shipping",
     icon: <FiTruck size={13} />,
     badge: "bg-blue-50 text-blue-700 border border-blue-200",
     dot: "bg-blue-400",
   },
   delivering: {
-    label: "Đang giao",
+    label: "Delivering",
     icon: <FiTruck size={13} />,
     badge: "bg-blue-50 text-blue-700 border border-blue-200",
     dot: "bg-blue-400",
   },
   completed: {
-    label: "Hoàn thành",
+    label: "Completed",
     icon: <FiCheckCircle size={13} />,
     badge: "bg-green-50 text-green-700 border border-green-200",
     dot: "bg-green-500",
   },
   cancelled: {
-    label: "Đã huỷ",
+    label: "Cancelled",
     icon: <FiXCircle size={13} />,
     badge: "bg-red-50 text-red-700 border border-red-200",
     dot: "bg-red-400",
@@ -98,11 +98,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
       );
     });
 
-  console.log(">>> MODAL RENDER (Advanced Detection):", { 
-    code: order.orderCode || order.code, 
-    isPrescriptionOrder,
-    items: order.orderItems?.map(i => ({ name: i.productName, lensId: i.lensOptionId, type: i.fulfillmentType }))
-  });
+
 
   // Lọc ra các item có prescription data
   const prescriptionItems =
@@ -161,7 +157,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="font-semibold text-gray-800 leading-tight">
-                    Chi tiết đơn hàng
+                    Order Details
                   </h2>
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${status.badge}`}
@@ -170,7 +166,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                   </span>
                   {isPrescriptionOrder && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      <FiFileText size={11} /> Toa thuốc
+                      <FiFileText size={11} /> Prescription
                     </span>
                   )}
                 </div>
@@ -199,7 +195,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
               {/* Left — items */}
               <div className="col-span-3 px-6 py-5">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                  <FiPackage size={12} /> Sản phẩm (
+                  <FiPackage size={12} /> Products (
                   {order.orderItems?.length || 0})
                 </p>
 
@@ -208,7 +204,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                     const itemName =
                       item.productName ||
                       item.product?.name ||
-                      "Sản phẩm không tên";
+                      "Unnamed product";
                     const itemImage =
                       item.imageUrl ||
                       item.product?.imageUrl ||
@@ -238,7 +234,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                             {itemName}
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                            {itemColor && <span>Màu: {itemColor}</span>}
+                            {itemColor && <span>Color: {itemColor}</span>}
                             {itemSize && <span>Size: {itemSize}</span>}
                             {(item.isPreorder ||
                               item.type === "PRE_ORDER") && (
@@ -248,7 +244,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                             )}
                             {isLensItem && (
                               <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md font-bold text-[9px]">
-                                CÓ TOA THUỐC
+                                HAS PRESCRIPTION
                               </span>
                             )}
                           </p>
@@ -279,7 +275,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                 {prescriptionItems.length > 0 && (
                   <div className="mt-6 pt-4 border-t border-gray-100">
                     <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                      <FiFileText size={12} /> Thông tin toa thuốc
+                      <FiFileText size={12} /> Prescription Information
                     </p>
                     {prescriptionItems.map((item, idx) => {
                       const rx = item.prescription || {};
@@ -289,10 +285,10 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         className="bg-indigo-50/50 rounded-xl p-4 mb-3 border border-indigo-100"
                       >
                         <p className="text-xs font-medium text-indigo-700 mb-2">
-                          {item.productName || `Sản phẩm ${idx + 1}`}
+                          {item.productName || `Product ${idx + 1}`}
                         </p>
                         <div className="grid grid-cols-5 gap-1 text-[10px] font-semibold text-gray-400 uppercase text-center mb-1">
-                          <div className="text-left">Mắt</div>
+                          <div className="text-left">Eye</div>
                           <div>SPH</div>
                           <div>CYL</div>
                           <div>AXIS</div>
@@ -300,7 +296,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         </div>
                         <div className="grid grid-cols-5 gap-1 text-xs text-center font-mono text-gray-700 mb-1">
                           <div className="text-left font-semibold text-gray-500">
-                            Phải (OD)
+                            Right (OD)
                           </div>
                           <div>{rx.sphRight ?? "—"}</div>
                           <div>{rx.cylRight ?? "—"}</div>
@@ -313,7 +309,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         </div>
                         <div className="grid grid-cols-5 gap-1 text-xs text-center font-mono text-gray-700">
                           <div className="text-left font-semibold text-gray-500">
-                            Trái (OS)
+                            Left (OS)
                           </div>
                           <div>{rx.sphLeft ?? "—"}</div>
                           <div>{rx.cylLeft ?? "—"}</div>
@@ -340,10 +336,10 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                               <FiAlertCircle size={14} className="text-indigo-500 mt-0.5 flex-shrink-0" />
                               <div>
                                 <p className="text-xs font-semibold text-indigo-700 mb-1">
-                                  Cần duyệt toa thuốc
+                                  Prescription approval required
                                 </p>
                                 <p className="text-[10px] text-indigo-600 leading-relaxed mb-2">
-                                  Việc duyệt/từ chối toa thuốc hiện được thực hiện tại trang quản lý chuyên biệt.
+                                  Approving/declining prescriptions is now managed on a dedicated page.
                                 </p>
                                 <button
                                   onClick={() => {
@@ -352,7 +348,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                                   }}
                                   className="text-[10px] font-bold text-indigo-700 underline flex items-center gap-1 hover:text-indigo-800 transition-colors"
                                 >
-                                  Đến trang Quản lý toa thuốc
+                                  Go to Prescription Management
                                 </button>
                               </div>
                             </div>
@@ -382,7 +378,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                 {/* Customer */}
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <FiUser size={12} /> Khách hàng
+                    <FiUser size={12} /> Customer
                   </p>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                     <img
@@ -392,7 +388,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                     />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">
-                        {order.userName || order.customer || "Khách lẻ"}
+                        {order.userName || order.customer || "Guest Customer"}
                       </p>
                       <p className="text-xs text-gray-400 truncate">
                         {order.userEmail || order.email || "N/A"}
@@ -401,12 +397,12 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                   </div>
                   {order.phone && (
                     <p className="text-xs text-gray-500 mt-2">
-                      SĐT: {order.phone}
+                      Phone: {order.phone}
                     </p>
                   )}
                   {order.address && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Đ/C: {order.address}
+                      Address: {order.address}
                     </p>
                   )}
                 </div>
@@ -414,11 +410,11 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                 {/* Payment */}
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <FiTruck size={12} /> Thanh toán
+                    <FiTruck size={12} /> Payment
                   </p>
                   <div className="bg-gray-50 rounded-xl p-4 space-y-2.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Tạm tính</span>
+                      <span className="text-gray-500">Subtotal</span>
                       <span className="text-gray-700 font-medium">
                         {(
                           order.totalPrice || calculatedSubtotal
@@ -427,16 +423,16 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Phí vận chuyển</span>
+                      <span className="text-gray-500">Shipping Fee</span>
                       <span className="text-green-600 font-medium">
                         {order.shippingFee > 0
                           ? `${order.shippingFee.toLocaleString("vi-VN")} ₫`
-                          : "Miễn phí"}
+                          : "Free"}
                       </span>
                     </div>
                     {order.voucherDiscount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Giảm giá</span>
+                        <span className="text-gray-500">Discount</span>
                         <span className="text-red-500 font-medium">
                           -{order.voucherDiscount.toLocaleString("vi-VN")} ₫
                         </span>
@@ -444,7 +440,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                     )}
                     <div className="border-t border-gray-200 pt-2.5 flex justify-between">
                       <span className="font-semibold text-gray-700">
-                        Tổng cộng
+                        Total
                       </span>
                       <span className="font-bold text-blue-600 text-base">
                         {(
@@ -465,7 +461,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                       className={`w-2.5 h-2.5 rounded-full ${status.dot}`}
                     />
                     <span className="text-sm font-medium text-gray-700">
-                      Trạng thái: {status.label}
+                      Status: {status.label}
                     </span>
                   </div>
 
@@ -479,10 +475,10 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         />
                         <div>
                           <p className="text-xs font-semibold text-indigo-700 mb-1">
-                            Toa thuốc chưa được duyệt
+                            Prescriptions not approved
                           </p>
                           <p className="text-xs text-indigo-600 leading-relaxed mb-2">
-                            Cần duyệt <strong>tất cả</strong> các đơn thuốc ở phía bên trái trước khi có thể xác nhận đơn hàng này.
+                            Needs approval for <strong>all</strong> prescriptions on the left before confirming this order.
                           </p>
                           <button
                             onClick={() => {
@@ -491,7 +487,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                             }}
                             className="text-xs font-bold text-indigo-700 underline flex items-center gap-1 hover:text-indigo-800 transition-colors"
                           >
-                            Đến trang Quản lý toa thuốc
+                            Go to Prescription Management
                           </button>
                         </div>
                       </div>
@@ -499,7 +495,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         onClick={() => {
                           if (
                             window.confirm(
-                              "Bạn có chắc chắn muốn hủy đơn hàng này?"
+                              "Are you sure you want to cancel this order?"
                             )
                           ) {
                             onUpdateStatus("cancelled");
@@ -507,7 +503,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         }}
                         className="w-full px-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors"
                       >
-                        Hủy đơn
+                        Cancel Order
                       </button>
                     </div>
                   ) : isPreOrderBlocked ? (
@@ -520,10 +516,10 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         />
                         <div>
                           <p className="text-xs font-semibold text-amber-700 mb-1">
-                            Đơn hàng có sản phẩm Đặt trước (Pre-order)
+                            Order contains Pre-order products
                           </p>
                           <p className="text-xs text-amber-600 leading-relaxed mb-2">
-                            Vui lòng quản lý và xử lý đơn hàng này tại trang <strong>Quản lý đặt trước</strong>.
+                            Please manage and process this order on the <strong>Pre-order Management</strong> page.
                           </p>
                           <button
                             onClick={() => {
@@ -532,7 +528,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                             }}
                             className="text-xs font-bold text-amber-700 underline flex items-center gap-1 hover:text-amber-800 transition-colors"
                           >
-                            Đến trang Quản lý đặt trước
+                            Go to Pre-order Management
                           </button>
                         </div>
                       </div>
@@ -540,7 +536,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         onClick={() => {
                           if (
                             window.confirm(
-                              "Bạn có chắc chắn muốn hủy đơn hàng đặt trước này?"
+                              "Are you sure you want to cancel this pre-order?"
                             )
                           ) {
                             onUpdateStatus("cancelled");
@@ -548,7 +544,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                         }}
                         className="w-full px-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors"
                       >
-                        Hủy đơn
+                        Cancel Order
                       </button>
                     </div>
                   ) : (
@@ -559,7 +555,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           onClick={() => onUpdateStatus("processing")}
                           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
                         >
-                          Xác nhận & Đóng gói
+                          Confirm & Pack
                         </button>
                       )}
                       {currentStatus === "processing" && (
@@ -567,7 +563,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           onClick={() => onUpdateStatus("shipped")}
                           className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
                         >
-                          Giao hàng ngay
+                          Ship Now
                         </button>
                       )}
                       {currentStatus === "shipped" && (
@@ -575,7 +571,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           onClick={() => onUpdateStatus("completed")}
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
                         >
-                          Giao hàng thành công
+                          Delivery Success
                         </button>
                       )}
                       {["pending", "processing"].includes(currentStatus) && (
@@ -583,7 +579,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           onClick={() => {
                             if (
                               window.confirm(
-                                "Bạn có chắc chắn muốn hủy đơn hàng này?"
+                                "Are you sure you want to cancel this order?"
                               )
                             ) {
                               onUpdateStatus("cancelled");
@@ -591,7 +587,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
                           }}
                           className="px-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors"
                         >
-                          Hủy đơn
+                          Cancel Order
                         </button>
                       )}
                     </div>
@@ -607,7 +603,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus, onPrescriptionA
               onClick={onClose}
               className="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-white transition-colors"
             >
-              Đóng
+              Close
             </button>
           </div>
         </motion.div>

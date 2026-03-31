@@ -27,7 +27,7 @@ const fadeUp = (delay = 0) => ({
 
 /* ── chart data ── */
 const revenueSeries = [
-  { name: "Doanh thu", data: revenueData.map((i) => i.revenue) },
+  { name: "Revenue", data: revenueData.map((i) => i.revenue) },
 ];
 const revenueCategories = revenueData.map((i) => i.day);
 
@@ -35,7 +35,7 @@ const revenueCategories = revenueData.map((i) => i.day);
 const statCards = [
   {
     key: "revenue",
-    label: "Tổng doanh thu",
+    label: "Total Revenue",
     icon: FiDollarSign,
     color: "blue",
     bg: "bg-blue-50",
@@ -44,7 +44,7 @@ const statCards = [
   },
   {
     key: "orders",
-    label: "Đơn hàng",
+    label: "Orders",
     icon: FiShoppingCart,
     color: "green",
     bg: "bg-green-50",
@@ -53,7 +53,7 @@ const statCards = [
   },
   {
     key: "customers",
-    label: "Khách hàng",
+    label: "Customers",
     icon: FiUsers,
     color: "yellow",
     bg: "bg-yellow-50",
@@ -63,7 +63,7 @@ const statCards = [
   },
   {
     key: "growth",
-    label: "Tăng trưởng",
+    label: "Growth",
     icon: FiTrendingUp,
     color: "purple",
     bg: "bg-purple-50",
@@ -81,10 +81,10 @@ const statusStyle = {
 };
 
 const statusText = {
-  completed: "Hoàn thành",
-  pending: "Chờ xử lý",
-  cancelled: "Đã huỷ",
-  shipped: "Đang giao",
+  completed: "Completed",
+  pending: "Pending",
+  cancelled: "Cancelled",
+  shipped: "Shipped",
 };
 
 const parseDateVN = (dateStr) => {
@@ -135,7 +135,7 @@ function AdminOverview() {
       .slice(0, 5); // lấy 5 đơn
   }, [orders, filter]);
 
-  const today = new Date().toLocaleDateString("vi-VN", {
+  const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -151,10 +151,10 @@ function AdminOverview() {
       >
         <div>
           <h1 className="text-2xl font-bold text-gray-800">
-            Tổng quan hệ thống
+            System Overview
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Theo dõi hiệu suất kinh doanh và đơn hàng
+            Track business performance and orders
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-400 bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-2">
@@ -209,10 +209,10 @@ function AdminOverview() {
           <div className="flex items-center justify-between mb-1">
             <div>
               <h2 className="text-base font-semibold text-gray-800">
-                Doanh thu 7 ngày
+                7-Day Revenue
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                Tổng hợp doanh số theo ngày
+                Daily sales summary
               </p>
             </div>
             <button className="text-gray-300 hover:text-gray-500 transition">
@@ -249,12 +249,12 @@ function AdminOverview() {
               yaxis: {
                 labels: {
                   style: { fontSize: "12px", colors: "#9ca3af" },
-                  formatter: (v) => v.toLocaleString("vi-VN"),
+                  formatter: (v) => v.toLocaleString("en-US"),
                 },
               },
               grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
               tooltip: {
-                y: { formatter: (val) => val.toLocaleString("vi-VN") + " đ" },
+                y: { formatter: (val) => val.toLocaleString("en-US") + " ₫" },
               },
             }}
           />
@@ -268,10 +268,10 @@ function AdminOverview() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-base font-semibold text-gray-800">
-                Đơn hàng gần đây
+                Recent Orders
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                {recentOrdersFiltered.length} đơn hàng
+                {recentOrdersFiltered.length} orders
               </p>
             </div>
 
@@ -281,15 +281,15 @@ function AdminOverview() {
                 onChange={(e) => setFilter(e.target.value)}
                 className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-gray-50"
               >
-                <option value="7days">7 ngày</option>
-                <option value="30days">1 tháng</option>
+                <option value="7days">7 days</option>
+                <option value="30days">1 month</option>
               </select>
 
               <Link
                 to="/dashboard/orders"
                 className="text-sm font-medium text-blue-600 hover:text-blue-700"
               >
-                Xem tất cả →
+                View All →
               </Link>
             </div>
           </div>
@@ -346,10 +346,10 @@ function AdminOverview() {
         >
           <div className="mb-1">
             <h2 className="text-base font-semibold text-gray-800">
-              Tỷ lệ trạng thái
+              Status Ratio
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              Phân bổ đơn hàng theo trạng thái
+              Order distribution by status
             </p>
           </div>
 
@@ -369,7 +369,7 @@ function AdminOverview() {
                       show: true,
                       total: {
                         show: true,
-                        label: "Tổng",
+                        label: "Total",
                         fontSize: "13px",
                         color: "#6b7280",
                         formatter: (w) =>
@@ -393,10 +393,10 @@ function AdminOverview() {
           <div className="flex items-center justify-between mb-1">
             <div>
               <h2 className="text-base font-semibold text-gray-800">
-                Xu hướng tăng trưởng
+                Growth Trend
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                Biến động doanh thu theo từng ngày
+                Daily revenue fluctuations
               </p>
             </div>
             <button className="text-gray-300 hover:text-gray-500 transition">
@@ -428,12 +428,12 @@ function AdminOverview() {
               yaxis: {
                 labels: {
                   style: { fontSize: "12px", colors: "#9ca3af" },
-                  formatter: (v) => v.toLocaleString("vi-VN"),
+                  formatter: (v) => v.toLocaleString("en-US"),
                 },
               },
               grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
               tooltip: {
-                y: { formatter: (val) => val.toLocaleString("vi-VN") + " đ" },
+                y: { formatter: (val) => val.toLocaleString("en-US") + " ₫" },
               },
             }}
           />

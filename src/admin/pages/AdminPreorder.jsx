@@ -73,7 +73,7 @@ const STEP_COLORS = {
 
 const colorOf = (step) => STEP_COLORS[step.color] || STEP_COLORS.gray;
 
-const fmtDate = () => new Date().toLocaleDateString("vi-VN");
+const fmtDate = () => new Date().toLocaleDateString("en-US");
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    MINI PIPELINE TRACK (in row)
@@ -152,7 +152,7 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
             <p className="text-sm font-medium text-gray-800">
               {item.name} - {order.color}
             </p>
-            <p className="text-xs text-gray-400">Số lượng: {item.quantity}</p>
+            <p className="text-xs text-gray-400">Quantity: {item.quantity}</p>
           </div>
         ))}
       </td>
@@ -168,7 +168,7 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
         {order.cancelled ? (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
             <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-            Đã huỷ
+            Cancelled
           </span>
         ) : (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -185,7 +185,7 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
                   ? "bg-yellow-400" 
                   : "bg-blue-400"
             }`} />
-            {order.step === 6 ? "Hoàn thành" : order.step === 0 ? "Chờ xử lý" : "Đang xử lý"}
+            {order.step === 6 ? "Completed" : order.step === 0 ? "Pending" : "Processing"}
           </span>
         )}
       </td>
@@ -204,7 +204,7 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
               <FiEye size={18} />
             </button>
             <span className="pointer-events-none absolute bottom-full mb-2 right-0 px-2 py-1 text-[10px] rounded-md bg-gray-800 text-white opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-              Xem & duyệt
+              View & Approve
             </span>
           </div>
         </div>
@@ -272,7 +272,7 @@ export default function AdminPreorders() {
             phone: item.phone,
             address: item.address,
 
-            createdAt: new Date(item.createdAt).toLocaleDateString("vi-VN"),
+            createdAt: new Date(item.createdAt).toLocaleDateString("en-US"),
 
             note: item.note,
 
@@ -296,7 +296,7 @@ export default function AdminPreorders() {
           };
         }),
       );
-      console.log(mapped);
+
       setOrders(mapped);
     };
 
@@ -311,22 +311,22 @@ export default function AdminPreorders() {
   const checkStockBeforeConfirm = async (order) => {
     try {
       const stockData = await getStockVariantById(order.variantId);
-      console.log(order);
+
       const currentStock = stockData?.stockQuantity ?? 0;
 
       if (currentStock <= 0) {
-        showToast("Sản phẩm đã hết hàng!", "error");
+        showToast("Product out of stock!", "error");
         return;
       }
 
       const qtyOrder = order.items?.[0]?.quantity || 0;
 
       if (currentStock < qtyOrder.quantity || qtyOrder.quantity === 0) {
-        showToast("Không đủ hàng trong kho!", "error");
+        showToast("Not enough stock!", "error");
         return;
       }
 
-      showToast("Xác nhận đơn & trừ kho thành công!");
+      showToast("Order confirmed & inventory deducted successfully!");
 
       // ✅ update UI (trừ stock local)
 
@@ -334,7 +334,7 @@ export default function AdminPreorders() {
       setViewing(order);
     } catch (error) {
       console.error(error);
-      showToast("Lỗi khi cập nhật kho!", "error");
+      showToast("Error updating stock!", "error");
     }
   };
 
@@ -407,7 +407,7 @@ export default function AdminPreorders() {
         };
       });
       showToast(
-        `Đã chuyển sang: ${STEPS[Math.min(orders.find((o) => o.id === id)?.step + 1 || 0, 6)]?.label}`,
+        `Moved to: ${STEPS[Math.min(orders.find((o) => o.id === id)?.step + 1 || 0, 6)]?.label}`,
       );
     },
     [orders, showToast],
@@ -422,7 +422,7 @@ export default function AdminPreorders() {
           const histEntry = {
             step: o.step,
             date: fmtDate(),
-            note: "Admin đã huỷ đơn.",
+            note: "Admin cancelled the order.",
           };
           return {
             ...o,
@@ -438,11 +438,11 @@ export default function AdminPreorders() {
           cancelled: true,
           history: [
             ...(v.history || []),
-            { step: v.step, date: fmtDate(), note: "Admin đã huỷ đơn." },
+            { step: v.step, date: fmtDate(), note: "Admin cancelled the order." },
           ],
         };
       });
-      showToast("Đã huỷ đơn", "error");
+      showToast("Order cancelled", "error");
     },
     [showToast],
   );
@@ -456,9 +456,9 @@ export default function AdminPreorders() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Quản lý đặt trước</h1>
+          <h1 className="text-xl font-bold text-gray-800">Pre-order Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Theo dõi và xử lý quy trình sản xuất kính theo yêu cầu
+            Track and process custom eyeglass production
           </p>
         </div>
       </div>
@@ -474,7 +474,7 @@ export default function AdminPreorders() {
             />
             <input
               type="text"
-              placeholder="Tìm mã đơn, khách hàng..."
+              placeholder="Search order code, customer..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -494,7 +494,7 @@ export default function AdminPreorders() {
                 }}
                 className="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
               >
-                Xoá bộ lọc
+                Clear Filters
               </button>
             )}
           </div>
@@ -506,22 +506,22 @@ export default function AdminPreorders() {
             <thead>
               <tr className="text-xs uppercase text-gray-400 border-b border-gray-100 bg-gray-50/60">
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
-                  Mã đơn
+                  Order Code
                 </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
-                  Khách hàng
+                  Customer
                 </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
-                  Sản phẩm
+                  Product
                 </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
                   Stock
                 </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
-                  Trạng thái
+                  Status
                 </th>
                 <th className="text-left px-5 py-3.5 font-semibold tracking-wider">
-                  Ngày đặt
+                  Order Date
                 </th>
 
                 <th className="w-16 px-5 py-3.5" />
@@ -538,7 +538,7 @@ export default function AdminPreorders() {
                         className="text-gray-200"
                       />
                       <p className="text-sm text-gray-400">
-                        Không tìm thấy đơn đặt trước
+                        No pre-orders found
                       </p>
                     </div>
                   </td>
@@ -561,16 +561,16 @@ export default function AdminPreorders() {
         {paginated.length > 0 && (
           <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
             <p className="text-xs text-gray-400">
-              Hiển thị{" "}
+              Showing{" "}
               <span className="font-medium text-gray-600">
                 {(safePage - 1) * itemsPerPage + 1}–
                 {Math.min(safePage * itemsPerPage, filtered.length)}
               </span>{" "}
-              trong{" "}
+              of{" "}
               <span className="font-medium text-gray-600">
                 {filtered.length}
               </span>{" "}
-              đơn
+              orders
             </p>
             {totalPages > 1 && (
               <div className="flex items-center gap-1 select-none">
@@ -650,7 +650,7 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
   const [loading, setLoading] = useState(false);
 
   const handleApprove = async () => {
-    if (!window.confirm("Duyệt đơn đặt trước này và trừ kho hàng?")) return;
+    if (!window.confirm("Approve this pre-order and deduct inventory?")) return;
     setLoading(true);
     try {
       // 1. Lấy kho mới nhất và thông tin variant đầy đủ từ server
@@ -670,7 +670,7 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
         active: true,
       };
 
-      console.log(`Deducting stock for variant ${order.variantId}: ${currentStock} -> ${newQuantity}`, variantPayload);
+
       
       // 3. Cập nhật kho mới với đầy đủ thông tin variant
       await updateStockService(order.variantId, newQuantity, variantPayload);
@@ -678,11 +678,11 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
       // 4. Cập nhật trạng thái đơn hàng sang PROCESSING
       await updateOrderStatus(order.orderId, "PROCESSING");
       
-      alert(`Xử lý thành công! \n- Product ID: #${order.productId} \n- Variant ID: #${order.variantId} \n- Kho cũ: ${currentStock} \n- Kho mới: ${newQuantity}`);
+      alert(`Processed successfully! \n- Product ID: #${order.productId} \n- Variant ID: #${order.variantId} \n- Old stock: ${currentStock} \n- New stock: ${newQuantity}`);
       window.location.reload(); 
     } catch (error) {
       console.error("Lỗi xử lý:", error);
-      alert("Lỗi khi xử lý đơn đặt trước: " + (error.response?.data?.message || error.message));
+      alert("Error processing pre-order: " + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -710,8 +710,8 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                 <FiPackage size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-gray-800">Duyệt Đơn Đặt Trước</h3>
-                <p className="text-xs text-gray-500">Mã đơn: {order.id}</p>
+                <h3 className="font-bold text-gray-800">Approve Pre-order</h3>
+                <p className="text-xs text-gray-500">Order Code: {order.id}</p>
               </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400"><FiX size={18} /></button>
@@ -729,17 +729,17 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
 
             <div className="space-y-3">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <FiPackage size={12} /> Sản phẩm đặt trước
+                <FiPackage size={12} /> Pre-ordered Products
               </p>
               {order.items.map((it, idx) => (
                 <div key={idx} className="flex gap-4 p-3 rounded-xl border border-gray-100 bg-white">
                   <img src={it.img} className="w-14 h-14 rounded-lg object-cover border border-gray-100" />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-800 text-sm truncate">{it.name}</p>
-                    <p className="text-xs text-gray-500 font-medium">Màu: {order.color} | SL: {it.quantity}</p>
+                    <p className="text-xs text-gray-500 font-medium">Color: {order.color} | Qty: {it.quantity}</p>
                     <div className="mt-1">
                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.stock >= it.quantity ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                         Tồn kho: {order.stock}
+                         In stock: {order.stock}
                        </span>
                     </div>
                   </div>
@@ -750,7 +750,7 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
               <FiAlertCircle className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
               <div className="text-xs text-amber-800 leading-relaxed">
-                <strong>Lưu ý:</strong> Khi bạn nhấn "Duyệt đơn hàng", hệ thống sẽ chuyển trạng thái đơn hàng sang <strong>Đang đóng gói</strong>. Đơn hàng này sau đó có thể được xử lý tiếp tại trang Quản lý đơn hàng.
+                <strong>Note:</strong> When you click "Approve Order", the system will move the order status to <strong>Packaging</strong>. This order can then be further processed in the Order Management page.
               </div>
             </div>
           </div>
@@ -761,7 +761,7 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                onClick={onClose} 
                className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 border border-gray-200 rounded-xl hover:bg-white transition-colors"
             >
-              QUAY LẠI
+              BACK
             </button>
             
             {order.step === 0 && !order.cancelled && (
@@ -770,13 +770,13 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                onClick={handleApprove}
                className="flex-[2] px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:grayscale"
             >
-              {loading ? "ĐANG XỬ LÝ..." : (order.stock < (order.items?.[0]?.quantity || 0) ? "KHÔNG ĐỦ HÀNG" : "DUYỆT ĐƠN HÀNG")}
+              {loading ? "PROCESSING..." : (order.stock < (order.items?.[0]?.quantity || 0) ? "NOT ENOUGH STOCK" : "APPROVE ORDER")}
             </button>
             )}
 
             {(order.step > 0 || order.cancelled) && (
               <div className="flex-[2] flex items-center justify-center bg-gray-100 rounded-xl text-[10px] font-bold text-gray-400">
-                {order.cancelled ? "ĐƠN HÀNG ĐÃ HUỶ" : "ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT"}
+                {order.cancelled ? "ORDER CANCELLED" : "ORDER APPROVED"}
               </div>
             )}
           </div>
@@ -787,11 +787,11 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
 }
 
 const STEPS = [
-  { id: 0, label: "Chờ xử lý", color: "amber" },
-  { id: 1, label: "Xác nhận", color: "blue" },
-  { id: 2, label: "Kiểm tra", color: "violet" },
-  { id: 3, label: "Sản xuất", color: "orange" },
+  { id: 0, label: "Pending", color: "amber" },
+  { id: 1, label: "Confirm", color: "blue" },
+  { id: 2, label: "Check", color: "violet" },
+  { id: 3, label: "Production", color: "orange" },
   { id: 4, label: "QC", color: "teal" },
-  { id: 5, label: "Vận chuyển", color: "blue" },
-  { id: 6, label: "Đã giao", color: "green" },
+  { id: 5, label: "Shipping", color: "blue" },
+  { id: 6, label: "Delivered", color: "green" },
 ];

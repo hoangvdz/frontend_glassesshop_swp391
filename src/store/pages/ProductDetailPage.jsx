@@ -24,7 +24,7 @@ function Toast({ message, visible }) {
   if (!visible) return null;
   return (
     <div
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white px-5 py-3 rounded-full text-sm font-medium shadow-2xl flex items-center gap-2.5"
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-5 py-3 rounded-full text-sm font-medium shadow-2xl flex items-center gap-2.5"
       style={{ animation: "slideUp .3s cubic-bezier(0.34,1.56,0.64,1)" }}
     >
       <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
@@ -129,14 +129,14 @@ function ProductDetailPage() {
       setReviews(rData?.data?.data || []);
     } catch (err) {
       setReviews([]);
-      console.log(err);
+      console.error("Failed to load product details:", err);
     }
   };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!eligibleOrderId || !newComment.trim()) {
-      showToast("Vui lòng nhập nhận xét");
+      showToast("Please enter a comment");
       return;
     }
     setSubmittingReview(true);
@@ -147,13 +147,13 @@ function ProductDetailPage() {
         rating: newRating,
         comment: newComment,
       });
-      showToast("Gửi đánh giá thành công!");
+      showToast("Review submitted successfully!");
       setNewComment("");
       setNewRating(5);
       await reloadReviews();
       setEligibleOrderId(null);
     } catch (err) {
-      showToast(err.response?.data?.message || "Lỗi khi gửi đánh giá");
+      showToast(err.response?.data?.message || "Error submitting review");
     } finally {
       setSubmittingReview(false);
     }
@@ -169,7 +169,7 @@ function ProductDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full border-2 border-stone-200 border-t-stone-800 animate-spin" />
-          <p className="text-stone-400 text-sm">Đang tải sản phẩm...</p>
+          <p className="text-stone-400 text-sm">Loading product...</p>
         </div>
       </div>
     );
@@ -182,16 +182,16 @@ function ProductDetailPage() {
           <FiShoppingBag size={28} className="text-stone-300" />
         </div>
         <h2 className="text-xl font-semibold text-stone-800 mb-2">
-          Không tìm thấy sản phẩm
+          Product not found
         </h2>
         <p className="text-stone-400 text-sm mb-8 max-w-xs leading-relaxed">
-          Sản phẩm có thể đã bị gỡ bỏ hoặc ID không chính xác.
+          The product may have been removed or the ID is incorrect.
         </p>
         <button
           onClick={() => navigate("/shop")}
-          className="px-7 py-2.5 bg-stone-900 text-white rounded-full text-sm font-medium hover:bg-stone-700 transition-colors"
+          className="px-7 py-2.5 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors"
         >
-          Quay lại cửa hàng
+          Back to Shop
         </button>
       </div>
     );
@@ -208,15 +208,15 @@ function ProductDetailPage() {
     images: productData.variants?.map((v) => v.imageUrl) || ["https://via.placeholder.com/500"],
     colors: productData.variants?.map((v) => v.color) || [],
     specs: [
-      { label: "Thương hiệu", value: productData.brand },
-      { label: "Loại sản phẩm", value: productData.category || productData.productType },
+      { label: "Brand", value: productData.brand },
+      { label: "Category", value: productData.category || productData.productType },
       {
-        label: "Tồn kho",
+        label: "Stock",
         value: productData.variants?.reduce((sum, v) => sum + v.stockQuantity, 0),
       },
       {
-        label: "Hỗ trợ độ",
-        value: productData.isPrescriptionSupported ? "Có" : "Không",
+        label: "Prescription Support",
+        value: productData.isPrescriptionSupported ? "Yes" : "No",
       },
     ],
   };
@@ -225,14 +225,14 @@ function ProductDetailPage() {
   let stockText = "", stockColor = "", isOutOfStock = false;
   
   if (!selectedVariantUI || selectedVariantUI.stockQuantity === 0) {
-    stockText = "Hết hàng · Có thể đặt trước";
+    stockText = "Out of stock · Pre-order available";
     stockColor = "text-red-500";
     isOutOfStock = true;
   } else if (selectedVariantUI.stockQuantity <= 20) {
-    stockText = `Chỉ còn ${selectedVariantUI.stockQuantity} sản phẩm`;
-    stockColor = "text-amber-500";
+    stockText = `Only ${selectedVariantUI.stockQuantity} items left`;
+    stockColor = "text-blue-500";
   } else {
-    stockText = `Còn ${selectedVariantUI.stockQuantity} sản phẩm`;
+    stockText = `${selectedVariantUI.stockQuantity} items in stock`;
     stockColor = "text-emerald-600";
   }
 
@@ -249,7 +249,7 @@ function ProductDetailPage() {
 
     // FIX LỖI: Bắt buộc chọn tuỳ chọn nếu mua tròng kính
     if (productCat === "lens" && !lensOption) {
-      showToast("Vui lòng chọn phương thức nhập độ kính!");
+      showToast("Please select a prescription entry method!");
       return;
     }
 
@@ -261,7 +261,7 @@ function ProductDetailPage() {
     }
     
     if (!selectedVariant) {
-      showToast("Vui lòng chọn màu sắc");
+      showToast("Please select a color");
       return;
     }
 
@@ -315,14 +315,16 @@ function ProductDetailPage() {
             const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
             preorders[selectedVariant.variantId] = true;
             localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
-          } catch(e){}
+          } catch (e) {
+            // ignore
+          }
         }
-        showToast(`Đã thêm ${quantity} sản phẩm vào giỏ!`);
+        showToast(`Added ${quantity} items to cart!`);
       } else {
-        showToast("Lỗi khi thêm vào giỏ hàng");
+        showToast("Error adding to cart");
       }
     } catch {
-      showToast("Đã lưu vào giỏ hàng cục bộ!");
+      showToast("Saved to local cart!");
     }
   };
 
@@ -370,7 +372,7 @@ function ProductDetailPage() {
                 size={15}
                 className="group-hover:-translate-x-0.5 transition-transform"
               />
-              <span>Quay lại</span>
+              <span>Back</span>
             </button>
             <p className="text-[11px] text-stone-300 uppercase tracking-[0.2em] font-medium hidden sm:block">
               {product.category}
@@ -453,7 +455,7 @@ function ProductDetailPage() {
                       size={14}
                     />
                     <p className="text-xs text-stone-400 mt-0.5">
-                      {reviews.length} đánh giá
+                      {reviews.length} reviews
                     </p>
                   </div>
                 </div>
@@ -474,7 +476,7 @@ function ProductDetailPage() {
                   {product.name}
                 </h1>
                 <div className="flex items-baseline gap-3 pt-1">
-                  <span className="text-2xl font-bold text-amber-500">
+                  <span className="text-2xl font-bold text-blue-600">
                     {product.price}
                   </span>
                 </div>
@@ -490,7 +492,7 @@ function ProductDetailPage() {
               {/* Color selector */}
               <div>
                 <p className="text-[10px] text-stone-400 tracking-[0.2em] uppercase font-semibold mb-3">
-                  Màu sắc ·{" "}
+                  Color ·{" "}
                   <span className="text-stone-700 normal-case tracking-normal font-medium">
                     {product.colors[activeColor]}
                   </span>
@@ -511,7 +513,7 @@ function ProductDetailPage() {
                     className={`mt-2.5 text-xs font-medium flex items-center gap-1.5 ${stockColor}`}
                   >
                     <span
-                      className={`w-1.5 h-1.5 rounded-full inline-block ${isOutOfStock ? "bg-red-400" : selectedVariantUI.stockQuantity <= 20 ? "bg-amber-400" : "bg-emerald-500"}`}
+                      className={`w-1.5 h-1.5 rounded-full inline-block ${isOutOfStock ? "bg-red-400" : selectedVariantUI.stockQuantity <= 20 ? "bg-blue-400" : "bg-emerald-500"}`}
                     />
                     {stockText}
                   </p>
@@ -521,7 +523,7 @@ function ProductDetailPage() {
               {/* Quantity */}
               <div>
                 <p className="text-[10px] text-stone-400 tracking-[0.2em] uppercase font-semibold mb-3">
-                  Số lượng
+                  Quantity
                 </p>
                 <div className="flex items-center border border-stone-200 rounded-full w-fit overflow-hidden bg-stone-50">
                   <button
@@ -560,10 +562,10 @@ function ProductDetailPage() {
               <div className="flex gap-3 pt-1">
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2.5 bg-stone-900 hover:bg-amber-500 text-white py-3.5 rounded-full text-sm font-semibold tracking-wide transition-all active:scale-[0.98] duration-150"
+                  className="flex-1 flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-full text-sm font-semibold tracking-wide transition-all active:scale-[0.98] duration-150"
                 >
                   <FiShoppingBag size={16} />
-                  {isOutOfStock ? "Đặt trước ngay" : "Thêm vào giỏ hàng"}
+                  {isOutOfStock ? "Pre-order Now" : "Add to Cart"}
                 </button>
                 <button
                   onClick={() => setWished((p) => !p)}
@@ -605,12 +607,12 @@ function ProductDetailPage() {
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-10">
               <div>
                 <h2 className="text-xl font-semibold text-stone-900">
-                  Đánh giá sản phẩm
+                  Product Reviews
                 </h2>
                 <p className="text-stone-400 text-sm mt-1">
                   {reviews.length > 0
-                    ? `${reviews.length} nhận xét từ khách hàng`
-                    : "Chưa có đánh giá nào"}
+                    ? `${reviews.length} customer reviews`
+                    : "No reviews yet"}
                 </p>
                 {avgRating && (
                   <div className="flex items-center gap-2 mt-2">
@@ -628,13 +630,13 @@ function ProductDetailPage() {
               {/* Write review / login prompt */}
               {token ? (
                 eligibleOrderId ? (
-                  <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 w-full md:max-w-sm">
+                  <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 w-full md:max-w-sm">
                     <p className="text-sm font-semibold text-stone-800 mb-4 flex items-center gap-2">
                       <FiStar
-                        className="text-amber-500 fill-amber-500"
+                        className="text-blue-600 fill-blue-600"
                         size={14}
                       />
-                      Viết đánh giá của bạn
+                      Write your review
                     </p>
                     <form onSubmit={handleReviewSubmit} className="space-y-3">
                       <div className="flex gap-1">
@@ -658,44 +660,44 @@ function ProductDetailPage() {
                         ))}
                       </div>
                       <textarea
-                        placeholder="Chia sẻ trải nghiệm của bạn..."
+                        placeholder="Share your experience..."
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
-                        className="w-full px-3.5 py-2.5 text-sm border border-amber-200 rounded-xl focus:ring-1 focus:ring-amber-400 focus:outline-none min-h-[90px] bg-white resize-none text-stone-700 placeholder:text-stone-300"
+                        className="w-full px-3.5 py-2.5 text-sm border border-blue-200 rounded-xl focus:ring-1 focus:ring-blue-400 focus:outline-none min-h-[90px] bg-white resize-none text-stone-700 placeholder:text-stone-300"
                         required
                       />
                       <button
                         disabled={submittingReview}
                         type="submit"
-                        className="w-full bg-stone-900 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-stone-700 transition-colors disabled:opacity-50"
+                        className="w-full bg-blue-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
                       >
-                        {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                        {submittingReview ? "Sending..." : "Submit Review"}
                       </button>
                     </form>
                   </div>
                 ) : checkingEligibility ? (
                   <div className="bg-stone-50 rounded-2xl px-5 py-4 border border-stone-100 flex items-center gap-2 text-xs text-stone-400">
                     <div className="w-3.5 h-3.5 rounded-full border-2 border-stone-300 border-t-stone-500 animate-spin" />
-                    Đang kiểm tra quyền đánh giá...
+                    Checking review eligibility...
                   </div>
                 ) : (
                   <div className="bg-stone-50 rounded-2xl p-5 border border-stone-100 text-center md:max-w-xs">
                     <p className="text-xs text-stone-400 leading-relaxed italic">
-                      Bạn chỉ có thể đánh giá những sản phẩm đã mua và nhận hàng
-                      thành công.
+                      You can only review products you have successfully
+                      purchased and received.
                     </p>
                   </div>
                 )
               ) : (
                 <div className="bg-stone-50 rounded-2xl p-5 border border-stone-100 text-center md:max-w-xs">
                   <p className="text-xs text-stone-500 mb-3">
-                    Đăng nhập để đánh giá sản phẩm
+                    Login to review this product
                   </p>
                   <button
                     onClick={() => navigate("/login")}
-                    className="text-white bg-stone-900 px-5 py-2 rounded-full text-xs font-medium hover:bg-stone-700 transition-colors"
+                    className="text-white bg-blue-600 px-5 py-2 rounded-full text-xs font-medium hover:bg-blue-700 transition-colors"
                   >
-                    Đăng nhập
+                    Login
                   </button>
                 </div>
               )}
@@ -723,7 +725,7 @@ function ProductDetailPage() {
                       </div>
                       <p className="text-[10px] text-stone-300 font-medium">
                         {new Date(review.reviewDate).toLocaleDateString(
-                          "vi-VN",
+                          "en-US",
                         )}
                       </p>
                     </div>
@@ -739,7 +741,7 @@ function ProductDetailPage() {
                   <FiStar size={20} className="text-stone-200" />
                 </div>
                 <p className="text-stone-400 text-sm">
-                  Chưa có đánh giá nào cho sản phẩm này
+                  No reviews yet for this product
                 </p>
               </div>
             )}
@@ -747,28 +749,28 @@ function ProductDetailPage() {
         </div>
 
         {/* ── CTA Strip ── */}
-        <section className="relative overflow-hidden bg-stone-900 py-20">
+        <section className="relative overflow-hidden bg-blue-950 py-20">
           <div className="absolute -top-32 -right-32 w-[400px] h-[400px] rounded-full border border-white/[0.03]" />
           <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full border border-white/[0.03]" />
           <div className="relative max-w-xl mx-auto text-center px-6 z-10">
-            <p className="text-amber-400/70 text-[10px] tracking-[0.35em] uppercase font-semibold mb-4">
-              Cần tư vấn thêm?
+            <p className="text-blue-300/70 text-[10px] tracking-[0.35em] uppercase font-semibold mb-4">
+              Need more advice?
             </p>
             <h2 className="text-3xl font-semibold text-white mb-3 tracking-tight">
-              Đặt lịch đo mắt <span className="text-amber-400">miễn phí</span>
+              Book a <span className="text-blue-300">free</span> eye exam
             </h2>
             <p className="text-stone-400 text-sm mb-8 leading-relaxed max-w-xs mx-auto">
-              Kỹ thuật viên chuyên nghiệp sẵn sàng tư vấn và đo mắt tại cửa hàng
-              gần nhất.
+              Professional technicians are ready to advise and measure your eyes
+              at the nearest store.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <button className="flex items-center justify-center gap-2 px-7 py-3 bg-amber-500 hover:bg-amber-400 text-stone-900 font-semibold text-sm rounded-full transition-all active:scale-95">
+              <button className="flex items-center justify-center gap-2 px-7 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-full transition-all active:scale-95">
                 <FiCalendar size={15} />
-                Đặt lịch ngay
+                Book Now
               </button>
               <button className="flex items-center justify-center gap-2 px-7 py-3 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-white font-medium text-sm rounded-full transition-all active:scale-95">
                 <FiMapPin size={15} />
-                Tìm cửa hàng
+                Find a Store
               </button>
             </div>
           </div>
@@ -812,12 +814,12 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
         </div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm text-stone-900">
-            Nhập toa thủ công
+            Manual Prescription Entry
           </p>
           <p
             className={`text-[11px] mt-0.5 ${lensOption === "manual" ? "text-emerald-600" : "text-stone-400"}`}
           >
-            Nhập SPH · CYL · AXIS · ADD · PD
+            Enter SPH · CYL · AXIS · ADD · PD
           </p>
         </div>
         <FiChevronDown
@@ -845,7 +847,7 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
               <thead>
                 <tr>
                   <th className="text-left text-[10px] font-semibold text-stone-400 uppercase tracking-wider pb-1 w-[16%]">
-                    Mắt
+                    Eye
                   </th>
                   {["SPH", "CYL", "AXIS", "ADD"].map((h) => (
                     <th
@@ -859,8 +861,8 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
               </thead>
               <tbody>
                 {[
-                  { side: "right", label: "Mắt P" },
-                  { side: "left", label: "Mắt T" },
+                  { side: "right", label: "Eye R" },
+                  { side: "left", label: "Eye L" },
                 ].map(({ side, label }) => (
                   <tr key={side}>
                     <td>
@@ -903,7 +905,7 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
               className="w-16 border border-stone-200 rounded-lg px-2 py-1.5 text-sm font-mono text-center bg-white focus:border-emerald-400 focus:ring-1 focus:ring-emerald-200 focus:outline-none transition-all"
             />
             <span className="text-[11px] text-stone-400">
-              Khoảng cách đồng tử
+              Pupillary Distance
             </span>
           </div>
         </div>
@@ -913,7 +915,7 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-stone-100" />
         <span className="text-[10px] text-stone-300 uppercase tracking-[0.2em] font-medium whitespace-nowrap">
-          hoặc
+          or
         </span>
         <div className="flex-1 h-px bg-stone-100" />
       </div>
@@ -927,8 +929,8 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
         }
         className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
           lensOption === "no-prescription"
-            ? "border-stone-800 bg-stone-900 text-white"
-            : "border-stone-200 hover:border-stone-400 bg-white"
+            ? "border-blue-700 bg-blue-600 text-white"
+            : "border-stone-200 hover:border-blue-400 bg-white"
         }`}
       >
         <div
@@ -939,7 +941,7 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
           <FiCheck
             size={17}
             className={
-              lensOption === "no-prescription" ? "text-white" : "text-stone-500"
+              lensOption === "no-prescription" ? "text-white" : "text-blue-500"
             }
             strokeWidth={2.5}
           />
@@ -948,12 +950,12 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
           <p
             className={`font-semibold text-sm ${lensOption === "no-prescription" ? "text-white" : "text-stone-900"}`}
           >
-            Không nhập độ
+            No Prescription
           </p>
           <p
             className={`text-[11px] mt-0.5 ${lensOption === "no-prescription" ? "text-stone-400" : "text-stone-400"}`}
           >
-            Mua kính không độ
+            Buy non-prescription glasses
           </p>
         </div>
       </button>
@@ -962,9 +964,9 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
       {lensOption && (
         <p className="text-xs text-stone-400 flex items-center gap-1.5 pl-1">
           <FiCheck size={11} className="text-emerald-500" strokeWidth={3} />
-          Đã chọn:{" "}
+          Selected:{" "}
           <span className="font-semibold text-stone-700">
-            {lensOption === "manual" ? "Nhập toa thủ công" : "Kính không độ"}
+            {lensOption === "manual" ? "Manual Entry" : "Non-prescription"}
           </span>
         </p>
       )}

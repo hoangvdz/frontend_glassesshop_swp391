@@ -19,7 +19,7 @@ import { createProduct } from "../services/productService";
 /* ─────────────────────────────────────────────
    STEPPER
 ───────────────────────────────────────────── */
-const STEPS = ["Danh mục", "Chi tiết", "Hoàn thành"];
+const STEPS = ["Category", "Details", "Complete"];
 
 function Stepper({ step }) {
   const progress = step === 1 ? 0 : step === 2 ? 50 : 100;
@@ -73,82 +73,82 @@ function Stepper({ step }) {
 const CATEGORIES = [
   {
     value: "FRAME",
-    label: "Gọng kính",
-    desc: "Gọng kính thời trang & quang học",
+    label: "Frames",
+    desc: "Fashion & Optical Frames",
     emoji: "👓",
     color: "blue",
     variantFields: [
       {
         name: "color",
-        label: "Màu sắc",
-        placeholder: "VD: Đen bóng, Vàng gold…",
+        label: "Color",
+        placeholder: "e.g. Glossy Black, Gold...",
       },
       {
         name: "material",
-        label: "Chất liệu",
-        placeholder: "VD: Titanium, Acetate…",
+        label: "Material",
+        placeholder: "e.g. Titanium, Acetate...",
       },
-      { name: "frameSize", label: "Kích thước", placeholder: "VD: 52-18-140" },
+      { name: "frameSize", label: "Size", placeholder: "VD: 52-18-140" },
       {
         name: "image",
-        label: "URL ảnh",
+        label: "Image URL",
         placeholder: "https://…",
         isImage: true,
       },
-      { name: "stock", label: "Tồn kho", placeholder: "0", isNumber: true },
+      { name: "stock", label: "Stock", placeholder: "0", isNumber: true },
     ],
   },
   {
     value: "LENS",
-    label: "Tròng kính",
-    desc: "Tròng quang học, tráng phủ",
+    label: "Lenses",
+    desc: "Optical Lenses, Coatings",
     emoji: "🔍",
     color: "violet",
     variantFields: [
       {
         name: "material",
-        label: "Chất liệu",
-        placeholder: "VD: CR-39, Polycarbonate…",
+        label: "Material",
+        placeholder: "e.g. CR-39, Polycarbonate...",
       },
       {
         name: "color",
-        label: "Màu / phủ",
-        placeholder: "VD: Chống UV, Đổi màu…",
+        label: "Color / Coating",
+        placeholder: "e.g. UV Protection, Photochromic...",
       },
       {
         name: "frameSize",
-        label: "Chỉ số",
-        placeholder: "VD: SPH -2.00 CYL -0.50",
+        label: "Index",
+        placeholder: "e.g. SPH -2.00 CYL -0.50",
       },
       {
         name: "image",
-        label: "URL ảnh",
+        label: "Image URL",
         placeholder: "https://…",
         isImage: true,
       },
-      { name: "stock", label: "Tồn kho", placeholder: "0", isNumber: true },
+      { name: "stock", label: "Stock", placeholder: "0", isNumber: true },
     ],
   },
   {
     value: "ACCESSORY",
-    label: "Phụ kiện",
-    desc: "Hộp kính, khăn lau, dây…",
+    label: "Accessories",
+    desc: "Glasses case, cloth, strap...",
     emoji: "🧴",
     color: "emerald",
     variantFields: [
-      { name: "color", label: "Màu sắc", placeholder: "VD: Xanh navy, Hồng…" },
+      { name: "color", label: "Color", placeholder: "e.g. Navy Blue, Pink..." },
       {
         name: "material",
-        label: "Chất liệu",
-        placeholder: "VD: Da, Vải microfiber…",
+        label: "Material",
+        placeholder: "e.g. Leather, Microfiber...",
       },
       {
         name: "image",
-        label: "URL ảnh",
+        label: "Image URL",
         placeholder: "https://…",
         isImage: true,
       },
-      { name: "stock", label: "Tồn kho", placeholder: "0", isNumber: true },
+      { name: "stock", label: "Stock", placeholder: "0", isNumber: true },
     ],
   },
 ];
@@ -252,7 +252,7 @@ function VariantCard({
             {[
               variant.material,
               variant.frameSize,
-              variant.stock && `${variant.stock} cái`,
+              variant.stock && `${variant.stock} units`,
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -261,7 +261,7 @@ function VariantCard({
         <div className="flex gap-1">
           <button
             onClick={onEdit}
-            title="Chỉnh sửa"
+            title="Edit"
             className="p-1.5 rounded-lg hover:bg-white/80 text-slate-400 hover:text-slate-600 transition-colors"
           >
             <FiEdit2 size={13} />
@@ -269,7 +269,7 @@ function VariantCard({
           {onDelete && (
             <button
               onClick={onDelete}
-              title="Xoá"
+              title="Delete"
               className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
             >
               <FiTrash2 size={13} />
@@ -328,7 +328,7 @@ function VariantCard({
           onClick={() => onMarkDone(index)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all shadow-sm ${cc.btn}`}
         >
-          <FiCheck size={13} strokeWidth={3} /> Xác nhận variant
+          <FiCheck size={13} strokeWidth={3} /> Confirm Variant
         </button>
       </div>
     </motion.div>
@@ -400,7 +400,7 @@ function AddProductModal({ onClose, onAdd }) {
 
   const handleSubmit = async () => {
     if (!form.name || !form.type || !form.price) {
-      alert("Nhập thiếu thông tin!");
+      alert("Missing information!");
       return;
     }
     try {
@@ -410,7 +410,7 @@ function AddProductModal({ onClose, onAdd }) {
       onAdd?.(newProduct);
     } catch (err) {
       console.error(err);
-      alert("Tạo sản phẩm thất bại!");
+      alert("Failed to create product!");
     }
   };
 
@@ -438,10 +438,10 @@ function AddProductModal({ onClose, onAdd }) {
             </div>
             <div>
               <h2 className="font-extrabold text-slate-800 text-[15px] leading-tight">
-                Thêm sản phẩm mới
+                Add New Product
               </h2>
               <p className="text-[11px] text-slate-400 font-medium">
-                Bước {step} / {STEPS.length}
+                Step {step} / {STEPS.length}
               </p>
             </div>
           </div>
@@ -466,7 +466,7 @@ function AddProductModal({ onClose, onAdd }) {
                 className="px-6 py-6"
               >
                 <p className="text-sm text-slate-500 mb-5 leading-relaxed">
-                  Chọn loại sản phẩm bạn muốn thêm vào hệ thống.
+                  Select the type of product you want to add.
                 </p>
                 <div className="flex flex-col gap-3">
                   {CATEGORIES.map((c) => {
@@ -533,40 +533,40 @@ function AddProductModal({ onClose, onAdd }) {
                 </span>
 
                 {/* basic info */}
-                <Section title="Thông tin sản phẩm" icon={<FiTag size={13} />}>
+                <Section title="Product Information" icon={<FiTag size={13} />}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FieldInput
-                      label="Tên sản phẩm"
+                      label="Product Name"
                       name="name"
                       value={form.name}
                       onChange={handleChange}
-                      placeholder="VD: Kính Rayban RB3025"
+                      placeholder="e.g. Rayban RB3025"
                       required
                     />
                     <FieldInput
-                      label="Thương hiệu"
+                      label="Brand"
                       name="brand"
                       value={form.brand}
                       onChange={handleChange}
-                      placeholder="VD: Rayban, Oakley…"
+                      placeholder="e.g. Rayban, Oakley…"
                     />
                     <div className="sm:col-span-2">
                       <FieldInput
-                        label="Mô tả"
+                        label="Description"
                         name="description"
                         value={form.description}
                         onChange={handleChange}
-                        placeholder="Mô tả ngắn về sản phẩm…"
+                        placeholder="Short product description…"
                       />
                     </div>
                   </div>
                 </Section>
 
                 {/* price */}
-                <Section title="Giá bán" icon={<FiDollarSign size={13} />}>
+                <Section title="Price" icon={<FiDollarSign size={13} />}>
                   <div className="max-w-xs">
                     <FieldInput
-                      label="Giá bán (₫)"
+                      label="Price (₫)"
                       name="price"
                       type="number"
                       value={form.price}
@@ -582,7 +582,7 @@ function AddProductModal({ onClose, onAdd }) {
                 <Section
                   title="Variants"
                   icon={<FiBox size={13} />}
-                  hint={`${doneCount} / ${form.variants.length} đã xác nhận`}
+                  hint={`${doneCount} / ${form.variants.length} verified`}
                 >
                   <div className="flex flex-col gap-3">
                     <AnimatePresence>
@@ -608,7 +608,7 @@ function AddProductModal({ onClose, onAdd }) {
                       onClick={addVariant}
                       className={`flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed text-sm font-bold transition-all ${accent.dashed}`}
                     >
-                      <FiPlus size={14} /> Thêm variant
+                      <FiPlus size={14} /> Add Variant
                     </button>
                   </div>
                 </Section>
@@ -636,7 +636,7 @@ function AddProductModal({ onClose, onAdd }) {
 
                     <div>
                       <p className="text-sm font-bold text-slate-700">
-                        {form.name || "Tên sản phẩm"}
+                        {form.name || "Product Name"}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
                         {cat.label}
@@ -674,11 +674,10 @@ function AddProductModal({ onClose, onAdd }) {
                   </div>
                 </div>
                 <h3 className="text-xl font-extrabold text-slate-800 mb-2">
-                  Thêm thành công!
+                  Successfully added!
                 </h3>
                 <p className="text-sm text-slate-400 mb-8 max-w-xs leading-relaxed">
-                  Sản phẩm đã được lưu vào hệ thống. Bạn có thể tiếp tục thêm
-                  sản phẩm khác.
+                  Product has been saved. You can continue adding others.
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -708,7 +707,7 @@ function AddProductModal({ onClose, onAdd }) {
                   onClick={() => go(step - 1)}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 border-2 border-slate-200 rounded-xl hover:bg-white transition-colors"
                 >
-                  <FiArrowLeft size={13} /> Quay lại
+                  <FiArrowLeft size={13} /> Back
                 </button>
               )}
             </div>
@@ -728,7 +727,7 @@ function AddProductModal({ onClose, onAdd }) {
                   onClick={() => go(2)}
                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-md shadow-blue-200 disabled:opacity-30 disabled:pointer-events-none"
                 >
-                  Tiếp theo <FiArrowRight size={13} />
+                  Next <FiArrowRight size={13} />
                 </button>
               )}
               {step === 2 && (
@@ -737,7 +736,7 @@ function AddProductModal({ onClose, onAdd }) {
                   onClick={handleSubmit}
                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-md shadow-blue-200 disabled:opacity-30 disabled:pointer-events-none"
                 >
-                  <FiCheck size={13} strokeWidth={3} /> Hoàn thành
+                  <FiCheck size={13} strokeWidth={3} /> Complete
                 </button>
               )}
             </div>

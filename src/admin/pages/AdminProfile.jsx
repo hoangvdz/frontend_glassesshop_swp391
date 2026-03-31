@@ -52,9 +52,9 @@ function AdminProfile() {
   return (
     <div className="px-8 pt-6 pb-12 bg-gray-50 min-h-full">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-800">Hồ sơ cá nhân</h1>
+        <h1 className="text-xl font-bold text-gray-800">User Profile</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Quản lý thông tin tài khoản của bạn
+          Manage your account information
         </p>
       </div>
 
@@ -95,7 +95,7 @@ function AdminProfile() {
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                   >
                     <FiEdit size={14} />
-                    Chỉnh sửa hồ sơ
+                    Edit Profile
                   </button>
                 ) : (
                   <div className="flex gap-2">
@@ -104,14 +104,14 @@ function AdminProfile() {
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <FiX size={14} />
-                      Huỷ
+                      Cancel
                     </button>
                     <button
                       onClick={handleSave}
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                     >
                       <FiCheck size={14} />
-                      Lưu
+                      Save
                     </button>
                   </div>
                 )}
@@ -122,19 +122,19 @@ function AdminProfile() {
           {/* Quick stats */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-              Thống kê
+              Stats
             </h3>
             <div className="space-y-4">
               {[
                 {
                   icon: <FiCalendar size={15} className="text-purple-500" />,
-                  label: "Ngày tham gia",
+                  label: "Joined Date",
                   value: admin.createdAt,
                 },
                 {
                   icon: <FiShield size={15} className="text-green-500" />,
-                  label: "Trạng thái",
-                  value: "Hoạt động",
+                  label: "Status",
+                  value: "Active",
                 },
               ].map((s) => (
                 <div
@@ -201,12 +201,12 @@ function AdminProfile() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h3 className="text-sm font-semibold text-gray-800 mb-5 flex items-center gap-2">
               <FiUser size={15} className="text-blue-500" />
-              Thông tin cá nhân
+              Personal Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <ProfileField
                 icon={<FiUser size={14} />}
-                label="Họ và tên"
+                label="Full Name"
                 value={admin.name}
                 editing={editing}
                 name="name"
@@ -224,7 +224,7 @@ function AdminProfile() {
               />
               <ProfileField
                 icon={<FiPhone size={14} />}
-                label="Số điện thoại"
+                label="Phone Number"
                 value={admin.phone}
                 editing={editing}
                 name="phone"
@@ -233,7 +233,7 @@ function AdminProfile() {
               />
               <ProfileField
                 icon={<FiMapPin size={14} />}
-                label="Địa chỉ"
+                label="Address"
                 value={admin.address}
                 editing={editing}
                 name="address"
@@ -247,24 +247,24 @@ function AdminProfile() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h3 className="text-sm font-semibold text-gray-800 mb-5 flex items-center gap-2">
               <FiShield size={15} className="text-blue-500" />
-              Thông tin hệ thống
+              System Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <ProfileDisplay icon={<FiShield size={14} />} label="Vai trò">
+              <ProfileDisplay icon={<FiShield size={14} />} label="Role">
                 <span className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
                   {admin.role}
                 </span>
               </ProfileDisplay>
 
-              <ProfileDisplay label="ID tài khoản">
+              <ProfileDisplay label="Account ID">
                 <span className="font-mono text-sm text-gray-700">
                   #{admin.userId}
                 </span>
               </ProfileDisplay>
-              <ProfileDisplay label="Trạng thái">
+              <ProfileDisplay label="Status">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-sm text-gray-700">Đang hoạt động</span>
+                  <span className="text-sm text-gray-700">Active</span>
                 </span>
               </ProfileDisplay>
             </div>
@@ -273,17 +273,17 @@ function AdminProfile() {
           {/* Danger zone */}
           <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-6">
             <h3 className="text-sm font-semibold text-red-600 mb-1">
-              Vùng nguy hiểm
+              Danger Zone
             </h3>
             <p className="text-xs text-gray-400 mb-4">
-              Các hành động dưới đây không thể hoàn tác. Hãy thận trọng.
+              These actions cannot be undone. Please be cautious.
             </p>
             <div className="flex flex-wrap gap-3">
               <button className="px-4 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
-                Đổi mật khẩu
+                Change Password
               </button>
               <button className="px-4 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
-                Xoá tài khoản
+                Delete Account
               </button>
             </div>
           </div>
@@ -308,7 +308,7 @@ function ProfileField({
     return (
       <ProfileDisplay icon={icon} label={label}>
         {value || (
-          <span className="text-gray-300 italic text-xs">Chưa cập nhật</span>
+          <span className="text-gray-300 italic text-xs">Not updated</span>
         )}
       </ProfileDisplay>
     );
