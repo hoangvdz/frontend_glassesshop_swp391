@@ -11,12 +11,19 @@ import {
   FiArrowDownRight,
   FiCalendar,
   FiMoreHorizontal,
+  FiX,
 } from "react-icons/fi";
 
 import { useEffect, useState, useMemo } from "react";
 import { getAllOrders } from "../services/orderService";
-import { getCustomerCount, getOrdersCount } from "../services/dashboardService";
-import { revenueData, orderStatusData } from "../data/adminMock";
+import { 
+  getCustomerCount, 
+  getOrdersCount, 
+  getRevenueReport, 
+  getDailyRevenue,
+  getCancelledOrders
+} from "../services/dashboardService";
+import { orderStatusData } from "../data/adminMock";
 
 /* ── animation helpers ── */
 const fadeUp = (delay = 0) => ({
@@ -25,11 +32,17 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.4, delay, ease: "easeOut" },
 });
 
-/* ── chart data ── */
-const revenueSeries = [
-  { name: "Revenue", data: revenueData.map((i) => i.revenue) },
-];
-const revenueCategories = revenueData.map((i) => i.day);
+/* ── chart helpers ── */
+const formatChartData = (dailyData) => {
+  if (!dailyData || dailyData.length === 0) return { series: [], categories: [] };
+  return {
+    series: [{ name: "Revenue", data: dailyData.map(d => d.revenue) }],
+    categories: dailyData.map(d => {
+       const date = new Date(d.day);
+       return date.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" });
+    })
+  };
+};
 
 /* ── stat card config ── */
 const statCards = [
@@ -96,25 +109,81 @@ function AdminOverview() {
   const [orders, setOrders] = useState([]);
   const [orderCount, setOrderCount] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
-  const [filter, setFilter] = useState("7days"); // mặc định 7 ngày
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [dailyData, setDailyData] = useState([]);
+  const [cancelledOrders, setCancelledOrders] = useState([]);
+  const [revenueGrowth, setRevenueGrowth] = useState(0);
+  const [filter, setFilter] = useState("7days");
+
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getAllOrders();
+        const today = new Date();
+        const formatDate = (date) => {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, "0");
+          const d = String(date.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        };
 
-        const orderCountData = await getOrdersCount();
-        const customerCountData = await getCustomerCount();
+        const toDateObj = new Date(today);
+        toDateObj.setDate(today.getDate() + 1); // Include today
+        const toDate = formatDate(toDateObj);
 
-        setOrderCount(orderCountData);
-        setCustomerCount(customerCountData);
-        setOrders(data);
+        const fromDateObj = new Date(today);
+        fromDateObj.setDate(today.getDate() - 7);
+        const fromDate = formatDate(fromDateObj);
+
+        // Previous period for growth
+        const prevToDate = fromDate;
+        const prevFromDateObj = new Date(today);
+        prevFromDateObj.setDate(today.getDate() - 14);
+        const prevFromDate = formatDate(prevFromDateObj);
+
+        const [
+          ordersData,
+          ordCount,
+          custCount,
+          currentRev,
+          dailyRev,
+          prevRev,
+          cancelledData
+        ] = await Promise.all([
+          getAllOrders(),
+          getOrdersCount(),
+          getCustomerCount(),
+          getRevenueReport(fromDate, toDate),
+          getDailyRevenue(fromDate, toDate),
+          getRevenueReport(prevFromDate, prevToDate),
+          getCancelledOrders(fromDate, toDate)
+        ]);
+
+        setOrders(ordersData || []);
+        setOrderCount(ordCount || 0);
+        setCustomerCount(custCount || 0);
+        setTotalRevenue(currentRev?.totalRevenue || 0);
+        setDailyData(dailyRev || []);
+        setCancelledOrders(cancelledData || []);
+
+        // Calculate growth
+        if (prevRev?.totalRevenue > 0) {
+          const growth =
+            ((currentRev.totalRevenue - prevRev.totalRevenue) /
+              prevRev.totalRevenue) *
+            100;
+          setRevenueGrowth(growth.toFixed(1));
+        } else {
+          setRevenueGrowth(currentRev?.totalRevenue > 0 ? 100 : 0);
+        }
       } catch (err) {
-        console.error("Lỗi lấy orders:", err);
+        console.error("Lỗi lấy dữ liệu dashboard:", err);
       }
     };
 
-    fetchOrders();
+    fetchData();
   }, []);
+
+  const chartData = useMemo(() => formatChartData(dailyData), [dailyData]);
 
   const recentOrdersFiltered = useMemo(() => {
     const now = new Date();
@@ -185,13 +254,13 @@ function AdminOverview() {
 
               <p className="text-2xl font-semibold mt-5 text-gray-800">
                 {card.key === "orders"
-                  ? orderCount
+                  ? orderCount.toLocaleString()
                   : card.key === "customers"
-                    ? customerCount
+                    ? customerCount.toLocaleString()
                     : card.key === "revenue"
-                      ? "—" // sau này gọi API revenue
+                      ? totalRevenue.toLocaleString("vi-VN") + " ₫"
                       : card.key === "growth"
-                        ? "—"
+                        ? (revenueGrowth >= 0 ? "+" : "") + revenueGrowth + "%"
                         : "—"}
               </p>
             </motion.div>
@@ -223,7 +292,7 @@ function AdminOverview() {
           <Chart
             type="area"
             height={300}
-            series={revenueSeries}
+            series={chartData.series}
             options={{
               chart: {
                 toolbar: { show: false },
@@ -243,18 +312,18 @@ function AdminOverview() {
               },
               dataLabels: { enabled: false },
               xaxis: {
-                categories: revenueCategories,
+                categories: chartData.categories,
                 labels: { style: { fontSize: "12px", colors: "#9ca3af" } },
               },
               yaxis: {
                 labels: {
                   style: { fontSize: "12px", colors: "#9ca3af" },
-                  formatter: (v) => v.toLocaleString("en-US"),
+                  formatter: (v) => v ? v.toLocaleString("vi-VN") : "0",
                 },
               },
               grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
               tooltip: {
-                y: { formatter: (val) => val.toLocaleString("en-US") + " ₫" },
+                y: { formatter: (val) => val ? val.toLocaleString("vi-VN") + " ₫" : "0 ₫" },
               },
             }}
           />
@@ -407,7 +476,7 @@ function AdminOverview() {
           <Chart
             type="line"
             height={280}
-            series={revenueSeries}
+            series={chartData.series}
             options={{
               chart: {
                 toolbar: { show: false },
@@ -422,23 +491,64 @@ function AdminOverview() {
               },
               colors: ["#22c55e"],
               xaxis: {
-                categories: revenueCategories,
+                categories: chartData.categories,
                 labels: { style: { fontSize: "12px", colors: "#9ca3af" } },
               },
               yaxis: {
                 labels: {
                   style: { fontSize: "12px", colors: "#9ca3af" },
-                  formatter: (v) => v.toLocaleString("en-US"),
+                  formatter: (v) => v ? v.toLocaleString("vi-VN") : "0",
                 },
               },
               grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
               tooltip: {
-                y: { formatter: (val) => val.toLocaleString("en-US") + " ₫" },
+                y: { formatter: (val) => val ? val.toLocaleString("vi-VN") + " ₫" : "0 ₫" },
               },
             }}
           />
         </motion.div>
       </section>
+
+      {/* ── CANCELLED ORDERS ── */}
+      {cancelledOrders.length > 0 && (
+        <section className="mt-10">
+          <motion.div
+            {...fadeUp(0.35)}
+            className="bg-white rounded-3xl border border-red-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-base font-semibold text-red-800 flex items-center gap-2">
+                  <FiX className="text-red-500" /> Cancelled Orders
+                </h2>
+                <p className="text-xs text-red-400 mt-0.5">
+                  Orders that were not successful
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {cancelledOrders.map((order, i) => (
+                <div key={order.orderId} className="flex items-center justify-between p-4 bg-red-50/30 rounded-2xl border border-red-50 hover:bg-red-50 transition-colors">
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold">
+                        {order.fullName?.charAt(0) || "U"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{order.orderCode}</p>
+                        <p className="text-xs text-gray-500">{order.fullName}</p>
+                      </div>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-sm font-bold text-red-600">{(order.finalPrice || 0).toLocaleString()} ₫</p>
+                      <p className="text-[10px] text-gray-400">{new Date(order.orderDate).toLocaleDateString()}</p>
+                   </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+      )}
     </div>
   );
 }
