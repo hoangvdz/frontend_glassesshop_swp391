@@ -1,5 +1,4 @@
-import { jwtDecode } from "jwt-decode";
-import { getUserById, loginApi, loginGoogleAPi } from "../api/authApi";
+import { loginApi, loginGoogleAPi } from "../api/authApi";
 
 export const login = async (email, password) => {
   const user = await loginApi(email, password);

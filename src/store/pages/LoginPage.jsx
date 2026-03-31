@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getUserById, loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import { checkEmail, createUser } from "../api/createApi";
 import { loginGmail } from "../services/authService";
 /* ── decorative eyewear SVG lines ── */
 function GlassesDecor({ className }) {
