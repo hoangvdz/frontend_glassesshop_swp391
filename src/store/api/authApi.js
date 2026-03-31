@@ -19,3 +19,10 @@ export const getUserById = async (userId) => {
   const res = await axiosClient.get(`/users/${userId}`);
   return res.data.data;
 };
+
+
+export const loginGoogleAPi = async (gmail, name) => {
+  const res = await axiosClient.post(`/users/login-google?gmail=${gmail}&name=${name}`);
+  const token = res.data.data;
+  return token;
+}

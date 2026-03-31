@@ -4,6 +4,7 @@ import { getUserById, loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { checkEmail, createUser } from "../api/createApi";
+import { loginGmail } from "../services/authService";
 /* ── decorative eyewear SVG lines ── */
 function GlassesDecor({ className }) {
   return (
@@ -82,8 +83,14 @@ export default function LoginPage() {
       if (decoded.role === "ADMIN" || decoded.role === "OPERATIONAL_STAFF")
         navigate("/dashboard");
       else navigate(from);
-    } catch {
-      setError("Server connection error. Please try again.");
+    } catch (error) {
+      const status = error.status;
+      console.log("Error Login with Status: ", status);
+      if (status === 401) {
+        setError("Incorrect email or password");
+      } else {
+        setError("Server connection error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -92,32 +99,16 @@ export default function LoginPage() {
   const handleGoogle = async (credentialResponse) => {
     try {
       const decoded = jwtDecode(credentialResponse.credential);
-
       const email = decoded.email;
-      const password = "123456";
-
-      // 1. check email
-      const emailExist = await checkEmail(email);
-
-      // 2. nếu chưa có → create
-      if (!emailExist?.data) {
-        await createUser({
-          email,
-          name: decoded.name,
-          phone: "",
-          password,
-          role: "CUSTOMER",
-          accountStatus: "ACTIVE",
-        });
-      }
+      const name = decoded.name;
 
       // 3. login
-      const token = await loginApi(email, password);
+      const token = await loginGmail(email, name);
       localStorage.setItem("token", token);
 
       // 4. decode token
       const userDecode = jwtDecode(token);
-
+      console.log(userDecode);
       // 5. get user
       const res = await getUserById(userDecode.userId);
 
