@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 
 import { getMyOrders, cancelOrder } from "../services/orderService";
+import { useToast } from "../../context/ToastContext";
 // Dữ liệu mẫu (Mock Data)
 
 const TABS = [
@@ -24,6 +25,7 @@ function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
   const [returnMap, setReturnMap] = useState({});
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -94,13 +96,14 @@ function OrderHistoryPage() {
                 : order,
             ),
           );
-          alert("Order cancelled successfully!");
+          showToast("Order cancelled successfully!");
         }
       } catch (error) {
         console.error("Error when cancel order:", error);
-        alert(
+        showToast(
           "Cancellation failed: " +
             (error.response?.data?.message || "System error"),
+          "error"
         );
       }
     }

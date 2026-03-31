@@ -3,6 +3,7 @@ import {
     getAllReturnRequestsApi,
     updateReturnRequestStatusApi,
 } from "../api/returnRequestApi";
+import { useToast } from "../../context/ToastContext";
 
 function ReturnRequestManagementPage() {
     const [requests, setRequests] = useState([]);
@@ -11,6 +12,7 @@ function ReturnRequestManagementPage() {
     const [error, setError] = useState("");
     const [keyword, setKeyword] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
+    const { showToast } = useToast();
 
     const role = getCurrentRoleFromToken();
 
@@ -62,7 +64,7 @@ function ReturnRequestManagementPage() {
             if (reason === null) return;
 
             if (!reason.trim()) {
-                alert("Vui lòng nhập lý do từ chối");
+                showToast("Vui lòng nhập lý do từ chối", "error");
                 return;
             }
 
@@ -85,11 +87,11 @@ function ReturnRequestManagementPage() {
                 )
             );
 
-            alert("Cập nhật trạng thái thành công");
+            showToast("Cập nhật trạng thái thành công");
         } catch (err) {
             console.error("Lỗi update status:", err);
             const msg = err?.response?.data?.message || "Cập nhật trạng thái thất bại";
-            alert(msg);
+            showToast(msg, "error");
         } finally {
             setUpdatingId(null);
         }

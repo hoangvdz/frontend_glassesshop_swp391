@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { FiPhoneCall, FiMail } from "react-icons/fi";
+import { useToast } from "../../context/ToastContext";
 
 function ContactPage() {
   const [formData, setFormData] = useState({
     message: "",
     phone: "",
   });
+  const { showToast } = useToast();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Thay bằng logic gọi API gửi thông tin của bạn sau này
-    alert("Thank you for your feedback!");
+    showToast("Thank you for your feedback!");
     setFormData({ message: "", phone: "" });
   };
 

@@ -4,6 +4,7 @@ import {
     updateReturnRequestStatusApi,
 } from "../../store/api/returnRequestApi";
 import { Eye, Search, X } from "lucide-react";
+import { useToast } from "../../context/ToastContext";
 
 function AdminReturnRequest() {
     const [requests, setRequests] = useState([]);
@@ -12,6 +13,7 @@ function AdminReturnRequest() {
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [updating, setUpdating] = useState(false);
+    const { showToast } = useToast();
 
     const role = getCurrentRoleFromToken();
 
@@ -26,7 +28,7 @@ function AdminReturnRequest() {
             setRequests(res?.data?.data || []);
         } catch (err) {
             console.error("Lỗi tải return requests:", err);
-            alert(err?.response?.data?.message || "Không tải được danh sách đổi/trả");
+            showToast(err?.response?.data?.message || "Không tải được danh sách đổi/trả", "error");
         } finally {
             setLoading(false);
         }
@@ -70,10 +72,10 @@ function AdminReturnRequest() {
                 setSelectedRequest((prev) => ({ ...prev, ...updated }));
             }
 
-            alert("Cập nhật trạng thái thành công");
+            showToast("Cập nhật trạng thái thành công");
         } catch (err) {
             console.error("Lỗi update status:", err);
-            alert(err?.response?.data?.message || "Cập nhật trạng thái thất bại");
+            showToast(err?.response?.data?.message || "Cập nhật trạng thái thất bại", "error");
         } finally {
             setUpdating(false);
         }

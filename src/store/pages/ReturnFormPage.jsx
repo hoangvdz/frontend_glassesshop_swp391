@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiUploadCloud, FiChevronLeft } from "react-icons/fi";
 import { createReturnRequestApi } from "../api/returnRequestApi";
+import { useToast } from "../../context/ToastContext";
 
 function ReturnFormPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const orderItemId = queryParams.get("orderItemId");
+  const { showToast } = useToast();
 
   const [formData, setFormData] = useState({
     reason: "",
@@ -19,8 +21,9 @@ function ReturnFormPage() {
     e.preventDefault();
 
     if (!orderItemId) {
-      alert(
+      showToast(
         "ERROR: Order item ID (orderItemId) not found in the URL. Please go back to the order page and click the Return/Exchange button again.",
+        "error"
       );
       return;
     }
@@ -36,15 +39,15 @@ function ReturnFormPage() {
       const res = await createReturnRequestApi(payload);
 
       if (res.data.success) {
-        alert("Return/exchange request sent successfully!");
-        navigate("/my-orders");
+        showToast("Return/exchange request sent successfully!");
+        setTimeout(() => navigate("/my-orders"), 1200);
       } else {
-        alert("Failed: " + (res.data.message || "Unknown"));
+        showToast("Failed: " + (res.data.message || "Unknown"), "error");
       }
     } catch (error) {
       console.error("Lỗi API Chi tiết:", error);
       const errorMsg = error.response?.data?.message || error.message;
-      alert("Error sending request: " + errorMsg);
+      showToast("Error sending request: " + errorMsg, "error");
     } finally {
       setSubmitting(false);
     }

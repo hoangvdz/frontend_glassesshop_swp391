@@ -14,6 +14,7 @@ import {
   FiEdit2,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "../../context/ToastContext";
 import {
   createVariant,
   deleteVariant,
@@ -349,6 +350,7 @@ function EditProductModal({ product, onClose, onUpdate }) {
   const [completed, setCompleted] = useState(false);
   const [direction, setDirection] = useState(1);
   const [form, setForm] = useState(EMPTY_FORM);
+  const { showToast } = useToast();
   const cat = CATEGORY_MAP[form.type];
   const accent = cat ? CC[cat.color] : CC.blue;
 
@@ -427,7 +429,7 @@ function EditProductModal({ product, onClose, onUpdate }) {
         }));
       } catch (err) {
         console.error("Error deleting variant:", err);
-        alert("Failed to delete variant!");
+        showToast("Failed to delete variant!", "error");
       }
     } else {
       setForm((f) => ({
@@ -438,13 +440,13 @@ function EditProductModal({ product, onClose, onUpdate }) {
   };
   const handleSubmit = async () => {
     if (!form.name || !form.type || !form.price) {
-      alert("Missing information!");
+      showToast("Missing information!", "error");
       return;
     }
 
     try {
       if (!form.id) {
-        alert("Product ID not found!");
+        showToast("Product ID not found!", "error");
         return;
       }
       // 🟢 1. update product trước
@@ -486,7 +488,7 @@ function EditProductModal({ product, onClose, onUpdate }) {
       setStep(3);
     } catch (err) {
       console.error(err);
-      alert("Failed to update product!");
+      showToast("Failed to update product!", "error");
     }
   };
   const canNext = step === 1 ? !!form.type : !!form.name && !!form.price;

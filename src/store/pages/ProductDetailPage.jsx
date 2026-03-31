@@ -18,22 +18,7 @@ import { getProductById } from "../services/productService.js";
 import { addToCartService } from "../services/cartService";
 import { getReviewsByProduct, createReview } from "../api/reviewApi";
 import { historyOrderApi } from "../api/orderApi";
-
-/* ─── Toast ─── */
-function Toast({ message, visible }) {
-  if (!visible) return null;
-  return (
-    <div
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-5 py-3 rounded-full text-sm font-medium shadow-2xl flex items-center gap-2.5"
-      style={{ animation: "slideUp .3s cubic-bezier(0.34,1.56,0.64,1)" }}
-    >
-      <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-        <FiCheck size={11} strokeWidth={3} />
-      </span>
-      {message}
-    </div>
-  );
-}
+import { useToast } from "../../context/ToastContext";
 
 /* ─── Star Rating Display ─── */
 function StarRow({ rating, size = 14 }) {
@@ -60,7 +45,7 @@ function ProductDetailPage() {
   const [activeColor, setActiveColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [wished, setWished] = useState(false);
-  const [toast, setToast] = useState({ visible: false, message: "" });
+  const { showToast } = useToast();
   const [token] = useState(localStorage.getItem("token"));
   const [lensOption, setLensOption] = useState(null);
   const [prescription, setPrescription] = useState({
@@ -159,10 +144,7 @@ function ProductDetailPage() {
     }
   };
 
-  const showToast = (msg) => {
-    setToast({ visible: true, message: msg });
-    setTimeout(() => setToast({ visible: false, message: "" }), 3000);
-  };
+  const showToastWrapper = (msg, type) => showToast(msg, type);
 
   if (loading) {
     return (
@@ -351,8 +333,6 @@ function ProductDetailPage() {
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
         input[type=number] { -moz-appearance: textfield; }
       `}</style>
-
-      <Toast visible={toast.visible} message={toast.message} />
 
       <div
         className="min-h-screen bg-white text-stone-800"

@@ -7,6 +7,7 @@ import {
 import { FiPackage, FiCheck, FiSearch, FiFilter, FiX, FiEye, FiClock, FiAlertCircle } from "react-icons/fi";
 import { updateOrderStatus } from "../services/orderService";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "../../context/ToastContext";
 
 const STEP_COLORS = {
   gray: {
@@ -222,7 +223,7 @@ export default function AdminPreorders() {
   const [stepFilter, setStepFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewing, setViewing] = useState(null);
-  const [toast, setToast] = useState(null);
+  const { showToast } = useToast();
   const itemsPerPage = 7;
   const mapStatusToStep = (status) => {
     switch (status) {
@@ -301,11 +302,6 @@ export default function AdminPreorders() {
     };
 
     fetchPreorder();
-  }, []);
-
-  const showToast = useCallback((msg, type = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 2800);
   }, []);
 
   const checkStockBeforeConfirm = async (order) => {
@@ -622,23 +618,6 @@ export default function AdminPreorders() {
           />
         )}
       </AnimatePresence>
-
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.18 }}
-            className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium
-              ${toast.type === "error" ? "bg-red-600 text-white" : "bg-gray-900 text-white"}`}
-          >
-            {toast.type === "error" ? <FiX size={14} /> : <FiCheck size={14} />}
-            {toast.msg}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -648,6 +627,7 @@ export default function AdminPreorders() {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function DetailModal({ order, onClose, onAdvance, onCancel }) {
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleApprove = async () => {
     if (!window.confirm("Approve this pre-order and deduct inventory?")) return;
@@ -678,11 +658,11 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
       // 4. Cập nhật trạng thái đơn hàng sang PROCESSING
       await updateOrderStatus(order.orderId, "PROCESSING");
       
-      alert(`Processed successfully! \n- Product ID: #${order.productId} \n- Variant ID: #${order.variantId} \n- Old stock: ${currentStock} \n- New stock: ${newQuantity}`);
-      window.location.reload(); 
+      showToast(`Processed successfully!`);
+      setTimeout(() => window.location.reload(), 1500); 
     } catch (error) {
       console.error("Lỗi xử lý:", error);
-      alert("Error processing pre-order: " + (error.response?.data?.message || error.message));
+      showToast("Error processing pre-order: " + (error.response?.data?.message || error.message), "error");
     } finally {
       setLoading(false);
     }
