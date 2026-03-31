@@ -6,6 +6,8 @@ export const checkoutOrder = async (
   items,
   paymentMethod = [],
 ) => {
+  const hasPreOrder = items.some(item => item.isPreorder || item.isPreOrder);
+
   const payload = {
     fullName: formData.fullName,
     phone: formData.phone,
@@ -15,31 +17,20 @@ export const checkoutOrder = async (
     shippingFee: parseFloat(shippingFee) || 0,
     voucherDiscount: 0,
     idempotencyKey: String(Date.now()),
-    items: items.map((item) => ({
-      productId: item.productId,
-      variantId: item.variant?.variantId,
-      quantity: item.quantity,
-      // ĐẶC BIỆT QUAN TRỌNG: Gửi toa thuốc mắt
-      isLens: item.isLens || false,
-      sphLeft: item.sphLeft,
-      sphRight: item.sphRight,
-      cylLeft: item.cylLeft,
-      cylRight: item.cylRight,
-      axisLeft: item.axisLeft,
-      axisRight: item.axisRight,
-      addLeft: item.addLeft,
-      addRight: item.addRight,
-      pd: item.pd,
-      itemType: item.itemType === "PRE_ORDER" || item.isPreorder ? "PRE_ORDER" : (item.itemType || (item.isLens ? "PRESCRIPTION" : "IN_STOCK"))
-    }))
+    isPreorder: hasPreOrder 
   };
 
-  const response = await checkoutOrderApi(payload);
-
-  if (response.data?.success) {
-    return response.data.data; // trả về order
-  } else {
-    throw new Error(response.data?.message || "Đặt hàng thất bại");
+  try {
+    const response = await checkoutOrderApi(payload);
+    if (response.data?.success) {
+      return response.data.data; // trả về order
+    } else {
+      throw new Error(response.data?.message || "Checkout failed");
+    }
+  } catch (error) {
+      console.error("LOI CHECKOUT:", error.response?.data);
+      const backendMessage = error.response?.data?.message || JSON.stringify(error.response?.data) || error.message;
+      throw new Error(`Backend error: ${backendMessage}`);
   }
 };
 
@@ -47,8 +38,6 @@ export const checkoutOrder = async (
 export const createVNPayPayment = async (amount, orderId) => {
   try {
     const res = await createPaymentApi(amount, orderId);
-
-    console.log("VNPay response:", res);
 
     return res.data.paymentUrl;
   } catch (error) {

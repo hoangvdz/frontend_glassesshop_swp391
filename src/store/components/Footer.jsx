@@ -9,11 +9,10 @@ function Footer() {
           {/* Brand */}
           <div>
             <h2 className="text-lg font-bold tracking-wide mb-4">
-              Mắt Kính
+              Falcon Eyewear
             </h2>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Mắt kinh thời trang cao cấp, nơi phong cách gặp gỡ chất lượng.  
-              Thiết kế tinh tế, chất lượng vượt trội, mang đến sự tự tin và phong cách cho mọi ánh nhìn.
+              Mắt kính thời trang cao cấp, nơi phong cách gặp gỡ chất lượng. Thiết kế tinh tế, chất lượng vượt trội, mang lại sự tự tin và phong cách cho mọi ánh nhìn.
             </p>
           </div>
 
@@ -23,8 +22,8 @@ function Footer() {
               Cửa hàng
             </h3>
             <ul className="space-y-3 text-sm text-gray-500">
-              <li className="hover:opacity-60 cursor-pointer">Hàng mới</li>
-              <li className="hover:opacity-60 cursor-pointer">Kính mắt công sở</li>
+              <li className="hover:opacity-60 cursor-pointer">Sản phẩm mới</li>
+              <li className="hover:opacity-60 cursor-pointer">Kính văn phòng</li>
               <li className="hover:opacity-60 cursor-pointer">Kính râm</li>
               <li className="hover:opacity-60 cursor-pointer">Phụ kiện</li>
             </ul>
@@ -36,8 +35,8 @@ function Footer() {
               Hỗ trợ
             </h3>
             <ul className="space-y-3 text-sm text-gray-500">
-              <li className="hover:opacity-60 cursor-pointer">Giới thiệu</li>
-              <li className="hover:opacity-60 cursor-pointer">Vận chuyển & Trả hàng</li>
+              <li className="hover:opacity-60 cursor-pointer">Về chúng tôi</li>
+              <li className="hover:opacity-60 cursor-pointer">Giao hàng & Hoàn trả</li>
               <li className="hover:opacity-60 cursor-pointer">Bảo hành</li>
               <li className="hover:opacity-60 cursor-pointer">Liên hệ</li>
             </ul>
@@ -51,7 +50,7 @@ function Footer() {
             <ul className="space-y-3 text-sm text-gray-500">
               <li>Email: support@eyewear.com</li>
               <li>Phone: +84 123 456 789</li>
-              <li>Location: Ho Chi Minh City</li>
+              <li>Vị trí: Thành phố Hồ Chí Minh</li>
             </ul>
           </div>
         </div>
@@ -61,7 +60,7 @@ function Footer() {
 
           {/* Copyright */}
           <p className="text-xs text-gray-400 tracking-wide">
-            © 2026 Bản quyền thuộc về Mắt Kính. Bảo lưu mọi quyền.
+            © 2026 Bản quyền thuộc về Falcon Eyewear. Bảo lưu mọi quyền.
           </p>
 
           {/* Social */}

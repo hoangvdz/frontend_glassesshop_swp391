@@ -34,20 +34,20 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
   const notifications = [
     {
       id: 1,
-      text: "Đơn hàng #1042 vừa được tạo",
-      time: "2 phút trước",
+      text: "Order #1042 has been created",
+      time: "2 minutes ago",
       unread: true,
     },
     {
       id: 2,
-      text: "Sản phẩm 'Kính A1' sắp hết hàng",
-      time: "15 phút trước",
+      text: "Product 'Kính A1' is low on stock",
+      time: "15 minutes ago",
       unread: true,
     },
     {
       id: 3,
-      text: "Báo cáo tháng 6 đã sẵn sàng",
-      time: "1 giờ trước",
+      text: "June report is ready",
+      time: "1 hour ago",
       unread: false,
     },
   ];
@@ -88,7 +88,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
           {/* Sidebar toggle */}
           <button
             onClick={onToggleSidebar}
-            title={collapsed ? "Mở rộng" : "Thu gọn"}
+            title={collapsed ? "Expand" : "Collapse"}
             className="flex items-center px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-100 transition"
           >
             <motion.div
@@ -108,7 +108,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
             />
             <input
               type="text"
-              placeholder="Tìm kiếm..."
+              placeholder="Search..."
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
               className="w-56 pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
@@ -123,7 +123,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
             <button
               onClick={toggleNotif}
               className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
-              title="Thông báo"
+              title="Notifications"
             >
               <FiBell size={18} />
               {unreadCount > 0 && (
@@ -147,11 +147,11 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
                 >
                   <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100">
                     <p className="text-sm font-semibold text-slate-800">
-                      Thông báo
+                      Notifications
                     </p>
                     {unreadCount > 0 && (
                       <span className="text-xs text-blue-500 font-medium">
-                        {unreadCount} chưa đọc
+                        {unreadCount} unread
                       </span>
                     )}
                   </div>
@@ -182,7 +182,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
 
                   <div className="px-4 py-2.5 border-t border-slate-100 text-center">
                     <button className="text-xs text-blue-500 hover:underline font-medium">
-                      Xem tất cả thông báo
+                      View all notifications
                     </button>
                   </div>
                 </motion.div>
@@ -194,7 +194,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
           <button
             onClick={() => navigate("/dashboard/settings")}
             className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
-            title="Cài đặt"
+            title="Settings"
           >
             <FiSettings size={18} />
           </button>
@@ -265,7 +265,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
                       className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 text-slate-700 hover:bg-slate-50 transition"
                     >
                       <FiUser size={15} className="text-slate-400" />
-                      Hồ sơ
+                      Profile
                     </button>
 
                     <button
@@ -276,7 +276,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
                       className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 text-slate-700 hover:bg-slate-50 transition"
                     >
                       <FiSettings size={15} className="text-slate-400" />
-                      Cài đặt
+                      Settings
                     </button>
                   </div>
 
@@ -288,7 +288,7 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
                       className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 text-red-600 hover:bg-red-50 transition"
                     >
                       <FiLogOut size={15} />
-                      Đăng xuất
+                      Logout
                     </button>
                   </div>
                 </motion.div>

@@ -15,126 +15,110 @@ function ReturnFormPage() {
     });
     const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        console.log("Submit request for Item:", orderItemId);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        if (!orderItemId) {
-            alert(
-                "LỖI: Không tìm thấy mã sản phẩm (orderItemId) trong đường dẫn. Hãy quay lại trang đơn hàng và nhấn nút Đổi Trả lại."
-            );
-            return;
-        }
+    
+    if (!orderItemId) {
+      alert("ERROR: Order item ID (orderItemId) not found in the URL. Please go back to the order page and click the Return/Exchange button again.");
+      return;
+    }
 
-        setSubmitting(true);
-        try {
-            const payload = {
-                orderItemId: parseInt(orderItemId),
-                description: formData.details,
-                imageUrl: null,
-                reason: `Lý do: ${formData.reason}. Chi tiết: ${formData.details}`,
-            };
+    setSubmitting(true);
+    try {
+      const payload = {
+        orderItemId: parseInt(orderItemId),
+        requestType: "RETURN",
+        reason: `Reason: ${formData.reason}. Details: ${formData.details}`,
+      };
+      
 
-            console.log("Gửi Payload:", payload);
 
-            const res = await createReturnRequestApi(payload);
-            console.log("Backend phản hồi:", res.data);
+      const res = await submitServiceRequestApi(payload);
 
-            if (res.data.success) {
-                alert("Yêu cầu đổi/trả đã được gửi thành công!");
-                navigate("/my-orders");
-            } else {
-                alert("Thất bại: " + (res.data.message || "Không xác định"));
-            }
-        } catch (error) {
-            console.error("Lỗi API Chi tiết:", error);
-            const errorMsg = error.response?.data?.message || error.message;
-            alert("Lỗi khi gửi yêu cầu: " + errorMsg);
-        } finally {
-            setSubmitting(false);
-        }
-    };
 
-    const reasons = [
-        { value: "broken", label: "Sản phẩm bị lỗi/trầy xước" },
-        { value: "wrong_item", label: "Giao sai sản phẩm" },
-        { value: "not_fit", label: "Đeo không vừa / Không hợp" },
-        { value: "other", label: "Lý do khác" },
-    ];
+      if (res.data.success) {
+        alert("Return/exchange request sent successfully!");
+        navigate("/my-orders");
+      } else {
+        alert("Failed: " + (res.data.message || "Unknown"));
+      }
+    } catch (error) {
+      console.error("Lỗi API Chi tiết:", error);
+      const errorMsg = error.response?.data?.message || error.message;
+      alert("Error sending request: " + errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-stone-50 pt-24 pb-16 px-6">
-            <div className="max-w-2xl mx-auto">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="inline-flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors mb-6 text-sm font-medium"
-                >
-                    <FiChevronLeft /> Quay lại
-                </button>
+  const reasons = [
+    { value: "broken", label: "Defective/Scratched product" },
+    { value: "wrong_item", label: "Wrong product delivered" },
+    { value: "not_fit", label: "Does not fit / Not suitable" },
+    { value: "other", label: "Other reason" },
+  ];
 
-                <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-8">
-                    <h1 className="text-2xl font-bold text-stone-900 mb-2 tracking-tight">
-                        Yêu cầu đổi/trả hàng
-                    </h1>
-                    <p className="text-stone-500 mb-8 border-b border-stone-100 pb-6">
-                        Mã món hàng:{" "}
-                        <span className="font-semibold text-stone-900">
-              #{orderItemId || "N/A"}
-            </span>
-                    </p>
+  return (
+    <div className="min-h-screen bg-stone-50 pt-24 pb-16 px-6">
+      <div className="max-w-2xl mx-auto">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors mb-6 text-sm font-medium"
+        >
+          <FiChevronLeft /> Back
+        </button>
 
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                        <div>
-                            <label className="block text-sm font-semibold text-stone-700 mb-2">
-                                Lý do đổi trả <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                value={formData.reason}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, reason: e.target.value })
-                                }
-                                className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-stone-400 transition-colors"
-                                required
-                            >
-                                <option value="" disabled>
-                                    -- Chọn lý do --
-                                </option>
-                                {reasons.map((r) => (
-                                    <option key={r.value} value={r.label}>
-                                        {r.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-8">
+          <h1 className="text-2xl font-bold text-stone-900 mb-2 tracking-tight">
+            Return/Exchange Request
+          </h1>
+          <p className="text-stone-500 mb-8 border-b border-stone-100 pb-6">
+            Item ID: <span className="font-semibold text-stone-900">#{orderItemId || "N/A"}</span>
+          </p>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-stone-700 mb-2">
-                                Mô tả chi tiết tình trạng <span className="text-red-500">*</span>
-                            </label>
-                            <textarea
-                                rows="4"
-                                placeholder="Vui lòng mô tả chi tiết vấn đề bạn đang gặp phải..."
-                                value={formData.details}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, details: e.target.value })
-                                }
-                                className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-400 resize-none transition-colors"
-                                required
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className={`w-full py-4 mt-4 bg-stone-900 hover:bg-stone-800 text-white font-bold rounded-xl transition-colors text-sm uppercase tracking-widest ${
-                                submitting ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                        >
-                            {submitting ? "Đang gửi yêu cầu..." : "Gửi yêu cầu"}
-                        </button>
-                    </form>
-                </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            {/* Reason Selection */}
+            <div>
+              <label className="block text-sm font-semibold text-stone-700 mb-2">
+                Reason for Return/Exchange <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.reason}
+                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-stone-400 transition-colors"
+                required
+              >
+                <option value="" disabled>-- Select Reason --</option>
+                {reasons.map(r => (
+                  <option key={r.value} value={r.label}>{r.label}</option>
+                ))}
+              </select>
             </div>
+
+            {/* Details */}
+            <div>
+              <label className="block text-sm font-semibold text-stone-700 mb-2">
+                Detailed description of the issue <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows="4"
+                placeholder="Please describe the problem you are experiencing in detail..."
+                value={formData.details}
+                onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-400 resize-none transition-colors"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className={`w-full py-4 mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors text-sm uppercase tracking-widest ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {submitting ? "Sending Request..." : "Send Request"}
+            </button>
+          </form>
         </div>
     );
 }

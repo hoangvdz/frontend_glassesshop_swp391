@@ -29,18 +29,18 @@ const ProductRow = memo(
       if (stock === 0)
         return (
           <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 border border-red-200 font-medium">
-            Hết hàng
+          Out of stock
           </span>
         );
       if (stock <= 10)
         return (
           <span className="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
-            Sắp hết ({stock})
+            Low stock ({stock})
           </span>
         );
       return (
         <span className="px-3 py-1 text-xs rounded-full bg-green-50 text-green-700 border border-green-200 font-medium">
-          Còn hàng ({stock})
+          In stock ({stock})
         </span>
       );
     };
@@ -93,7 +93,7 @@ const ProductRow = memo(
 
         {/* Price */}
         <td className="px-6 py-4 text-right font-semibold text-gray-800">
-          {product.price.toLocaleString("vi-VN")} ₫
+          {product.price.toLocaleString("en-US")} ₫
         </td>
 
         {/* Stock */}
@@ -110,7 +110,7 @@ const ProductRow = memo(
                 <FiEdit2 size={15} />
               </button>
               <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-                Chỉnh sửa
+                Edit
               </span>
             </div>
 
@@ -122,7 +122,7 @@ const ProductRow = memo(
                 <FiTrash2 size={15} />
               </button>
               <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-                Xoá
+                Delete
               </span>
             </div>
           </div>
@@ -173,7 +173,7 @@ function AdminProducts() {
     const fetchProducts = async () => {
       try {
         const data = await getAllProducts();
-        console.log(data);
+
         setProducts(data.filter(Boolean));
       } catch (error) {
         console.error("Error Api Get All Product: ", error);
@@ -277,7 +277,7 @@ function AdminProducts() {
       }
     } catch (err) {
       console.error("Delete error: ", err);
-      const message = err.response?.data?.message || "Xoá thất bại!";
+      const message = err.response?.data?.message || "Delete failed!";
 
       alert(message);
     }
@@ -324,9 +324,9 @@ function AdminProducts() {
       {/* ── HEADER ── */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Quản lý sản phẩm</h1>
+          <h1 className="text-xl font-bold text-gray-800">Product Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {filteredProducts.length} / {products.length} sản phẩm
+            {filteredProducts.length} / {products.length} products
           </p>
         </div>
 
@@ -342,7 +342,7 @@ function AdminProducts() {
                 className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-medium shadow-sm"
               >
                 <FiTrash2 size={14} />
-                Xoá ({selected.length})
+                Delete ({selected.length})
               </motion.button>
             )}
           </AnimatePresence>
@@ -352,7 +352,7 @@ function AdminProducts() {
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium shadow-sm"
           >
             <FiPlus size={15} />
-            Thêm sản phẩm
+            Add Product
           </button>
         </div>
       </div>
@@ -367,7 +367,7 @@ function AdminProducts() {
             />
             <input
               type="text"
-              placeholder="Tìm sản phẩm..."
+              placeholder="Search products..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -397,7 +397,7 @@ function AdminProducts() {
             >
               {categories.filter(Boolean).map((c) => (
                 <option key={c} value={c}>
-                  {c === "all" ? "Tất cả danh mục" : c}
+                  {c === "all" ? "All Categories" : c}
                 </option>
               ))}
             </select>
@@ -410,11 +410,11 @@ function AdminProducts() {
               }}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 text-gray-700"
             >
-              <option value="all">Tất cả mức giá</option>
-              <option value="under500">Dưới 500k</option>
-              <option value="500to1m">500k – 1 triệu</option>
-              <option value="1mto2m">1 – 2 triệu</option>
-              <option value="over2m">Trên 2 triệu</option>
+              <option value="all">All Price Range</option>
+              <option value="under500">Under 500k</option>
+              <option value="500to1m">500k – 1M</option>
+              <option value="1mto2m">1 – 2M</option>
+              <option value="over2m">Over 2M</option>
             </select>
 
             {activeFilters > 0 && (
@@ -427,7 +427,7 @@ function AdminProducts() {
                 }}
                 className="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded-md hover:bg-red-50"
               >
-                Xoá bộ lọc
+                Clear Filters
               </button>
             )}
           </div>
@@ -461,10 +461,10 @@ function AdminProducts() {
                   </div>
                 </th>
                 <th className="w-[32%] text-left px-6 py-3.5 font-semibold tracking-wider">
-                  Sản phẩm
+                  Product
                 </th>
                 <th className="w-[18%] text-left px-6 py-3.5 font-semibold tracking-wider">
-                  Danh mục
+                  Category
                 </th>
                 <th className="w-[16%] text-right px-6 py-3.5 font-semibold tracking-wider">
                   <span
@@ -475,14 +475,14 @@ function AdminProducts() {
                     }
                     className="cursor-pointer select-none hover:text-gray-700 normal-case inline-flex items-center justify-end gap-1"
                   >
-                    Giá <SortIcon sortOrder={sortOrder} />
+                    Price <SortIcon sortOrder={sortOrder} />
                   </span>
                 </th>
                 <th className="w-[16%] text-center px-6 py-3.5 font-semibold tracking-wider">
-                  Tồn kho
+                  Stock
                 </th>
                 <th className="w-[13%] text-right px-6 py-3.5 font-semibold tracking-wider">
-                  Hành động
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -499,8 +499,8 @@ function AdminProducts() {
                       />
                       <p className="text-sm text-gray-400">
                         {isEmpty
-                          ? "Chưa có sản phẩm nào"
-                          : "Không tìm thấy sản phẩm phù hợp"}
+                          ? "No products yet"
+                          : "No matching products found"}
                       </p>
                       {!isEmpty && (
                         <button
@@ -511,7 +511,7 @@ function AdminProducts() {
                           }}
                           className="text-sm text-blue-500 hover:underline"
                         >
-                          Xoá bộ lọc
+                          Clear Filters
                         </button>
                       )}
                     </div>
@@ -540,7 +540,7 @@ function AdminProducts() {
         {!isFilteredEmpty && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
             <p className="text-xs text-gray-400">
-              Hiển thị{" "}
+              Showing{" "}
               <span className="font-medium text-gray-600">
                 {(safeCurrentPage - 1) * itemsPerPage + 1}–
                 {Math.min(
@@ -548,11 +548,11 @@ function AdminProducts() {
                   filteredProducts.length,
                 )}
               </span>{" "}
-              trong{" "}
+              of{" "}
               <span className="font-medium text-gray-600">
                 {filteredProducts.length}
               </span>{" "}
-              sản phẩm
+              products
             </p>
 
             {totalPages > 1 && (
@@ -616,25 +616,25 @@ function AdminProducts() {
                 <FiTrash2 size={18} className="text-red-500" />
               </div>
               <h3 className="text-base font-semibold text-gray-800 mb-1">
-                Xác nhận xoá
+                Confirm Deletion
               </h3>
               <p className="text-sm text-gray-500 mb-6">
                 {confirmDelete === "bulk"
-                  ? `Bạn sắp xoá ${selected.length} sản phẩm. Hành động này không thể hoàn tác.`
-                  : "Bạn có chắc muốn xoá sản phẩm này? Hành động này không thể hoàn tác."}
+                  ? `You are about to delete ${selected.length} products. This action cannot be undone.`
+                  : "Are you sure you want to delete this product? This action cannot be undone."}
               </p>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setConfirmDelete(null)}
                   className="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50"
                 >
-                  Huỷ
+                  Cancel
                 </button>
                 <button
                   onClick={handleDelete}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 font-medium"
                 >
-                  Xoá
+                  Delete
                 </button>
               </div>
             </motion.div>

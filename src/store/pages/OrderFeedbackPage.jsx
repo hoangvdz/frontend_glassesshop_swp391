@@ -8,17 +8,17 @@ function OrderFeedbackPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(`Cảm ơn bạn đã đánh giá ${rating} sao!`);
+    alert(`Thank you for your ${rating} star rating!`);
   };
 
   return (
     <div className="min-h-screen bg-stone-50 pt-24 pb-16 px-6">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-stone-100 p-8">
         <h1 className="text-2xl font-bold text-stone-900 mb-2 tracking-tight">
-          Đánh giá trải nghiệm
+          Rate Your Experience
         </h1>
         <p className="text-stone-500 mb-8">
-          Đơn hàng:{" "}
+          Order:{" "}
           <span className="font-medium text-stone-900">#FALCON-8899</span>
         </p>
 
@@ -26,7 +26,7 @@ function OrderFeedbackPage() {
           {/* Rating Stars */}
           <div>
             <label className="block text-sm font-semibold text-stone-700 mb-3">
-              Bạn cảm thấy sản phẩm như thế nào?
+              How do you feel about the product?
             </label>
             <div className="flex gap-2">
               {[...Array(5)].map((star, index) => {
@@ -42,7 +42,7 @@ function OrderFeedbackPage() {
                   >
                     <FiStar
                       size={32}
-                      className={`${indexPlusOne <= (hover || rating) ? "fill-amber-500 text-amber-500" : "text-stone-300"}`}
+                      className={`${indexPlusOne <= (hover || rating) ? "fill-blue-500 text-blue-500" : "text-stone-300"}`}
                     />
                   </button>
                 );
@@ -53,11 +53,11 @@ function OrderFeedbackPage() {
           {/* Feedback Textarea */}
           <div>
             <label className="block text-sm font-semibold text-stone-700 mb-2">
-              Chia sẻ thêm về trải nghiệm của bạn
+              Share more about your experience
             </label>
             <textarea
               rows="5"
-              placeholder="Chất lượng kính thế nào, giao hàng có nhanh không?..."
+              placeholder="How was the quality of the glasses, was delivery fast?..."
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-400 resize-none transition-colors"
@@ -70,11 +70,11 @@ function OrderFeedbackPage() {
             disabled={!rating}
             className={`w-full py-3.5 mt-2 rounded-xl font-bold transition-colors ${
               rating
-                ? "bg-stone-900 hover:bg-stone-800 text-white"
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : "bg-stone-200 text-stone-400 cursor-not-allowed"
             }`}
           >
-            Gửi đánh giá
+            Submit Review
           </button>
         </form>
       </div>

@@ -10,17 +10,17 @@ function OrderSuccessPage() {
                     </svg>
                 </div>
 
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Đặt hàng thành công!</h2>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Order Successful!</h2>
                 <p className="text-gray-600 mb-6">
-                    Cảm ơn bạn đã mua hàng tại Falcon Eyewear. Đơn hàng của bạn đang được xử lý và sẽ sớm được giao.
+                    Thank you for shopping at Falcon Eyewear. Your order is being processed and will be delivered soon.
                 </p>
 
                 <div className="space-y-3">
-                    <Link to="/" className="block w-full bg-amber-600 text-white py-3 rounded-lg font-bold hover:bg-amber-700 transition-all">
-                        Tiếp tục mua sắm
+                    <Link to="/" className="block w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-all">
+                        Continue Shopping
                     </Link>
                     <Link to="/order" className="block w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50">
-                        Xem đơn hàng
+                        View Orders
                     </Link>
                 </div>
             </div>

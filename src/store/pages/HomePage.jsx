@@ -24,22 +24,22 @@ import { products } from "../data/shopMock";
 const sliderData = [ 
   {
     id: 1,
-    title: "Modern Eyewear",
-    subtitle: "Collection 2026",
+    title: "Mắt kính hiện đại",
+    subtitle: "Bộ sưu tập 2026",
     desc: "Thiết kế tối giản, tinh tế cho sự thoải mái hàng ngày.",
     image: glassesImg1,
   },
   {
     id: 2,
-    title: "Premium Optical",
-    subtitle: "Experience",
-    desc: "Trải nghiệm hình ảnh rõ nét với tròng kính công nghệ cao.",
+    title: "Quang học cao cấp",
+    subtitle: "Trải nghiệm",
+    desc: "Trải nghiệm tầm nhìn rõ nét với tròng kính công nghệ cao.",
     image: glassesImg2,
   },
   {
     id: 3,
-    title: "Seasonal Limited",
-    subtitle: "Selection",
+    title: "Phiên bản giới hạn",
+    subtitle: "Lựa chọn",
     desc: "Bộ sưu tập giới hạn dành riêng cho mùa hè này.",
     image: glassesImg3,
   },
@@ -49,23 +49,23 @@ const sliderData = [
 const services = [
   {
     icon: <FiSettings size={22} />,
-    title: "Bảo Dưỡng Kính",
-    desc: "Vệ sinh và nắn chỉnh kính miễn phí trọn đời.",
+    title: "Bảo dưỡng kính",
+    desc: "Vệ sinh và điều chỉnh miễn phí trọn đời.",
   },
   {
     icon: <FiTruck size={22} />,
-    title: "Giao Hàng Nhanh",
-    desc: "Miễn phí vận chuyển cho đơn hàng trên 1 triệu.",
+    title: "Giao hàng nhanh",
+    desc: "Miễn phí giao hàng cho đơn hàng trên 1 triệu đồng.",
   },
   {
     icon: <FiRepeat size={22} />,
-    title: "Thu Cũ Đổi Mới",
-    desc: "Trợ giá lên đời kính mới cực hấp dẫn.",
+    title: "Thu cũ đổi mới",
+    desc: "Trợ giá hấp dẫn khi nâng cấp kính mới.",
   },
   {
     icon: <FiEye size={22} />,
-    title: "Đo Mắt Miễn Phí",
-    desc: "Kỹ thuật viên chuyên nghiệp, máy móc hiện đại.",
+    title: "Đo mắt miễn phí",
+    desc: "Kỹ thuật viên chuyên nghiệp, thiết bị hiện đại.",
   },
 ];
 
@@ -96,7 +96,7 @@ function LoginModal({ isOpen, onClose, productName }) {
         style={{ animation: "slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
       >
         {/* Accent line */}
-        <div className="h-0.5 w-full bg-stone-900" />
+        <div className="h-0.5 w-full bg-blue-600" />
 
         <button
           onClick={onClose}
@@ -106,8 +106,8 @@ function LoginModal({ isOpen, onClose, productName }) {
         </button>
 
         <div className="px-8 pt-8 pb-10">
-          <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-6">
-            <FiLock size={18} className="text-stone-600" />
+          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6">
+            <FiLock size={18} className="text-blue-600" />
           </div>
 
           <div className="text-center mb-7">
@@ -135,7 +135,7 @@ function LoginModal({ isOpen, onClose, productName }) {
                 onClose();
                 navigate("/login");
               }}
-              className="w-full py-3 cursor-pointer bg-stone-900 hover:bg-amber-500 text-white font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
+              className="w-full py-3 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
             >
               Đăng nhập
             </button>
@@ -169,7 +169,7 @@ function Toast({ message, visible }) {
   if (!visible) return null;
   return (
     <div
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white px-5 py-3 rounded-full text-sm font-medium shadow-xl flex items-center gap-2"
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-5 py-3 rounded-full text-sm font-medium shadow-xl flex items-center gap-2"
       style={{ animation: "slideUp 0.3s ease" }}
     >
       <FiCheck size={14} className="text-green-400" />
@@ -256,7 +256,7 @@ function HomePage() {
         />
 
         {/* ── HERO ── */}
-        <section className="relative w-full h-screen max-h-[720px] min-h-[520px] overflow-hidden bg-stone-900">
+        <section className="relative w-full h-screen max-h-[720px] min-h-[520px] overflow-hidden bg-blue-950">
           {sliderData.map((slide, i) => (
             <div
               key={slide.id}
@@ -278,10 +278,10 @@ function HomePage() {
 
           <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-20 lg:px-28">
             <div key={current}>
-              <p className="slide-in text-amber-300 tracking-[0.35em] uppercase text-[11px] font-medium mb-5">
-                New Collection 2026
+              <p className="slide-in text-blue-300 tracking-[0.35em] uppercase text-[11px] font-medium mb-5">
+                Bộ sưu tập mới 2026
               </p>
-              <h1 className="slide-in-d1 text-5xl md:text-7xl font-semibold text-amber-500 leading-[1.05] tracking-tight mb-2">
+              <h1 className="slide-in-d1 text-5xl md:text-7xl font-semibold text-white leading-[1.05] tracking-tight mb-2">
                 {sliderData[current].title}
               </h1>
               <h2 className="slide-in-d1 text-5xl md:text-7xl font-light text-white leading-[1.05] tracking-tight mb-6">
@@ -292,7 +292,7 @@ function HomePage() {
               </p>
               <div className="slide-in-d3 flex items-center gap-4">
                 <Link to="/shop">
-                  <button className="px-6 py-2.5 bg-white cursor-pointer hover:bg-amber-500 text-stone-900 font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
+                  <button className="px-6 py-2.5 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
                     Khám phá ngay
                   </button>
                 </Link>
@@ -349,8 +349,8 @@ function HomePage() {
         {/* ── SERVICES ── */}
         <section className="relative bg-stone-50 py-24 overflow-hidden">
           {/* subtle background decoration */}
-          <div className="absolute -top-20 -right-20 w-72 h-72 bg-amber-100 rounded-full blur-3xl opacity-30" />
-          <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-stone-200 rounded-full blur-3xl opacity-40" />
+          <div className="absolute -top-20 -right-20 w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-30" />
+          <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-blue-50 rounded-full blur-3xl opacity-40" />
 
           <div className="relative max-w-6xl mx-auto px-6">
             <div
@@ -366,7 +366,7 @@ function HomePage() {
                 Cam kết của chúng tôi
               </h2>
 
-              <div className="w-16 h-[2px] bg-amber-500 mx-auto mt-6" />
+              <div className="w-16 h-[2px] bg-blue-600 mx-auto mt-6" />
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -382,9 +382,9 @@ function HomePage() {
                 >
                   {/* icon */}
                   <div
-                    className="w-16 h-16 mx-auto mb-6 rounded-xl bg-stone-100 flex items-center justify-center text-stone-600 
+                    className="w-16 h-16 mx-auto mb-6 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 
                           transition-all duration-300
-                          group-hover:bg-amber-500 group-hover:text-white"
+                          group-hover:bg-blue-600 group-hover:text-white"
                   >
                     {item.icon}
                   </div>
@@ -400,7 +400,7 @@ function HomePage() {
                   </p>
 
                   {/* subtle hover border effect */}
-                  <div className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-amber-400 transition-all duration-500 pointer-events-none" />
+                  <div className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-blue-400 transition-all duration-500 pointer-events-none" />
                 </div>
               ))}
             </div>
@@ -411,28 +411,25 @@ function HomePage() {
         <section
           id="cta"
           data-reveal
-          className={`relative py-28 overflow-hidden bg-stone-900 transition-all duration-700 ${rv("cta")}`}
+          className={`relative py-28 overflow-hidden bg-blue-950 transition-all duration-700 ${rv("cta")}`}
         >
           <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full border border-white/[0.04]" />
           <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full border border-white/[0.04]" />
 
           <div className="relative max-w-2xl mx-auto text-center px-6 z-10">
-            <p className="text-amber-300 text-[11px] tracking-[0.3em] uppercase font-medium mb-5">
-              Bắt đầu hành trình
+            <p className="text-blue-300 text-[11px] tracking-[0.3em] uppercase font-medium mb-5">
+              Bắt đầu hành trình của bạn
             </p>
-            <h2 className="text-4xl md:text-5xl font-semibold text-amber-500 mb-4 leading-tight tracking-tight">
-              Tìm chiếc kính
-              <br />
-              hoàn hảo của bạn
+            <h2 className="text-4xl md:text-5xl font-semibold text-white mb-4 leading-tight tracking-tight">
+              Tìm kiếm cặp kính hoàn hảo
             </h2>
             <p className="text-stone-400 mb-10 text-sm max-w-sm mx-auto leading-relaxed">
-              Hàng ngàn mẫu gọng kính và tròng kính chất lượng cao. Đặt lịch đo
-              mắt ngay hôm nay.
+              Hàng ngàn mẫu gọng và tròng kính chất lượng cao. Đặt lịch đo mắt ngay hôm nay.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link to="/shop">
-                <button className="px-7 py-3 bg-amber-500 hover:bg-stone-100 text-stone-900 font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
-                  Mua ngay
+                <button className="px-7 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">
+                  Mua sắm ngay
                 </button>
               </Link>
               <button className="px-7 py-3 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-white font-medium text-sm tracking-wide rounded-full transition-all active:scale-95">

@@ -27,19 +27,19 @@ import { motion, AnimatePresence } from "framer-motion";
 /* ── status config ── */
 const STATUS_CONFIG = {
   pending: {
-    label: "Chờ duyệt",
+    label: "Pending",
     badge: "bg-yellow-50 text-yellow-700 border border-yellow-200",
     dot: "bg-yellow-400",
     icon: <FiClock size={12} />,
   },
   approved: {
-    label: "Đã duyệt",
+    label: "Approved",
     badge: "bg-green-50 text-green-700 border border-green-200",
     dot: "bg-green-500",
     icon: <FiCheck size={12} />,
   },
   declined: {
-    label: "Từ chối",
+    label: "Declined",
     badge: "bg-red-50 text-red-700 border border-red-200",
     dot: "bg-red-400",
     icon: <FiX size={12} />,
@@ -139,7 +139,7 @@ const RxRow = memo(({ rx, onView }) => {
               <FiEye size={16} />
             </button>
             <span className="pointer-events-none absolute bottom-full mb-2 right-0 px-2 py-1 text-xs rounded-md bg-gray-800 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-              Xem & duyệt
+              View & Approve
             </span>
           </div>
         </div>
@@ -212,7 +212,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="font-semibold text-gray-800">
-                    Đơn thuốc {rx.id}
+                    Prescription {rx.id}
                   </h2>
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.badge}`}
@@ -221,7 +221,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
                   </span>
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Gửi lúc {rx.submittedAt}
+                  Submitted at {rx.submittedAt}
                 </p>
               </div>
             </div>
@@ -239,7 +239,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <FiUser size={11} /> Khách hàng
+                  <FiUser size={11} /> Customer
                 </p>
                 <div className="flex items-center gap-3 mb-3">
                   <img
@@ -259,14 +259,14 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
 
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                  Thông tin toa
+                  Prescription Info
                 </p>
                 <p className="text-sm font-semibold text-gray-800">
                   {rx.doctor}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">{rx.hospital}</p>
                 <p className="text-xs text-gray-400 mt-2">
-                  Ngày cấp:{" "}
+                  Issued Date:{" "}
                   <span className="text-gray-600">{rx.issuedDate}</span>
                 </p>
                 <div className="mt-2">
@@ -287,7 +287,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
             {rx.imgUrl && (
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Ảnh toa thuốc
+                  Prescription Image
                 </p>
                 <img
                   src={rx.imgUrl}
@@ -300,14 +300,14 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
             {/* Eye chart */}
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Số kính
+                Lens Values
               </p>
               <div className="bg-gray-50 rounded-xl overflow-hidden mt-0">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="py-2.5 pl-4 text-left text-xs text-gray-400 font-semibold uppercase">
-                        Mắt
+                        Eye
                       </th>
                       {["Sph (D)", "Cyl (D)", "Axis", "Add"].map((h) => (
                         <th
@@ -320,15 +320,15 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    <EyeRow label="Mắt P" data={rx.eyes.right} />
-                    <EyeRow label="Mắt T" data={rx.eyes.left} />
+                    <EyeRow label="OD (Right)" data={rx.eyes.right} />
+                    <EyeRow label="OS (Left)" data={rx.eyes.left} />
                   </tbody>
                 </table>
               </div>
 
               <div className="mt-2 flex items-center gap-2">
                 <span className="text-xs text-gray-400">
-                  PD (khoảng cách đồng tử):
+                  PD (Pupillary Distance):
                 </span>
                 <span className="font-mono font-semibold text-sm text-gray-700">
                   {rx.pd} mm
@@ -350,13 +350,13 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
             {/* Review note */}
             <div>
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
-                Ghi chú duyệt
+                Admin Note
               </label>
               {rx.status !== "pending" ? (
                 <div className="px-3 py-2.5 bg-gray-50 rounded-xl text-sm text-gray-600 border border-gray-200 min-h-[60px]">
                   {rx.reviewNote || (
                     <span className="text-gray-300 italic">
-                      Không có ghi chú
+                      No notes
                     </span>
                   )}
                 </div>
@@ -365,7 +365,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
                   rows={3}
                   value={reviewNote}
                   onChange={(e) => setReviewNote(e.target.value)}
-                  placeholder="Nhập ghi chú khi duyệt hoặc từ chối..."
+                  placeholder="Enter note for approval or decline..."
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none bg-gray-50 focus:bg-white transition-shadow"
                 />
               )}
@@ -378,7 +378,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
               onClick={onClose}
               className="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-white transition-colors"
             >
-              Đóng
+              Close
             </button>
 
             {(rx.status === "pending" || !rx.status) && (
@@ -387,13 +387,13 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
                   onClick={() => onDecline(rx.id, reviewNote, rx)}
                   className="flex items-center gap-2 px-4 py-2 text-sm border border-red-200 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors font-medium"
                 >
-                  <FiX size={14} /> Từ chối
+                  <FiX size={14} /> Decline
                 </button>
                 <button
                   onClick={() => onApprove(rx.id, reviewNote, rx)}
                   className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                 >
-                  <FiCheck size={14} /> Duyệt toa
+                  <FiCheck size={14} /> Approve
                 </button>
               </div>
             )}
@@ -422,7 +422,7 @@ function AddOfflineModal({ onClose, onAdd }) {
 
   const handleSubmit = () => {
     if (!form.customer || !form.doctor) return;
-    const today = new Date().toLocaleDateString("vi-VN");
+    const today = new Date().toLocaleDateString("en-US");
     onAdd({
       id: `RX-${String(Date.now()).slice(-4)}`,
       ...form,
@@ -495,10 +495,10 @@ function AddOfflineModal({ onClose, onAdd }) {
               </div>
               <div>
                 <h2 className="font-semibold text-gray-800">
-                  Nhập toa offline
+                  Import Offline Rx
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Nhập thủ công toa mắt từ giấy
+                  Manually enter eye prescription from paper
                 </p>
               </div>
             </div>
@@ -514,15 +514,15 @@ function AddOfflineModal({ onClose, onAdd }) {
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
             {/* Customer info */}
             <FieldGroup
-              title="Thông tin khách hàng"
+              title="Customer Information"
               icon={<FiUser size={13} className="text-blue-500" />}
             >
               <Field
-                label="Họ và tên *"
+                label="Full Name *"
                 name="customer"
                 value={form.customer}
                 onChange={handleChange}
-                placeholder="Nguyễn Văn A"
+                placeholder="John Doe"
               />
               <Field
                 label="Email"
@@ -532,7 +532,7 @@ function AddOfflineModal({ onClose, onAdd }) {
                 placeholder="email@gmail.com"
               />
               <Field
-                label="Số điện thoại"
+                label="Phone Number"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
@@ -542,25 +542,25 @@ function AddOfflineModal({ onClose, onAdd }) {
 
             {/* Doctor info */}
             <FieldGroup
-              title="Thông tin toa"
+              title="Prescription Info"
               icon={<FiFileText size={13} className="text-blue-500" />}
             >
               <Field
-                label="Bác sĩ *"
+                label="Doctor *"
                 name="doctor"
                 value={form.doctor}
                 onChange={handleChange}
-                placeholder="BS. Nguyễn Thị A"
+                placeholder="Dr. Smith"
               />
               <Field
-                label="Bệnh viện / PK"
+                label="Hospital / Clinic"
                 name="hospital"
                 value={form.hospital}
                 onChange={handleChange}
-                placeholder="BV Mắt TP.HCM"
+                placeholder="Eye Hospital"
               />
               <Field
-                label="Ngày cấp toa"
+                label="Issued Date"
                 name="issuedDate"
                 value={form.issuedDate}
                 onChange={handleChange}
@@ -572,12 +572,12 @@ function AddOfflineModal({ onClose, onAdd }) {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-sm font-semibold text-gray-700">
-                  Số kính
+                  Lens Values
                 </span>
               </div>
               <div className="bg-gray-50 rounded-xl p-4">
                 <div className="grid grid-cols-5 gap-2 mb-2 text-xs font-semibold text-gray-400 uppercase text-center">
-                  <div className="text-left">Mắt</div>
+                  <div className="text-left">Eye</div>
                   <div>Sph</div>
                   <div>Cyl</div>
                   <div>Axis</div>
@@ -589,7 +589,7 @@ function AddOfflineModal({ onClose, onAdd }) {
                     className="grid grid-cols-5 gap-2 mb-2 items-center"
                   >
                     <span className="text-xs font-semibold text-gray-500 uppercase">
-                      {side === "right" ? "Phải" : "Trái"}
+                      {side === "right" ? "Right" : "Left"}
                     </span>
                     {["sphere", "cylinder", "axis", "add"].map((field) => (
                       <input
@@ -624,14 +624,14 @@ function AddOfflineModal({ onClose, onAdd }) {
             {/* Note */}
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1.5 block">
-                Ghi chú
+                Note
               </label>
               <textarea
                 name="note"
                 rows={2}
                 value={form.note}
                 onChange={handleChange}
-                placeholder="Ghi chú thêm về đơn này..."
+                placeholder="Additional notes about this prescription..."
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none bg-gray-50 focus:bg-white transition-shadow"
               />
             </div>
@@ -639,20 +639,20 @@ function AddOfflineModal({ onClose, onAdd }) {
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex items-center justify-between">
-            <p className="text-xs text-gray-400">* Trường bắt buộc</p>
+            <p className="text-xs text-gray-400">* Required fields</p>
             <div className="flex gap-2">
               <button
                 onClick={onClose}
                 className="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-white transition-colors"
               >
-                Huỷ
+                Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!form.customer || !form.doctor}
                 className="flex items-center gap-2 px-5 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-40 disabled:pointer-events-none"
               >
-                <FiPlus size={14} /> Thêm toa
+                <FiPlus size={14} /> Add Rx
               </button>
             </div>
           </div>
@@ -782,13 +782,13 @@ function AdminPrescription() {
           customer: rx.customerName || rx.userName || rx.customer || "N/A",
           email: rx.customerEmail || rx.email || "",
           avatar: rx.avatar || rx.user?.avatar || `https://ui-avatars.com/api/?name=${rx.customerName || rx.userName || "P"}&background=6366f1&color=fff`,
-          doctor: rx.doctorName || rx.doctor || "Chưa cập nhật",
+          doctor: rx.doctorName || rx.doctor || "Not updated",
           hospital: rx.hospital || "N/A",
           issuedDate: rx.issuedDate || rx.expirationDate || "N/A",
           submittedAt: rx.submittedAt || rx.createdAt || "N/A",
           status: statusValue,
           source: rx.source || "online",
-          note: rx.note || (rx.orderCode ? `Toa đi kèm đơn # ${rx.orderCode}` : ""),
+          note: rx.note || (rx.orderCode ? `Rx included with order # ${rx.orderCode}` : ""),
           reviewNote: rx.adminNote || rx.reviewNote || "",
           pd: rx.pd || 0,
           imgUrl: rx.imgUrl || rx.imageUrl || "",
@@ -881,7 +881,7 @@ function AdminPrescription() {
       );
     } catch (err) {
       console.error("Lỗi duyệt đơn thuốc:", err);
-      alert("Duyệt đơn thuốc thất bại: " + (err?.response?.data?.message || err.message));
+      alert("Prescription approval failed: " + (err?.response?.data?.message || err.message));
     }
   }, []);
 
@@ -899,7 +899,7 @@ function AdminPrescription() {
       );
     } catch (err) {
       console.error("Lỗi từ chối đơn thuốc:", err);
-      alert("Từ chối đơn thuốc thất bại: " + (err?.response?.data?.message || err.message));
+      alert("Prescription decline failed: " + (err?.response?.data?.message || err.message));
     }
   }, []);
 
@@ -910,7 +910,7 @@ function AdminPrescription() {
       fetchPrescriptions();
     } catch (err) {
       console.error("Lỗi tạo đơn thuốc offline:", err);
-      alert("Tạo đơn thuốc thất bại: " + (err?.response?.data?.message || err.message));
+      alert("Prescription creation failed: " + (err?.response?.data?.message || err.message));
     }
   }, [fetchPrescriptions]);
 
@@ -937,10 +937,10 @@ function AdminPrescription() {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800">
-            Quản lý đơn thuốc mắt
+            Eye Prescription Management
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Duyệt, từ chối và nhập toa mắt của khách hàng
+            Approve, decline and import customer eye prescriptions
           </p>
         </div>
         <button
@@ -948,7 +948,7 @@ function AdminPrescription() {
           className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium shadow-sm"
         >
           <FiUpload size={14} />
-          Nhập toa offline
+          Import Offline Rx
         </button>
       </div>
 
@@ -956,25 +956,25 @@ function AdminPrescription() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
           {
-            label: "Tất cả",
+            label: "All",
             value: stats.total,
             color: "bg-gray-100 text-gray-700",
             key: "all",
           },
           {
-            label: "Chờ duyệt",
+            label: "Pending",
             value: stats.pending,
             color: "bg-yellow-50 text-yellow-700",
             key: "pending",
           },
           {
-            label: "Đã duyệt",
+            label: "Approved",
             value: stats.approved,
             color: "bg-green-50 text-green-700",
             key: "approved",
           },
           {
-            label: "Từ chối",
+            label: "Declined",
             value: stats.declined,
             color: "bg-red-50 text-red-700",
             key: "declined",
@@ -1014,7 +1014,7 @@ function AdminPrescription() {
             />
             <input
               type="text"
-              placeholder="Tìm toa, khách hàng, bác sĩ..."
+              placeholder="Search prescription, customer, doctor..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -1042,7 +1042,7 @@ function AdminPrescription() {
               }}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 text-gray-700"
             >
-              <option value="all">Tất cả nguồn</option>
+              <option value="all">All Sources</option>
               <option value="online">Online</option>
               <option value="offline">Offline</option>
             </select>
@@ -1057,7 +1057,7 @@ function AdminPrescription() {
                 }}
                 className="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded-md hover:bg-red-50"
               >
-                Xoá bộ lọc
+                Clear Filters
               </button>
             )}
           </div>
@@ -1069,22 +1069,22 @@ function AdminPrescription() {
             <thead>
               <tr className="text-xs uppercase text-gray-400 border-b border-gray-100 bg-gray-50/60">
                 <th className="text-left px-6 py-3.5 font-semibold tracking-wider w-[10%]">
-                  Mã toa
+                  Rx Code
                 </th>
                 <th className="text-left px-6 py-3.5 font-semibold tracking-wider w-[24%]">
-                  Khách hàng
+                  Customer
                 </th>
                 <th className="text-left px-6 py-3.5 font-semibold tracking-wider w-[10%]">
-                  Nguồn
+                  Source
                 </th>
                 <th className="text-left px-6 py-3.5 font-semibold tracking-wider w-[22%]">
-                  Bác sĩ / Nơi cấp
+                  Doctor / Hospital
                 </th>
                 <th className="text-left px-6 py-3.5 font-semibold tracking-wider w-[12%]">
-                  Ngày gửi
+                  Submitted Date
                 </th>
                 <th className="text-center px-6 py-3.5 font-semibold tracking-wider w-[12%]">
-                  Trạng thái
+                  Status
                 </th>
                 <th className="w-[10%] px-6 py-3.5" />
               </tr>
@@ -1096,7 +1096,7 @@ function AdminPrescription() {
                     <div className="flex flex-col items-center gap-3">
                       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
                       <p className="text-sm text-gray-400">
-                        Đang tải đơn thuốc...
+                        Loading prescriptions...
                       </p>
                     </div>
                   </td>
@@ -1111,7 +1111,7 @@ function AdminPrescription() {
                         className="text-gray-200"
                       />
                       <p className="text-sm text-gray-400">
-                        Không tìm thấy đơn thuốc phù hợp
+                        No matching prescriptions found
                       </p>
                       {activeFilters > 0 && (
                         <button
@@ -1122,7 +1122,7 @@ function AdminPrescription() {
                           }}
                           className="text-sm text-blue-500 hover:underline"
                         >
-                          Xoá bộ lọc
+                          Clear Filters
                         </button>
                       )}
                     </div>
@@ -1141,16 +1141,16 @@ function AdminPrescription() {
         {paginated.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
             <p className="text-xs text-gray-400">
-              Hiển thị{" "}
+              Showing{" "}
               <span className="font-medium text-gray-600">
                 {(safePage - 1) * itemsPerPage + 1}–
                 {Math.min(safePage * itemsPerPage, filtered.length)}
               </span>{" "}
-              trong{" "}
+              of{" "}
               <span className="font-medium text-gray-600">
                 {filtered.length}
               </span>{" "}
-              đơn thuốc
+              prescriptions
             </p>
             {totalPages > 1 && (
               <div className="flex items-center gap-1 select-none">

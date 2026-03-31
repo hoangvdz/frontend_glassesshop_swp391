@@ -38,10 +38,10 @@ function PaymentResultPage() {
               </svg>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Thanh toán VNPay thành công!
+              VNPay Payment Successful!
             </h2>
             <p className="text-gray-600 mb-6">
-              Mã giao dịch: {vnp_TransactionNo}
+              Transaction Code: {vnp_TransactionNo}
             </p>
           </>
         ) : (
@@ -62,10 +62,10 @@ function PaymentResultPage() {
               </svg>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Thanh toán thất bại!
+              Payment Failed!
             </h2>
             <p className="text-gray-600 mb-6">
-              Bạn đã hủy giao dịch hoặc có lỗi xảy ra (Mã lỗi:{" "}
+              You cancelled the transaction or an error occurred (Error Code:{" "}
               {vnp_ResponseCode})
             </p>
           </>

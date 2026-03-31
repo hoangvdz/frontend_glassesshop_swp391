@@ -7,7 +7,7 @@ export const getPreorderItemsService = async () => {
     const orders = res?.data?.data || [];
     const preorderItems = orders.flatMap((order) =>
       (order.orderItems || [])
-        .filter((item) => item.itemType === "PRE_ORDER")
+        .filter((item) => item.isPreorder === true)
         .map((item) => ({
           ...item,
 

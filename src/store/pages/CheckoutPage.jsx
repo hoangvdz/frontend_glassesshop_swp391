@@ -26,7 +26,7 @@ function Toast({ message, visible }) {
   if (!visible) return null;
   return (
     <div
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white px-5 py-3 rounded-full text-sm font-medium shadow-xl flex items-center gap-2"
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-5 py-3 rounded-full text-sm font-medium shadow-xl flex items-center gap-2"
       style={{ animation: "slideUp .3s ease" }}
     >
       <FiCheck size={14} className="text-green-400" /> {message}
@@ -39,7 +39,7 @@ function Field({ label, required, icon: Icon, children }) {
     <div>
       <label className="flex items-center gap-1.5 text-xs text-stone-500 tracking-[0.15em] uppercase font-medium mb-2">
         {Icon && <Icon size={12} />}
-        {label} {required && <span className="text-amber-500">*</span>}
+        {label} {required && <span className="text-blue-500">*</span>}
       </label>
       {children}
     </div>
@@ -95,17 +95,20 @@ function CheckoutPage() {
       user = null;
     }
 
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
+    // Allow guest checkout — don't redirect to login
+    // we'll just check if there's a local cart if no user
     const fetchCart = async () => {
       try {
-        const data = await getCartByUserService(user.userId);
-        console.log("=== RAW CART DATA FROM SERVER ===", data);
+        let cartData = [];
+        if (user) {
+          const res = await getCartByUserService(user.userId);
+          cartData = Array.isArray(res) ? res : res?.data || [];
+        } else {
+          // GUEST FLOW: Load from localStorage
+          cartData = JSON.parse(localStorage.getItem("cart")) || [];
+        }
 
-        const cartData = Array.isArray(data) ? data : data?.data || [];
+
 
         const checkLocalPreorder = (vId) => {
           try {
@@ -146,9 +149,7 @@ function CheckoutPage() {
           },
         }));
 
-        // ✅ update UI
         setCartItems(mapped);
-        // ✅ update localStorage (GIỮ cache)
         localStorage.setItem("cart", JSON.stringify(mapped));
         window.dispatchEvent(new Event("storage"));
 
@@ -159,7 +160,7 @@ function CheckoutPage() {
     };
 
     fetchCart();
-    setFormData((prev) => ({ ...prev, fullName: user.name || "" }));
+    if (user) setFormData((prev) => ({ ...prev, fullName: user.name || "" }));
   }, [navigate]);
 
   const total = cartItems.reduce(
@@ -209,7 +210,7 @@ function CheckoutPage() {
       setCartItems(updated);
       localStorage.setItem("cart", JSON.stringify(updated));
     } catch (error) {
-      showToast("Cập nhật số lượng thất bại!");
+      showToast("Quantity update failed!");
     }
   };
 
@@ -223,7 +224,7 @@ function CheckoutPage() {
       localStorage.setItem("cart", JSON.stringify(updated));
       if (updated.length === 0) navigate("/shop");
     } catch (error) {
-      showToast("Xóa sản phẩm thất bại!");
+      showToast("Failed to remove product!");
     }
   };
 
@@ -236,7 +237,7 @@ function CheckoutPage() {
       !formData.address ||
       !formData.city
     ) {
-      showToast("Vui lòng điền đầy đủ thông tin!");
+      showToast("Please fill in all information!");
       return;
     }
 
@@ -250,7 +251,7 @@ function CheckoutPage() {
         paymentMethod,
       );
 
-      console.log("Order:", order);
+
 
       // ✅ VNPay
       if (paymentMethod === "VNPAY") {
@@ -259,8 +260,8 @@ function CheckoutPage() {
           order.orderId,
         );
 
-        console.log(paymentUrl);
-        console.log("Redirecting to:", paymentUrl);
+
+
 
         window.location.href = paymentUrl; // 🚀 chuyển trang
         return;
@@ -272,7 +273,7 @@ function CheckoutPage() {
       window.dispatchEvent(new Event("storage"));
       setTimeout(() => navigate("/"), 2200);
     } catch (error) {
-      showToast(error.message || "Đặt hàng thất bại");
+      showToast(error.message || "Order failed");
     } finally {
       setPlacing(false);
     }
@@ -283,8 +284,8 @@ function CheckoutPage() {
       <div className="min-h-screen bg-white flex items-center justify-center px-6">
         <div className="text-center max-w-sm animate-pulse">
           <FiCheck size={40} className="text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Đặt hàng thành công!</h2>
-          <p className="text-stone-400">Đang chuyển về trang chủ...</p>
+          <h2 className="text-2xl font-semibold mb-2">Order Successful!</h2>
+          <p className="text-stone-400">Redirecting to home page...</p>
         </div>
       </div>
     );
@@ -296,10 +297,10 @@ function CheckoutPage() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 text-stone-400 hover:text-stone-800 text-sm"
         >
-          <FiArrowLeft size={14} /> Quay lại
+          <FiArrowLeft size={14} /> Back
         </button>
         <p className="text-[11px] text-stone-400 tracking-widest uppercase font-medium">
-          Thanh toán
+          Checkout
         </p>
         <div className="w-16" />
       </div>
@@ -314,10 +315,10 @@ function CheckoutPage() {
               <span className="w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs">
                 1
               </span>
-              Thông tin giao hàng
+              Shipping Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label="Họ và tên" required icon={FiUser}>
+              <Field label="Full Name" required icon={FiUser}>
                 <input
                   type="text"
                   name="fullName"
@@ -327,7 +328,7 @@ function CheckoutPage() {
                   className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl"
                 />
               </Field>
-              <Field label="Số điện thoại" required icon={FiPhone}>
+              <Field label="Phone Number" required icon={FiPhone}>
                 <input
                   type="tel"
                   name="phone"
@@ -338,7 +339,7 @@ function CheckoutPage() {
                   className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl"
                 />
               </Field>
-              <Field label="Tỉnh / Thành phố" required icon={FiMapPin}>
+              <Field label="City / Province" required icon={FiMapPin}>
                 <select
                   name="city"
                   required
@@ -346,7 +347,7 @@ function CheckoutPage() {
                   onChange={handleChange}
                   className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl"
                 >
-                  <option value="">Chọn tỉnh/thành</option>
+                  <option value="">Select City/Province</option>
                   {southernCities.map((c) => (
                     <option key={c.name} value={c.name}>
                       {c.name}
@@ -354,7 +355,7 @@ function CheckoutPage() {
                   ))}
                 </select>
               </Field>
-              <Field label="Địa chỉ" required icon={FiMapPin}>
+              <Field label="Address" required icon={FiMapPin}>
                 <input
                   type="text"
                   name="address"
@@ -372,7 +373,7 @@ function CheckoutPage() {
               <span className="w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs">
                 2
               </span>
-              Thanh toán
+              Payment
             </h2>
 
             {/* COD */}
@@ -386,7 +387,7 @@ function CheckoutPage() {
             >
               <FiTruck />
               <div>
-                <p className="text-sm font-medium">Thanh toán khi nhận hàng</p>
+                <p className="text-sm font-medium">Cash on Delivery (COD)</p>
               </div>
             </div>
 
@@ -401,7 +402,7 @@ function CheckoutPage() {
             >
               <FiCreditCard />
               <div>
-                <p className="text-sm font-medium">Thanh toán VNPay</p>
+                <p className="text-sm font-medium">VNPay Payment</p>
               </div>
             </div>
           </div>
@@ -409,7 +410,7 @@ function CheckoutPage() {
 
         <div className="bg-white border border-stone-100 rounded-2xl p-6 shadow-sm h-fit sticky top-6">
           <h3 className="font-semibold mb-5">
-            Đơn hàng của bạn ({cartItems.length})
+            Your Order ({cartItems.length})
           </h3>
           <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2">
             {cartItems.map((item) => (
@@ -419,9 +420,9 @@ function CheckoutPage() {
                   <div>
                     <p className="font-medium truncate pr-2">{item.name}</p>
                     <p className="text-xs text-stone-400">Qty: {item.quantity} · {item.price.toLocaleString()}₫</p>
-                    {item.isLens && !item.isPreorder && <p className="text-[10px] text-indigo-500 font-bold mt-0.5 tracking-tight uppercase">Đơn thuốc mắt</p>}
+                    {item.isLens && !item.isPreorder && <p className="text-[10px] text-indigo-500 font-bold mt-0.5 tracking-tight uppercase">Prescription Order</p>}
                   </div>
-                  <button onClick={() => removeItem(item.productId, item.variant?.variantId, item.cartItemId)} className="text-stone-400 hover:text-red-500 p-1 -mt-1 -mr-2 h-fit" title="Xóa">
+                  <button onClick={() => removeItem(item.productId, item.variant?.variantId, item.cartItemId)} className="text-stone-400 hover:text-red-500 p-1 -mt-1 -mr-2 h-fit" title="Remove">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
@@ -430,16 +431,16 @@ function CheckoutPage() {
           </div>
           <div className="border-t border-stone-100 pt-4 space-y-2 text-sm">
             <div className="flex justify-between text-stone-500">
-              <span>Tạm tính</span>
+              <span>Subtotal</span>
               <span>{total.toLocaleString()}₫</span>
             </div>
             <div className="flex justify-between text-stone-500">
-              <span>Phí ship</span>
+              <span>Shipping Fee</span>
               <span>{shippingFee.toLocaleString()}₫</span>
             </div>
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-stone-100">
-              <span>Tổng cộng</span>
-              <span className="text-amber-600">
+              <span>Total</span>
+              <span className="text-blue-600">
                 {totalWithShipping.toLocaleString()}₫
               </span>
             </div>
@@ -449,7 +450,7 @@ function CheckoutPage() {
             disabled={placing}
             className="w-full mt-6 bg-black text-white py-4 rounded-full font-bold hover:bg-stone-800 transition-colors disabled:opacity-50 shadow-lg"
           >
-            {placing ? "Đang xử lý..." : "Đặt hàng"}
+            {placing ? "Processing..." : "Place Order"}
           </button>
         </div>
       </form>

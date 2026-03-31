@@ -95,10 +95,10 @@ function getStrength(pw) {
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   const map = [
     { label: "", color: "" },
-    { label: "Yếu", color: "#ef4444" },
-    { label: "Trung bình", color: "#f59e0b" },
-    { label: "Khá", color: "#3b82f6" },
-    { label: "Mạnh", color: "#22c55e" },
+    { label: "Weak", color: "#ef4444" },
+    { label: "Average", color: "#2563eb" },
+    { label: "Good", color: "#3b82f6" },
+    { label: "Strong", color: "#22c55e" },
   ];
   return { score, ...map[score] };
 }
@@ -128,12 +128,12 @@ export default function RegisterPage() {
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Mật khẩu nhập lại không khớp.");
+      setError("Passwords do not match.");
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự.");
+      setError("Password must be at least 6 characters.");
       return;
     }
 
@@ -143,7 +143,7 @@ export default function RegisterPage() {
       const emailExists = await checkEmail(formData.email);
 
       if (emailExists.data) {
-        setError("Email đã tồn tại.");
+        setError("Email already exists.");
         setLoading(false);
         return;
       }
@@ -166,7 +166,7 @@ export default function RegisterPage() {
       }, 1600);
     } catch (err) {
       console.error(err);
-      setError("Lỗi máy chủ. Vui lòng thử lại.");
+      setError("Server error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,7 @@ export default function RegisterPage() {
         .lp-anim-5 { animation: lp-fade-up .55s .35s cubic-bezier(.22,1,.36,1) both; }
         .lp-panel  { animation: lp-fade-in .4s ease both; }
         .lp-input  { transition: border-color .18s, box-shadow .18s, background .18s; }
-        .lp-input:focus { outline:none; border-color:#d97706; box-shadow:0 0 0 3px rgba(217,119,6,.13); background:#fff; }
+        .lp-input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.13); background:#fff; }
         .lp-btn    { transition: background .18s, transform .1s, box-shadow .18s; }
         .lp-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
         .lp-btn:active { transform:translateY(0); }
@@ -242,7 +242,7 @@ export default function RegisterPage() {
 
           {/* quote */}
           <div className="relative z-10 px-10 pb-2 flex-1 flex flex-col justify-center">
-            <GlassesDecor className="w-44 text-amber-400 mb-8 opacity-60" />
+            <GlassesDecor className="w-44 text-blue-400 mb-8 opacity-60" />
             <h2
               className="text-white leading-tight mb-5"
               style={{
@@ -251,30 +251,30 @@ export default function RegisterPage() {
                 lineHeight: 1.15,
               }}
             >
-              Tầm nhìn{" "}
-              <span className="not-italic" style={{ color: "#f59e0b" }}>
-                rõ ràng
+              Clear{" "}
+              <span className="not-italic" style={{ color: "#2563eb" }}>
+                Vision
               </span>
               ,<br />
-              phong cách <span style={{ color: "#f59e0b" }}>bất tận</span>.
+              Endless <span style={{ color: "#2563eb" }}>Style</span>.
             </h2>
             <p
               className="text-sm leading-relaxed"
               style={{ color: "rgba(255,255,255,.5)", maxWidth: 340 }}
             >
-              Kính được chế tác riêng theo số mắt và phong cách của bạn. Mỗi cặp
-              là một tuyên ngôn thẩm mỹ.
+              Glasses crafted specifically for your prescription and style. Each
+              pair is an aesthetic statement.
             </p>
             <div className="flex gap-8 mt-10">
               {[
-                ["500+", "Mẫu kính"],
-                ["10K+", "Khách hàng"],
-                ["5★", "Đánh giá"],
+                ["500+", "Frames"],
+                ["10K+", "Customers"],
+                ["5★", "Reviews"],
               ].map(([v, l]) => (
                 <div key={l}>
                   <p
                     style={{
-                      color: "#f59e0b",
+                      color: "#2563eb",
                     }}
                     className="font-bold text-xl"
                   >
@@ -297,7 +297,7 @@ export default function RegisterPage() {
               className="h-px w-full mb-5"
               style={{
                 background:
-                  "linear-gradient(to right, transparent, rgba(217,119,6,.4), transparent)",
+                  "linear-gradient(to right, transparent, rgba(37,99,235,.4), transparent)",
               }}
             />
             <p
@@ -340,9 +340,9 @@ export default function RegisterPage() {
                 </div>
                 <p
                   className="text-xs font-medium tracking-widest mb-2"
-                  style={{ color: "#d97706", letterSpacing: ".18em" }}
+                  style={{ color: "#2563eb", letterSpacing: ".18em" }}
                 >
-                  ĐĂNG KÝ THÀNH CÔNG
+                  REGISTRATION SUCCESSFUL
                 </p>
                 <h2
                   className="text-gray-900 font-bold mb-2"
@@ -350,10 +350,10 @@ export default function RegisterPage() {
                     fontSize: "1.8rem",
                   }}
                 >
-                  Chào mừng bạn!
+                  Welcome!
                 </h2>
                 <p className="text-sm" style={{ color: "#9ca3af" }}>
-                  Đang chuyển hướng đến trang đăng nhập…
+                  Redirecting to login page…
                 </p>
                 <div
                   className="mt-4 w-32 h-1 rounded-full overflow-hidden"
@@ -362,7 +362,7 @@ export default function RegisterPage() {
                   <div
                     className="h-full rounded-full"
                     style={{
-                      background: "#d97706",
+                      background: "#2563eb",
                       animation: "lp-fade-up 0s both",
                       width: "100%",
                       transition: "width 1.5s linear",
@@ -376,9 +376,9 @@ export default function RegisterPage() {
                 <div className="lp-anim-0 mb-7">
                   <p
                     className="text-xs font-medium tracking-widest mb-2"
-                    style={{ color: "#d97706", letterSpacing: ".18em" }}
+                    style={{ color: "#2563eb", letterSpacing: ".18em" }}
                   >
-                    THÀNH VIÊN MỚI
+                    NEW MEMBER
                   </p>
                   <h1
                     className="text-gray-900 font-bold leading-tight"
@@ -386,13 +386,13 @@ export default function RegisterPage() {
                       fontSize: "2rem",
                     }}
                   >
-                    Tạo tài khoản
+                    Register
                     <br />
                     <span
                       className="font-medium"
                       style={{ color: "#6b7280", fontSize: "1.4rem" }}
                     >
-                      của bạn ngay hôm nay
+                      your account today
                     </span>
                   </h1>
                 </div>
@@ -430,7 +430,7 @@ export default function RegisterPage() {
                       className="block text-xs font-medium mb-1.5"
                       style={{ color: "#6b7280", letterSpacing: ".04em" }}
                     >
-                      Họ và tên
+                      Full Name
                     </label>
                     <input
                       name="name"
@@ -438,7 +438,7 @@ export default function RegisterPage() {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      placeholder="Nguyễn Văn A"
+                      placeholder="John Doe"
                       autoComplete="name"
                       className="lp-input w-full px-4 py-3 rounded-xl text-sm border bg-gray-50"
                       style={{ border: "1.5px solid #e5e7eb", color: "#111" }}
@@ -472,7 +472,7 @@ export default function RegisterPage() {
                       className="block text-xs font-medium mb-1.5"
                       style={{ color: "#6b7280", letterSpacing: ".04em" }}
                     >
-                      Mật khẩu
+                      Password
                     </label>
                     <div className="relative">
                       <input
@@ -481,7 +481,7 @@ export default function RegisterPage() {
                         required
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="Tối thiểu 6 ký tự"
+                        placeholder="Min 6 characters"
                         autoComplete="new-password"
                         className="lp-input w-full px-4 py-3 pr-12 rounded-xl text-sm border bg-gray-50"
                         style={{ border: "1.5px solid #e5e7eb", color: "#111" }}
@@ -530,7 +530,7 @@ export default function RegisterPage() {
                       className="block text-xs font-medium mb-1.5"
                       style={{ color: "#6b7280", letterSpacing: ".04em" }}
                     >
-                      Nhập lại mật khẩu
+                      Confirm Password
                     </label>
                     <div className="relative">
                       <input
@@ -596,7 +596,7 @@ export default function RegisterPage() {
                       disabled={loading}
                       className="lp-btn w-full py-3.5 rounded-xl text-sm font-semibold text-white"
                       style={{
-                        background: loading ? "#9ca3af" : "#111111",
+                        background: loading ? "#9ca3af" : "#2563eb",
                         letterSpacing: ".04em",
                       }}
                     >
@@ -617,10 +617,10 @@ export default function RegisterPage() {
                             />
                             <path d="M12 2v4" />
                           </svg>
-                          Đang tạo tài khoản…
+                          Creating account…
                         </span>
                       ) : (
-                        "Đăng ký"
+                        "Register"
                       )}
                     </button>
                   </div>
@@ -631,13 +631,13 @@ export default function RegisterPage() {
                   className="lp-anim-5 text-center text-sm mt-6"
                   style={{ color: "#9ca3af" }}
                 >
-                  Đã có tài khoản?{" "}
+                  Already have an account?{" "}
                   <Link
                     to="/login"
                     className="font-semibold transition-colors hover:opacity-80"
-                    style={{ color: "#d97706" }}
+                    style={{ color: "#2563eb" }}
                   >
-                    Đăng nhập ngay
+                    Login now
                   </Link>
                 </p>
               </>

@@ -1,6 +1,6 @@
-export default function FrameSummary({ product }) {
+export default function FrameSummary({ product, variantId }) {
   if (!product) return null;
-  const variant = product.variants?.[0] || {};
+  const variant = product.variants?.find(v => String(v.variantId) === String(variantId)) || product.variants?.[0] || {};
 
   return (
     <div className="bg-white rounded-lg p-6 h-fit sticky top-6 border border-gray-100 shadow-sm">
@@ -14,23 +14,23 @@ export default function FrameSummary({ product }) {
       </div>
 
       <div className="space-y-1 mb-4">
-        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans">Gọng kính</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans">Frame</p>
         <p className="font-semibold text-gray-800 text-lg leading-tight">{product.name}</p>
-        <p className="text-sm text-gray-500">{product.brand}</p>
+        <p className="text-sm text-gray-500">{product.brand} {variant.color ? `· ${variant.color}` : ""}</p>
       </div>
 
       <div className="h-px bg-gray-100 my-5" />
 
       <div className="space-y-1 mb-6">
-        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans">Đơn thuốc</p>
-        <p className="text-sm font-medium text-indigo-600">Phân loại: Tròng có độ</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans">Prescription</p>
+        <p className="text-sm font-medium text-indigo-600">Category: Prescription Lens</p>
       </div>
 
       <div className="mt-8 pt-4 border-t border-gray-100 flex justify-between items-end">
         <div>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-1">Tạm tính</p>
-          <span className="font-bold text-2xl text-amber-500">
-            {(product.price || 0).toLocaleString("vi-VN")}
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-1">Subtotal</p>
+          <span className="font-bold text-2xl text-blue-600">
+            {(variant.price || product.price || 0).toLocaleString("en-US")}
             <span className="text-sm ml-1">₫</span>
           </span>
         </div>
