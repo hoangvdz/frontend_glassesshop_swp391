@@ -38,6 +38,7 @@ export const getAllOrders = async () => {
       total: o.finalPrice ?? o.totalPrice ?? 0,
       status: mapStatus(o.status),
       createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
+      rawDate: o.orderDate ? new Date(o.orderDate) : new Date(),
       orderItems: items,
       hasPrescription: hasPrescription,
     };

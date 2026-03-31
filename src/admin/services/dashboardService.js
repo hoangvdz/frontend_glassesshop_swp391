@@ -1,4 +1,4 @@
-import { getCustomerCountApi, getOrdersCountApi } from "../api/dashboardApi";
+import { getCustomerCountApi, getOrdersCountApi, getRevenueApi, getTotalRevenueApi } from "../api/dashboardApi";
 
 export const getOrdersCount = async () => {
   const res = await getOrdersCountApi();
@@ -7,5 +7,15 @@ export const getOrdersCount = async () => {
 
 export const getCustomerCount = async () => {
   const res = await getCustomerCountApi();
+  return res.data.data;
+}
+
+export const getRevenue = async (fromDate, toDate) => {
+  const res = await getRevenueApi(fromDate, toDate);
+  return res.data.data;
+}
+
+export const getTotalRevenue = async () => {
+  const res = await getTotalRevenueApi();
   return res.data.data;
 }
