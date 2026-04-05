@@ -347,7 +347,7 @@ export default function PrescriptionPage() {
           imageUrl: lensVariant?.imageUrl || lensProduct.imageUrl || lensProduct.img,
           price: lensPrice,
           unitPrice: lensPrice,
-          quantity: 1,
+          quantity: quantityFromUrl,
           variant: lensVariant,
           isPreOrder: lensVariant?.stockQuantity === 0,
           isLens: false,
@@ -398,7 +398,7 @@ export default function PrescriptionPage() {
           const lensPayload = {
             productId: lensProduct.id || lensProduct.productId,
             variantId: lensVariantId,
-            quantity: 1,
+            quantity: quantityFromUrl,
             isLens: false,
             isPreorder: lensOutOfStock
           };
