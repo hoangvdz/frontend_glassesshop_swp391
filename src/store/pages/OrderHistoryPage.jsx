@@ -10,7 +10,9 @@ import {
 } from "react-icons/fi";
 
 import { getMyOrders, cancelOrder } from "../services/orderService";
+import { addToCartService } from "../services/cartService";
 import { useToast } from "../../context/ToastContext";
+import { useNavigate } from "react-router-dom";
 // Dữ liệu mẫu (Mock Data)
 
 const TABS = [
@@ -26,6 +28,8 @@ function OrderHistoryPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [returnMap, setReturnMap] = useState({});
   const { showToast } = useToast();
+  const navigate = useNavigate();
+  const [buyingAgainId, setBuyingAgainId] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -56,40 +60,40 @@ function OrderHistoryPage() {
     fetchOrders();
   }, []);
 
-    const getReturnStatusInfo = (status) => {
-        switch (status) {
-            case "PENDING":
-                return {
-                    text: "Pending",
-                    color: "text-yellow-600",
-                    bg: "bg-yellow-100",
-                };
-            case "APPROVED":
-                return {
-                    text: "Approved",
-                    color: "text-blue-600",
-                    bg: "bg-blue-100",
-                };
-            case "REJECTED":
-                return {
-                    text: "Rejected",
-                    color: "text-red-600",
-                    bg: "bg-red-100",
-                };
-            case "COMPLETED":
-                return {
-                    text: "Completed",
-                    color: "text-green-600",
-                    bg: "bg-green-100",
-                };
-            default:
-                return {
-                    text: status,
-                    color: "text-stone-600",
-                    bg: "bg-stone-100",
-                };
-        }
-    };
+  const getReturnStatusInfo = (status) => {
+    switch (status) {
+      case "PENDING":
+        return {
+          text: "Pending",
+          color: "text-yellow-600",
+          bg: "bg-yellow-100",
+        };
+      case "APPROVED":
+        return {
+          text: "Approved",
+          color: "text-blue-600",
+          bg: "bg-blue-100",
+        };
+      case "REJECTED":
+        return {
+          text: "Rejected",
+          color: "text-red-600",
+          bg: "bg-red-100",
+        };
+      case "COMPLETED":
+        return {
+          text: "Completed",
+          color: "text-green-600",
+          bg: "bg-green-100",
+        };
+      default:
+        return {
+          text: status,
+          color: "text-stone-600",
+          bg: "bg-stone-100",
+        };
+    }
+  };
 
   const handleCancelOrder = async (orderId) => {
     const isConfirm = window.confirm(
@@ -114,7 +118,7 @@ function OrderHistoryPage() {
         console.error("Error when cancel order:", error);
         showToast(
           "Cancellation failed: " +
-            (error.response?.data?.message || "System error"),
+          (error.response?.data?.message || "System error"),
           "error"
         );
       }
@@ -134,6 +138,49 @@ function OrderHistoryPage() {
       case "PENDING":
       default:
         return { text: "Pending", code: 1, color: "text-stone-500" };
+    }
+  };
+
+  const handleBuyAgain = async (order) => {
+    try {
+      setBuyingAgainId(order.orderId);
+      let successCount = 0;
+      for (const item of order.items) {
+        if (!item.variantId) continue; // safety check
+
+        const payload = {
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          isLens: item.lensOptionId != null || item.lensType != null,
+          isPreorder: item.isPreorder,
+          sphLeft: item.sphLeft,
+          sphRight: item.sphRight,
+          cylLeft: item.cylLeft,
+          cylRight: item.cylRight,
+          axisLeft: item.axisLeft,
+          axisRight: item.axisRight,
+          addLeft: item.addLeft,
+          addRight: item.addRight,
+          pd: item.pd
+        };
+
+        try {
+          await addToCartService(payload);
+          successCount++;
+        } catch (err) {
+          console.error("Failed to add item to cart:", err);
+        }
+      }
+
+      if (successCount > 0) {
+        showToast("Order items added to your cart!");
+        navigate("/checkout");
+      } else {
+        showToast("Could not add items to cart. They may be out of stock.", "error");
+      }
+    } finally {
+      setBuyingAgainId(null);
     }
   };
 
@@ -158,11 +205,10 @@ function OrderHistoryPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[120px] py-3 text-sm font-medium rounded-xl transition-all duration-300 ${
-                activeTab === tab.id
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
-              }`}
+              className={`flex-1 min-w-[120px] py-3 text-sm font-medium rounded-xl transition-all duration-300 ${activeTab === tab.id
+                ? "bg-blue-600 text-white shadow-md"
+                : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
+                }`}
             >
               {tab.label}
             </button>
@@ -183,10 +229,10 @@ function OrderHistoryPage() {
             {filteredOrders.map((order, index) => {
               const statusInfo = getStatusInfo(order.status);
               const firstItem = order.items && order.items[0];
-                const returnRequest = firstItem ? returnMap[firstItem.orderItemId] : null;
-                const returnStatusInfo = returnRequest
-                    ? getReturnStatusInfo(returnRequest.status)
-                    : null;
+              const returnRequest = firstItem ? returnMap[firstItem.orderItemId] : null;
+              const returnStatusInfo = returnRequest
+                ? getReturnStatusInfo(returnRequest.status)
+                : null;
               return (
                 <div
                   key={order.id}
@@ -242,42 +288,42 @@ function OrderHistoryPage() {
                       </div>
                     </div>
                   )}
-                    {/* THÔNG TIN YÊU CẦU ĐỔI TRẢ */}
-                    {returnRequest && (
-                        <div className="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                                <p className="text-sm font-semibold text-stone-800">
-                                    Return / Exchange Request
-                                </p>
-                                <span
-                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${returnStatusInfo.bg} ${returnStatusInfo.color}`}
-                                >
-                                {returnStatusInfo.text}
-                                </span>
-                            </div>
+                  {/* THÔNG TIN YÊU CẦU ĐỔI TRẢ */}
+                  {returnRequest && (
+                    <div className="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <p className="text-sm font-semibold text-stone-800">
+                          Return / Exchange Request
+                        </p>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${returnStatusInfo.bg} ${returnStatusInfo.color}`}
+                        >
+                          {returnStatusInfo.text}
+                        </span>
+                      </div>
 
-                            {returnRequest.status === "REJECTED" && returnRequest.rejectionReason && (
-                                <div className="mt-3 text-sm text-red-600 font-medium">
-                                    <span className="font-semibold">Reason: </span>
-                                    {returnRequest.rejectionReason}
-                                </div>
-                            )}
-
-                            {returnRequest.status === "REJECTED" &&
-                                (returnRequest.rejectReason ||
-                                    returnRequest.rejectedReason ||
-                                    returnRequest.adminNote ||
-                                    returnRequest.note) && (
-                                    <p className="mt-3 text-sm text-red-600 font-medium">
-                                        <span className="font-semibold">Admin rejection reason:</span>{" "}
-                                        {returnRequest.rejectReason ||
-                                            returnRequest.rejectedReason ||
-                                            returnRequest.adminNote ||
-                                            returnRequest.note}
-                                    </p>
-                                )}
+                      {returnRequest.status === "REJECTED" && returnRequest.rejectionReason && (
+                        <div className="mt-3 text-sm text-red-600 font-medium">
+                          <span className="font-semibold">Reason: </span>
+                          {returnRequest.rejectionReason}
                         </div>
-                    )}
+                      )}
+
+                      {returnRequest.status === "REJECTED" &&
+                        (returnRequest.rejectReason ||
+                          returnRequest.rejectedReason ||
+                          returnRequest.adminNote ||
+                          returnRequest.note) && (
+                          <p className="mt-3 text-sm text-red-600 font-medium">
+                            <span className="font-semibold">Admin rejection reason:</span>{" "}
+                            {returnRequest.rejectReason ||
+                              returnRequest.rejectedReason ||
+                              returnRequest.adminNote ||
+                              returnRequest.note}
+                          </p>
+                        )}
+                    </div>
+                  )}
                   {/* CÁC NÚT CHỨC NĂNG */}
                   <div className="flex flex-wrap gap-3 justify-end pt-2">
                     {/* Chờ xác nhận (Pending) */}
@@ -294,57 +340,63 @@ function OrderHistoryPage() {
                     {(statusInfo.code === 2 ||
                       statusInfo.code === 1.5 ||
                       statusInfo.code === 1) && (
-                      <Link
-                        to={`/shipping-progress/${order.orderId}`}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md"
-                      >
-                        <FiTruck />
-                        Track Progress
-                      </Link>
-                    )}
+                        <Link
+                          to={`/shipping-progress/${order.orderId}`}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md"
+                        >
+                          <FiTruck />
+                          Track Progress
+                        </Link>
+                      )}
 
                     {/* Đã giao (Completed) */}
-                      {statusInfo.code === 3 && (
-                          <>
-                              {!returnRequest ? (
-                                  <Link
-                                      to={`/return-request?orderItemId=${firstItem.orderItemId}`}
-                                      className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-colors text-sm"
-                                  >
-                                      Return/Exchange Request
-                                  </Link>
-                              ) : (
-                                  <button
-                                      disabled
-                                      className="px-5 py-2.5 bg-stone-100 border border-stone-200 text-stone-500 font-semibold rounded-xl text-sm cursor-not-allowed"
-                                  >
-                                      {returnRequest.status === "PENDING" && "Request Submitted"}
-                                      {returnRequest.status === "APPROVED" && "Approved"}
-                                      {returnRequest.status === "REJECTED" && "Rejected"}
-                                      {returnRequest.status === "COMPLETED" && "Completed"}
-                                  </button>
-                              )}
+                    {statusInfo.code === 3 && (
+                      <>
+                        {!returnRequest ? (
+                          <Link
+                            to={`/return-request?orderItemId=${firstItem.orderItemId}`}
+                            className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-colors text-sm"
+                          >
+                            Return/Exchange Request
+                          </Link>
+                        ) : (
+                          <button
+                            disabled
+                            className="px-5 py-2.5 bg-stone-100 border border-stone-200 text-stone-500 font-semibold rounded-xl text-sm cursor-not-allowed"
+                          >
+                            {returnRequest.status === "PENDING" && "Request Submitted"}
+                            {returnRequest.status === "APPROVED" && "Approved"}
+                            {returnRequest.status === "REJECTED" && "Rejected"}
+                            {returnRequest.status === "COMPLETED" && "Completed"}
+                          </button>
+                        )}
 
-                              {firstItem && (
-                                  <Link
-                                      to={`/product/${firstItem.productId}#review-form`}
-                                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md shadow-blue-500/20"
-                                  >
-                                      <FiCheckCircle />
-                                      Review Product
-                                  </Link>
-                              )}
-                          </>
-                      )}
+                        {firstItem && (
+                          <Link
+                            to={`/product/${firstItem.productId}#review-form`}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md shadow-blue-500/20"
+                          >
+                            <FiCheckCircle />
+                            Review Product
+                          </Link>
+                        )}
+                      </>
+                    )}
 
                     {/* Đã hủy (Cancelled) */}
                     {statusInfo.code === 4 && (
-                      <Link
-                        to="/shop"
-                        className="px-5 py-2.5 bg-stone-100 text-stone-700 font-semibold rounded-xl hover:bg-stone-200 transition-colors text-sm flex items-center gap-2"
+                      <button
+                        onClick={() => handleBuyAgain(order)}
+                        disabled={buyingAgainId === order.orderId}
+                        className="px-5 py-2.5 bg-stone-100 text-stone-700 font-semibold rounded-xl hover:bg-stone-200 transition-colors text-sm flex items-center gap-2 disabled:opacity-50"
                       >
-                        <FiShoppingBag /> Buy Again
-                      </Link>
+                        {buyingAgainId === order.orderId ? (
+                          <div className="w-4 h-4 rounded-full border-2 border-stone-400 border-t-stone-600 animate-spin" />
+                        ) : (
+                          <FiShoppingBag />
+                        )}
+                        Buy Again
+                      </button>
                     )}
                   </div>
                 </div>
