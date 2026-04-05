@@ -205,7 +205,7 @@ function ProductDetailPage() {
 
   const selectedVariantUI = productData.variants?.[activeColor];
   let stockText = "", stockColor = "", isOutOfStock = false;
-  
+
   if (!selectedVariantUI || selectedVariantUI.stockQuantity === 0) {
     stockText = "Out of stock · Pre-order available";
     stockColor = "text-red-500";
@@ -225,7 +225,7 @@ function ProductDetailPage() {
     const selectedVariant = productData.variants[activeColor];
     if (productCat === "frame") {
       // Go directly to prescription page
-      navigate(`/prescription/${product.id}?variantId=${selectedVariant.variantId}`);
+      navigate(`/prescription/${product.id}?variantId=${selectedVariant.variantId}&quantity=${quantity}`);
       return;
     }
 
@@ -241,7 +241,7 @@ function ProductDetailPage() {
     } catch {
       cart = [];
     }
-    
+
     if (!selectedVariant) {
       showToast("Please select a color");
       return;
@@ -254,22 +254,22 @@ function ProductDetailPage() {
       productId: productData.id || productData.productId,
       name: productData.name,
       brand: productData.brand,
-      price: finalPrice, 
+      price: finalPrice,
       quantity,
       variant: selectedVariant,
       isPreOrder: isOutOfStock,
     };
-    
+
     const idx = cart.findIndex(
       (item) => item.variant?.variantId === selectedVariant.variantId,
     );
-    
+
     if (idx !== -1) cart[idx].quantity += quantity;
     else cart.push(cartItem);
-    
+
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("storage"));
-    
+
     try {
       // Prepare prescription payload if manual entry is selected
       const isLens = lensOption === "manual";
@@ -407,11 +407,10 @@ function ProductDetailPage() {
                     <button
                       key={i}
                       onClick={() => setActiveImg(i)}
-                      className={`w-[72px] h-[72px] flex-shrink-0 rounded-xl overflow-hidden border-2 bg-white p-1 transition-all ${
-                        i === activeImg
+                      className={`w-[72px] h-[72px] flex-shrink-0 rounded-xl overflow-hidden border-2 bg-white p-1 transition-all ${i === activeImg
                           ? "thumb-ring border-stone-900"
                           : "border-stone-100 hover:border-stone-300"
-                      }`}
+                        }`}
                     >
                       <img
                         src={img}
@@ -549,11 +548,10 @@ function ProductDetailPage() {
                 </button>
                 <button
                   onClick={() => setWished((p) => !p)}
-                  className={`w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all active:scale-95 duration-150 ${
-                    wished
+                  className={`w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all active:scale-95 duration-150 ${wished
                       ? "bg-red-50 border-red-300 text-red-500"
                       : "bg-white border-stone-200 text-stone-400 hover:border-stone-300 hover:text-stone-600"
-                  }`}
+                    }`}
                 >
                   <FiHeart size={16} className={wished ? "fill-red-500" : ""} />
                 </button>
@@ -774,16 +772,14 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
       {/* Option 1 — Manual */}
       <button
         onClick={() => setLensOption(lensOption === "manual" ? null : "manual")}
-        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
-          lensOption === "manual"
+        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${lensOption === "manual"
             ? "border-emerald-400 bg-emerald-50"
             : "border-stone-200 hover:border-emerald-300 bg-white"
-        }`}
+          }`}
       >
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-            lensOption === "manual" ? "bg-emerald-100" : "bg-stone-100"
-          }`}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${lensOption === "manual" ? "bg-emerald-100" : "bg-stone-100"
+            }`}
         >
           <FiEye
             size={17}
@@ -907,16 +903,14 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
             lensOption === "no-prescription" ? null : "no-prescription",
           )
         }
-        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
-          lensOption === "no-prescription"
+        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${lensOption === "no-prescription"
             ? "border-blue-700 bg-blue-600 text-white"
             : "border-stone-200 hover:border-blue-400 bg-white"
-        }`}
+          }`}
       >
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-            lensOption === "no-prescription" ? "bg-white/10" : "bg-stone-100"
-          }`}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${lensOption === "no-prescription" ? "bg-white/10" : "bg-stone-100"
+            }`}
         >
           <FiCheck
             size={17}
