@@ -65,6 +65,19 @@ export const getMyOrders = async () => {
       name: item.productName,
       quantity: item.quantity,
       image: item.imageUrl,
+      variantId: item.variantId,
+      lensOptionId: item.lensOptionId,
+      lensType: item.lensType,
+      sphLeft: item.sphLeft,
+      sphRight: item.sphRight,
+      cylLeft: item.cylLeft,
+      cylRight: item.cylRight,
+      axisLeft: item.axisLeft,
+      axisRight: item.axisRight,
+      addLeft: item.addLeft,
+      addRight: item.addRight,
+      pd: item.pd,
+      isPreorder: item.isPreorder
     })),
   }));
 };
@@ -110,14 +123,31 @@ export const getOrderDetails = async (id) => {
 export const updatePaymentStatus = async (orderId, resCode, transCode) => {
   const isSuccess = resCode === "00" && transCode === "00";
   const status = isSuccess ? "PAID" : "UNPAID";
+  
+  // Clean orderId just in case VNPay attached spaces or characters
+  const cleanOrderId = String(orderId).replace(/\D/g, "");
+
+  let responseData = null;
+
   try {
-    const res = await updatePaymentStatusApi(orderId, status);
-
-    console.log("Service response:", res.data);
-
-    return res.data;
+    const res = await updatePaymentStatusApi(cleanOrderId, status);
+    console.log("Service response payment status:", res.data);
+    responseData = res.data;
   } catch (error) {
-    console.error("Service error:", error);
-    throw error;
+    console.error("Failed to update payment status API:", error.response?.data || error);
+    // Continue execution to try cancelling the order anyway
   }
+
+  // Nếu thanh toán thất bại hoặc bị hủy (mã 24 = user cancel, các mã khác = lỗi giao dịch)
+  // → Hủy đơn hàng để không bị kẹt ở PENDING
+  if (!isSuccess) {
+    try {
+      await cancelOrderApi(cleanOrderId);
+      console.log("Order cancelled due to failed/cancelled VNPAY payment. ResponseCode:", resCode);
+    } catch (cancelErr) {
+      console.error("Failed to cancel order after payment failure:", cancelErr.response?.data || cancelErr);
+    }
+  }
+
+  return responseData;
 };

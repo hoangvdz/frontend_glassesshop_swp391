@@ -23,6 +23,7 @@ export default function PrescriptionPage() {
   const [searchParams] = useSearchParams();
   const lensId = searchParams.get("lensId");
   const variantIdFromUrl = searchParams.get("variantId");
+  const quantityFromUrl = Math.max(1, parseInt(searchParams.get("quantity")) || 1);
 
   const [product, setProduct] = useState(null);
   const [lensProduct, setLensProduct] = useState(null);
@@ -225,7 +226,7 @@ export default function PrescriptionPage() {
         brand: product.brand,
         imageUrl: variant?.imageUrl || product.imageUrl || product.img,
         price: finalPrice,
-        quantity: 1,
+        quantity: quantityFromUrl,
         variant: variant,
         isPreOrder: isOutOfStock,
         isLens: false,
@@ -252,13 +253,13 @@ export default function PrescriptionPage() {
         const payload = {
           productId,
           variantId,
-          quantity: 1,
+          quantity: quantityFromUrl,
           isLens: false,
           isPreorder: isOutOfStock,
         };
         await addToCartApi(payload);
       }
-      handleSuccess("Added 1 items to cart!");
+      handleSuccess(`Added ${quantityFromUrl} item(s) to cart!`);
     } catch (err) {
       console.error(err);
       handleSuccess("Frame saved to temporary cart!");
@@ -318,7 +319,7 @@ export default function PrescriptionPage() {
       }
 
       const framePrice = variant?.price || product.price || 0;
-      
+
       const cartItemFrame = {
         cartItemId: Date.now(), // Temp ID for guest
         productId: productId,
@@ -327,7 +328,7 @@ export default function PrescriptionPage() {
         imageUrl: variant?.imageUrl || product.imageUrl || product.img,
         price: framePrice,
         unitPrice: framePrice, // For CheckoutPage mapping compatibility
-        quantity: 1,
+        quantity: quantityFromUrl,
         variant: variant,
         isPreOrder: variant?.stockQuantity === 0,
         isLens: true,
@@ -346,10 +347,10 @@ export default function PrescriptionPage() {
           imageUrl: lensVariant?.imageUrl || lensProduct.imageUrl || lensProduct.img,
           price: lensPrice,
           unitPrice: lensPrice,
-          quantity: 1,
+          quantity: quantityFromUrl,
           variant: lensVariant,
           isPreOrder: lensVariant?.stockQuantity === 0,
-          isLens: false, 
+          isLens: false,
         };
         cart.push(cartItemLens);
       }
@@ -382,30 +383,30 @@ export default function PrescriptionPage() {
           }
         }
 
-          const framePayload = {
-            productId: productId,
-            variantId: variantId,
-            quantity: 1,
-            isLens: true,
-            isPreorder: isOutOfStock,
-            ...prescriptionData,
-          };
-          await addToCartApi(framePayload);
+        const framePayload = {
+          productId: productId,
+          variantId: variantId,
+          quantity: quantityFromUrl,
+          isLens: true,
+          isPreorder: isOutOfStock,
+          ...prescriptionData,
+        };
+        await addToCartApi(framePayload);
 
-          if (lensProduct) {
-             const lensOutOfStock = lensVariant?.stockQuantity === 0;
-             const lensPayload = {
-                productId: lensProduct.id || lensProduct.productId,
-                variantId: lensVariantId,
-                quantity: 1,
-                isLens: false,
-                isPreorder: lensOutOfStock
-             };
-             await addToCartApi(lensPayload);
-          }
+        if (lensProduct) {
+          const lensOutOfStock = lensVariant?.stockQuantity === 0;
+          const lensPayload = {
+            productId: lensProduct.id || lensProduct.productId,
+            variantId: lensVariantId,
+            quantity: quantityFromUrl,
+            isLens: false,
+            isPreorder: lensOutOfStock
+          };
+          await addToCartApi(lensPayload);
+        }
       }
 
-      handleSuccess("Added 1 items to cart!");
+      handleSuccess(`Added ${quantityFromUrl} item(s) to cart!`);
     } catch (err) {
       console.error("Lỗi thêm vào giỏ hàng:", err);
       handleSuccess("Saved to temporary cart!");
@@ -419,262 +420,262 @@ export default function PrescriptionPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <HeaderBar />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-6 flex-1">
-        <div className="space-y-4">
-          <FrameSummary product={product} variantId={variantIdFromUrl} />
-          {lensProduct && (
-            <div
-              className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm"
-              style={{ animation: "slideUp .4s ease" }}
-            >
-              <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">
-                Selected Lens
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-stone-50 rounded-lg overflow-hidden border border-stone-100">
-                  <img
-                    src={
-                      lensProduct.variants?.[0]?.imageUrl ||
-                      lensProduct.img ||
-                      "https://placehold.co/100"
-                    }
-                    className="w-full h-full object-contain p-2"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800 text-sm leading-tight">
-                    {lensProduct.name}
-                  </p>
-                  <p className="text-xs text-blue-600 font-bold mt-1">
-                    {(
-                      lensProduct.price ||
-                      lensProduct.variants?.[0]?.price ||
-                      0
-                    ).toLocaleString("vi-VN")}
-                    ₫
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() =>
-                  navigate(`/prescription/${id}?variantId=${variantIdFromUrl}`)
-                }
-                className="w-full mt-4 py-2 border border-stone-200 rounded-lg text-[11px] font-semibold text-stone-500 hover:bg-stone-50 transition-all active:scale-[0.98]"
+        <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-6 flex-1">
+          <div className="space-y-4">
+            <FrameSummary product={product} variantId={variantIdFromUrl} />
+            {lensProduct && (
+              <div
+                className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm"
+                style={{ animation: "slideUp .4s ease" }}
               >
-                Change Lens
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="relative">
-          {!lensId ? (
-            <div style={{ animation: "fadeIn .5s ease" }}>
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
-                  Select Lens
-                </h1>
-                <p className="text-stone-500 mt-2 text-sm">
-                  Please select a lens type that suits your needs
+                <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">
+                  Selected Lens
                 </p>
-              </div>
-
-              {loadingLenses ? (
-                <div className="flex items-center justify-center py-20">
-                  <div className="w-8 h-8 border-4 border-stone-200 border-t-indigo-600 rounded-full animate-spin" />
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-stone-50 rounded-lg overflow-hidden border border-stone-100">
+                    <img
+                      src={
+                        lensProduct.variants?.[0]?.imageUrl ||
+                        lensProduct.img ||
+                        "https://placehold.co/100"
+                      }
+                      className="w-full h-full object-contain p-2"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 text-sm leading-tight">
+                      {lensProduct.name}
+                    </p>
+                    <p className="text-xs text-blue-600 font-bold mt-1">
+                      {(
+                        lensProduct.price ||
+                        lensProduct.variants?.[0]?.price ||
+                        0
+                      ).toLocaleString("vi-VN")}
+                      ₫
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Option: No Lens (Frame Only) */}
-                  <button
-                    onClick={handleBuyFrameOnly}
-                    className="group p-5 bg-blue-900 border border-blue-800 rounded-2xl text-left hover:bg-blue-800 hover:shadow-xl transition-all duration-300 active:scale-[0.98] relative overflow-hidden"
-                  >
-                    <div className="flex items-center gap-5 relative z-10">
-                      <div className="w-20 h-20 bg-blue-800 rounded-xl flex items-center justify-center border border-blue-700">
+                <button
+                  onClick={() =>
+                    navigate(`/prescription/${id}?variantId=${variantIdFromUrl}&quantity=${quantityFromUrl}`)
+                  }
+                  className="w-full mt-4 py-2 border border-stone-200 rounded-lg text-[11px] font-semibold text-stone-500 hover:bg-stone-50 transition-all active:scale-[0.98]"
+                >
+                  Change Lens
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            {!lensId ? (
+              <div style={{ animation: "fadeIn .5s ease" }}>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
+                    Select Lens
+                  </h1>
+                  <p className="text-stone-500 mt-2 text-sm">
+                    Please select a lens type that suits your needs
+                  </p>
+                </div>
+
+                {loadingLenses ? (
+                  <div className="flex items-center justify-center py-20">
+                    <div className="w-8 h-8 border-4 border-stone-200 border-t-indigo-600 rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Option: No Lens (Frame Only) */}
+                    <button
+                      onClick={handleBuyFrameOnly}
+                      className="group p-5 bg-blue-900 border border-blue-800 rounded-2xl text-left hover:bg-blue-800 hover:shadow-xl transition-all duration-300 active:scale-[0.98] relative overflow-hidden"
+                    >
+                      <div className="flex items-center gap-5 relative z-10">
+                        <div className="w-20 h-20 bg-blue-800 rounded-xl flex items-center justify-center border border-blue-700">
+                          <svg
+                            className="w-8 h-8 text-blue-200"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-white leading-snug">
+                            Buy Frame Only
+                          </h3>
+                          <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold">
+                            No prescription lenses included
+                          </p>
+                          <div className="mt-2 text-sm font-black text-white">
+                            Keep original price
+                          </div>
+                        </div>
+                      </div>
+                      <div className="absolute top-0 right-0 p-4 opacity-10">
                         <svg
-                          className="w-8 h-8 text-blue-200"
-                          fill="none"
-                          stroke="currentColor"
+                          className="w-20 h-20 text-white"
+                          fill="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                          />
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-4.1L5.69 5.69C7.05 4.63 8.75 4 10.5 4c4.41 0 8 3.59 8 8 0 1.85-.63 3.55-1.69 4.9z" />
                         </svg>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-white leading-snug">
-                          Buy Frame Only
-                        </h3>
-                        <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold">
-                          No prescription lenses included
-                        </p>
-                        <div className="mt-2 text-sm font-black text-white">
-                          Keep original price
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                      <svg
-                        className="w-20 h-20 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-4.1L5.69 5.69C7.05 4.63 8.75 4 10.5 4c4.41 0 8 3.59 8 8 0 1.85-.63 3.55-1.69 4.9z" />
-                      </svg>
-                    </div>
-                  </button>
+                    </button>
 
-                  {lenses.map((lens) => {
-                    const lId = lens.productId || lens.id;
-                    return (
-                      <button
-                        key={lId}
-                        onClick={() =>
-                          navigate(
-                            `/prescription/${id}?variantId=${variantIdFromUrl}&lensId=${lId}`,
-                          )
-                        }
-                        className="group p-5 bg-white border border-stone-200 rounded-2xl text-left hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 active:scale-[0.98]"
-                      >
-                        <div className="flex items-center gap-5">
-                          <div className="w-20 h-20 bg-stone-50 rounded-xl overflow-hidden border border-stone-100 group-hover:scale-105 transition-transform duration-300">
-                            <img
-                              src={
-                                lens.imageUrl ||
-                                lens.img ||
-                                "https://placehold.co/150"
-                              }
-                              alt={lens.name}
-                              className="w-full h-full object-contain p-3"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-stone-800 leading-snug group-hover:text-indigo-600 transition-colors">
-                              {lens.name}
-                            </h3>
-                            <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold opacity-70">
-                              {lens.brand}
-                            </p>
-                            <div className="mt-2 text-sm font-black text-blue-600">
-                              {(lens.price || 0).toLocaleString("vi-VN")}₫
+                    {lenses.map((lens) => {
+                      const lId = lens.productId || lens.id;
+                      return (
+                        <button
+                          key={lId}
+                          onClick={() =>
+                            navigate(
+                              `/prescription/${id}?variantId=${variantIdFromUrl}&quantity=${quantityFromUrl}&lensId=${lId}`,
+                            )
+                          }
+                          className="group p-5 bg-white border border-stone-200 rounded-2xl text-left hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 active:scale-[0.98]"
+                        >
+                          <div className="flex items-center gap-5">
+                            <div className="w-20 h-20 bg-stone-50 rounded-xl overflow-hidden border border-stone-100 group-hover:scale-105 transition-transform duration-300">
+                              <img
+                                src={
+                                  lens.imageUrl ||
+                                  lens.img ||
+                                  "https://placehold.co/150"
+                                }
+                                alt={lens.name}
+                                className="w-full h-full object-contain p-3"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-stone-800 leading-snug group-hover:text-indigo-600 transition-colors">
+                                {lens.name}
+                              </h3>
+                              <p className="text-[11px] text-stone-400 mt-1 uppercase tracking-wider font-semibold opacity-70">
+                                {lens.brand}
+                              </p>
+                              <div className="mt-2 text-sm font-black text-blue-600">
+                                {(lens.price || 0).toLocaleString("vi-VN")}₫
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div style={{ animation: "fadeIn .5s ease" }}>
-              <div className="flex items-baseline justify-between mb-6">
-                <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
-                  Prescription Details
-                </h1>
-                <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase font-bold tracking-widest">
-                  Final Step
-                </span>
-              </div>
-
-              {savedPrescriptions.length > 0 && (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-8 shadow-sm">
-                  <p className="text-xs font-bold text-indigo-900 uppercase tracking-widest mb-4 opacity-70">
-                    Use Saved Prescription
-                  </p>
-                  <div className="flex flex-wrap gap-2.5">
-                    {savedPrescriptions.map((rx, idx) => {
-                      const rxId = rx.id || rx.prescriptionId;
-                      return (
-                        <div
-                          key={rxId || idx}
-                          className="flex items-stretch bg-white border border-indigo-100 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all active:scale-[0.98]"
-                        >
-                          <button
-                            onClick={() => applySavedPrescription(rx)}
-                            className="px-4 py-2.5 text-indigo-700 text-[13px] hover:bg-indigo-50 transition-colors font-semibold text-left"
-                          >
-                            Prescription #{idx + 1} — OD: {rx.sphRight ?? "—"} /
-                            OS: {rx.sphLeft ?? "—"}
-                          </button>
-                          {rxId && (
-                            <button
-                              onClick={() => handleDeletePrescription(rxId)}
-                              className="px-3 flex items-center justify-center text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border-l border-indigo-50"
-                              title="Remove"
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ animation: "fadeIn .5s ease" }}>
+                <div className="flex items-baseline justify-between mb-6">
+                  <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
+                    Prescription Details
+                  </h1>
+                  <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase font-bold tracking-widest">
+                    Final Step
+                  </span>
                 </div>
-              )}
 
-              <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
-                <div className="flex justify-between items-center mb-10">
-                  <h2 className="text-xl font-bold text-stone-900 tracking-tight">
-                    Detailed Eye Specifications
-                  </h2>
-                  {loadingRx && (
-                    <div className="flex items-center gap-2 text-xs text-stone-400">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600"></div>
-                      Loading profile...
+                {savedPrescriptions.length > 0 && (
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-8 shadow-sm">
+                    <p className="text-xs font-bold text-indigo-900 uppercase tracking-widest mb-4 opacity-70">
+                      Use Saved Prescription
+                    </p>
+                    <div className="flex flex-wrap gap-2.5">
+                      {savedPrescriptions.map((rx, idx) => {
+                        const rxId = rx.id || rx.prescriptionId;
+                        return (
+                          <div
+                            key={rxId || idx}
+                            className="flex items-stretch bg-white border border-indigo-100 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all active:scale-[0.98]"
+                          >
+                            <button
+                              onClick={() => applySavedPrescription(rx)}
+                              className="px-4 py-2.5 text-indigo-700 text-[13px] hover:bg-indigo-50 transition-colors font-semibold text-left"
+                            >
+                              Prescription #{idx + 1} — OD: {rx.sphRight ?? "—"} /
+                              OS: {rx.sphLeft ?? "—"}
+                            </button>
+                            {rxId && (
+                              <button
+                                onClick={() => handleDeletePrescription(rxId)}
+                                className="px-3 flex items-center justify-center text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border-l border-indigo-50"
+                                title="Remove"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                <div className="space-y-12">
-                  <PrescriptionTable
-                    form={form}
-                    errors={errors}
-                    updateEye={updateEye}
-                  />
+                <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
+                  <div className="flex justify-between items-center mb-10">
+                    <h2 className="text-xl font-bold text-stone-900 tracking-tight">
+                      Detailed Eye Specifications
+                    </h2>
+                    {loadingRx && (
+                      <div className="flex items-center gap-2 text-xs text-stone-400">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600"></div>
+                        Loading profile...
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="h-px bg-stone-100" />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <PDSection
+                  <div className="space-y-12">
+                    <PrescriptionTable
                       form={form}
                       errors={errors}
-                      updateField={updateField}
+                      updateEye={updateEye}
                     />
-                    <ExtrasSection form={form} updateField={updateField} />
-                  </div>
 
-                  <div className="mt-12 flex items-center gap-4 p-5 bg-stone-50 rounded-2xl border border-stone-200/50">
-                    <input
-                      type="checkbox"
-                      id="saveRx"
-                      className="w-5 h-5 rounded-lg border-stone-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-all"
-                      checked={form.savePrescription}
-                      onChange={(e) =>
-                        setForm({ ...form, savePrescription: e.target.checked })
-                      }
-                    />
-                    <label
-                      htmlFor="saveRx"
-                      className="text-sm font-semibold text-stone-700 cursor-pointer select-none"
-                    >
-                      Save this prescription to my profile for future use
-                    </label>
+                    <div className="h-px bg-stone-100" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                      <PDSection
+                        form={form}
+                        errors={errors}
+                        updateField={updateField}
+                      />
+                      <ExtrasSection form={form} updateField={updateField} />
+                    </div>
+
+                    <div className="mt-12 flex items-center gap-4 p-5 bg-stone-50 rounded-2xl border border-stone-200/50">
+                      <input
+                        type="checkbox"
+                        id="saveRx"
+                        className="w-5 h-5 rounded-lg border-stone-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-all"
+                        checked={form.savePrescription}
+                        onChange={(e) =>
+                          setForm({ ...form, savePrescription: e.target.checked })
+                        }
+                      />
+                      <label
+                        htmlFor="saveRx"
+                        className="text-sm font-semibold text-stone-700 cursor-pointer select-none"
+                      >
+                        Save this prescription to my profile for future use
+                      </label>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <SubmitBar onSubmit={handleSubmit} submitting={submitting} />
-            </div>
-          )}
+                <SubmitBar onSubmit={handleSubmit} submitting={submitting} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }

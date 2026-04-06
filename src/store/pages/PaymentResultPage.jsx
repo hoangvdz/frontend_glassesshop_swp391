@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { updatePaymentStatus } from "../services/orderService";
 
@@ -12,10 +12,24 @@ function PaymentResultPage() {
   const vnp_TransactionStatus = searchParams.get("vnp_TransactionStatus");
   const isSuccess = vnp_ResponseCode === "00";
 
+  const [hasProcessed, setHasProcessed] = useState(false);
+
   useEffect(() => {
-    if (!vnp_OrderInfo) return null;
-    updatePaymentStatus(vnp_OrderInfo, vnp_ResponseCode, vnp_TransactionStatus);
-  });
+    if (!vnp_OrderInfo || hasProcessed) return;
+    
+    // Đánh dấu đã xử lý để tránh StrictMode gọi API 2 lần gây race condition
+    setHasProcessed(true);
+
+    const handleUpdate = async () => {
+        try {
+            await updatePaymentStatus(vnp_OrderInfo, vnp_ResponseCode, vnp_TransactionStatus);
+        } catch (error) {
+            console.error("Payment status update error:", error);
+        }
+    };
+
+    handleUpdate();
+  }, [vnp_OrderInfo, vnp_ResponseCode, vnp_TransactionStatus, hasProcessed]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
