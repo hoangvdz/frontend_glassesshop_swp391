@@ -43,7 +43,8 @@ export const getStockVariantById = async (id) => {
   return res.data.data;
 };
 
-export const updateStockService = async (variantId, quantity, variantData) => {
-  const res = await updateStockApi(variantId, quantity, variantData);
+export const updateStockService = async (variantId, quantity) => {
+  const res = await updateStockApi(variantId, quantity);
+  
   return res.data.data;
 };

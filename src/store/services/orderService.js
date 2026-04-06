@@ -80,30 +80,30 @@ export const getOrderDetails = async (id) => {
 
   // Trình trạng số (0, 1, 2, 3) cho thanh tiến trình
   let statusCode = 0;
-  switch (order.status) {
-    case "PENDING":
-      statusCode = 0;
-      break;
-    case "PROCESSING":
-      statusCode = 1;
-      break;
-    case "DELIVERING":
-    case "SHIPPING":
-      statusCode = 2;
-      break;
-    case "DELIVERED":
-    case "COMPLETED":
-      statusCode = 3;
-      break;
-    default:
-      statusCode = 0;
-  }
+  const status = order.status?.toUpperCase();
+  
+  if (status === "PENDING") statusCode = 0;
+  else if (status === "PROCESSING") statusCode = 1;
+  else if (status === "SHIPPING" || status === "DELIVERING") statusCode = 2;
+  else if (status === "DELIVERED" || status === "COMPLETED") statusCode = 3;
 
   return {
+    ...order,
     id: order.orderCode,
+    orderId: order.orderId,
     date: new Date(order.orderDate).toLocaleDateString("en-US"),
     status: statusCode,
     rawStatus: mapStatusLabel(order.status),
+    items: (order.orderItems || []).map(item => ({
+       ...item,
+       name: item.productName,
+       image: item.imageUrl,
+       total: item.quantity * item.unitPrice
+    })),
+    subTotal: order.totalPrice || 0,
+    shippingFee: order.finalPrice > order.totalPrice ? (order.finalPrice - order.totalPrice) : 0,
+    discount: order.totalPrice > order.finalPrice ? (order.totalPrice - order.finalPrice) : 0,
+    finalTotal: order.finalPrice || 0
   };
 };
 

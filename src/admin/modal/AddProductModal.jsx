@@ -686,13 +686,13 @@ function AddProductModal({ onClose, onAdd }) {
                     onClick={resetForm}
                     className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-lg shadow-blue-200"
                   >
-                    Thêm sản phẩm khác
+                    Add Another Products
                   </button>
                   <button
                     onClick={onClose}
                     className="px-5 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
                   >
-                    Đóng
+                    Close
                   </button>
                 </div>
               </motion.div>

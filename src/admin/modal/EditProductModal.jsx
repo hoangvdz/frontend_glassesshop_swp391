@@ -21,6 +21,7 @@ import {
   getProductById,
   updateProduct,
   updateVariant,
+  updateVariantQuantity,
 } from "../services/productService";
 
 /* ─────────────────────────────────────────────
@@ -50,12 +51,11 @@ function Stepper({ step }) {
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 border-2
-                  ${
-                    done
-                      ? "bg-gradient-to-br from-blue-500 to-indigo-500 border-transparent text-white shadow-lg shadow-blue-200"
-                      : active
-                        ? "bg-white border-blue-500 text-blue-600 shadow-lg shadow-blue-100 ring-4 ring-blue-50"
-                        : "bg-white border-slate-200 text-slate-300"
+                  ${done
+                    ? "bg-gradient-to-br from-blue-500 to-indigo-500 border-transparent text-white shadow-lg shadow-blue-200"
+                    : active
+                      ? "bg-white border-blue-500 text-blue-600 shadow-lg shadow-blue-100 ring-4 ring-blue-50"
+                      : "bg-white border-slate-200 text-slate-300"
                   }`}
               >
                 {done ? <FiCheck size={15} strokeWidth={3} /> : s}
@@ -452,38 +452,36 @@ function EditProductModal({ product, onClose, onUpdate }) {
       // 🟢 1. update product trước
       await updateProduct(form.id, form);
       // 🟢 2. update từng variant
-      await Promise.all(
+      const updatedVariants = await Promise.all(
         form.variants.map((v) => {
           if (v.variantId) {
-            return updateVariant(v.variantId, Number(v.stock) || 0, {
-              frameSize: v.frameSize || "",
-              color: v.color || "",
-              material: v.material || "",
-              imageUrl: v.image || "",
-              status: "AVAILABLE",
-              active: true,
-            });
+            // ✅ Sử dụng API cập nhật chỉ số lượng (như yêu cầu)
+            return updateVariantQuantity(v.variantId, Number(v.stock) || 0);
           }
 
           return createVariant(form.id, {
-            stockQuantity: v.stock || 0,
-            frameSize: v.frameSize || 0,
+            stockQuantity: Number(v.stock) || 0,
+            frameSize: v.frameSize || "",
             color: v.color || "",
             material: v.material || "",
-            imageUrl: v.imageUrl || "",
+            imageUrl: v.image || "",
             status: "AVAILABLE",
-            active: true,
           });
         }),
       );
 
+      // ✅ 3. Đồng bộ lại dữ liệu trả về cho UI
       onUpdate({
         ...form,
-        stock: form.variants.reduce(
-          (total, v) => total + (Number(v.stock) || 0),
+        // 🔥 Đảm bảo ảnh đại diện sản phẩm không bị mất
+        img: updatedVariants[0]?.imageUrl || form.image,
+        variants: updatedVariants,
+        stock: updatedVariants.reduce(
+          (total, v) => total + (v.stockQuantity || 0),
           0,
         ),
       });
+
       setCompleted(true);
       setStep(3);
     } catch (err) {
@@ -761,13 +759,13 @@ function EditProductModal({ product, onClose, onUpdate }) {
                     onClick={resetForm}
                     className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-lg shadow-blue-200"
                   >
-                    Thêm sản phẩm khác
+                    Update Again
                   </button>
                   <button
                     onClick={onClose}
                     className="px-5 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
                   >
-                    Đóng
+                    Close
                   </button>
                 </div>
               </motion.div>
@@ -813,7 +811,7 @@ function EditProductModal({ product, onClose, onUpdate }) {
                   onClick={handleSubmit}
                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-md shadow-blue-200 disabled:opacity-30 disabled:pointer-events-none"
                 >
-                  <FiCheck size={13} strokeWidth={3} /> Hoàn thành
+                  <FiCheck size={13} strokeWidth={3} /> Complete
                 </button>
               )}
             </div>
@@ -868,6 +866,12 @@ function FieldInput({ label, icon, suffix, required, ...props }) {
         )}
         <input
           {...props}
+          min={props.type === "number" ? 0 : undefined}
+          onKeyDown={(e) => {
+            if (props.type === "number" && (e.key === "-" || e.key === "e")) {
+              e.preventDefault();
+            }
+          }}
           className={`w-full border-2 border-slate-200 rounded-xl text-sm py-2.5 bg-white
             text-slate-700 placeholder-slate-300
             focus:outline-none focus:border-blue-400
