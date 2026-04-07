@@ -252,11 +252,17 @@ function ProductDetailPage() {
 
     const cartItem = {
       productId: productData.id || productData.productId,
+      variantId: selectedVariant.variantId,
       name: productData.name,
+      productName: productData.name,
       brand: productData.brand,
       price: finalPrice,
+      unitPrice: finalPrice,
+      imageUrl: selectedVariant.imageUrl || productData.imageUrl || productData.img || "",
       quantity,
       variant: selectedVariant,
+      variantColor: selectedVariant.color,
+      variantSize: selectedVariant.frameSize,
       isPreOrder: isOutOfStock,
     };
 
@@ -270,43 +276,50 @@ function ProductDetailPage() {
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("storage"));
 
-    try {
-      // Prepare prescription payload if manual entry is selected
-      const isLens = lensOption === "manual";
+    // Only call backend API if user is logged in
+    const currentUser = localStorage.getItem("currentUser") || localStorage.getItem("token");
+    if (currentUser) {
+      try {
+        // Prepare prescription payload if manual entry is selected
+        const isLens = lensOption === "manual";
 
-      const apiRes = await addToCartService({
-        productId: productData.id || productData.productId,
-        variantId: selectedVariant.variantId,
-        quantity,
-        isLens,
-        sphLeft: isLens ? parseFloat(prescription.eyes.left.sphere) || 0 : null,
-        sphRight: isLens ? parseFloat(prescription.eyes.right.sphere) || 0 : null,
-        cylLeft: isLens ? parseFloat(prescription.eyes.left.cylinder) || 0 : null,
-        cylRight: isLens ? parseFloat(prescription.eyes.right.cylinder) || 0 : null,
-        axisLeft: isLens ? parseInt(prescription.eyes.left.axis) || 0 : null,
-        axisRight: isLens ? parseInt(prescription.eyes.right.axis) || 0 : null,
-        addLeft: isLens ? parseFloat(prescription.eyes.left.add) || 0 : null,
-        addRight: isLens ? parseFloat(prescription.eyes.right.add) || 0 : null,
-        pd: isLens ? parseFloat(prescription.pd) || 0 : null,
-      });
+        const apiRes = await addToCartService({
+          productId: productData.id || productData.productId,
+          variantId: selectedVariant.variantId,
+          quantity,
+          isLens,
+          sphLeft: isLens ? parseFloat(prescription.eyes.left.sphere) || 0 : null,
+          sphRight: isLens ? parseFloat(prescription.eyes.right.sphere) || 0 : null,
+          cylLeft: isLens ? parseFloat(prescription.eyes.left.cylinder) || 0 : null,
+          cylRight: isLens ? parseFloat(prescription.eyes.right.cylinder) || 0 : null,
+          axisLeft: isLens ? parseInt(prescription.eyes.left.axis) || 0 : null,
+          axisRight: isLens ? parseInt(prescription.eyes.right.axis) || 0 : null,
+          addLeft: isLens ? parseFloat(prescription.eyes.left.add) || 0 : null,
+          addRight: isLens ? parseFloat(prescription.eyes.right.add) || 0 : null,
+          pd: isLens ? parseFloat(prescription.pd) || 0 : null,
+        });
 
-      if (apiRes) {
-        // Save preorder state locally to bypass backend strict API validation rejection (500)
-        if (isOutOfStock) {
-          try {
-            const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
-            preorders[selectedVariant.variantId] = true;
-            localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
-          } catch (e) {
-            // ignore
+        if (apiRes) {
+          // Save preorder state locally to bypass backend strict API validation rejection (500)
+          if (isOutOfStock) {
+            try {
+              const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
+              preorders[selectedVariant.variantId] = true;
+              localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
+            } catch (e) {
+              // ignore
+            }
           }
+          showToast(`Added ${quantity} items to cart!`);
+        } else {
+          showToast("Error adding to cart");
         }
-        showToast(`Added ${quantity} items to cart!`);
-      } else {
-        showToast("Error adding to cart");
+      } catch {
+        showToast("Saved to local cart!");
       }
-    } catch {
-      showToast("Saved to local cart!");
+    } else {
+      // Guest user — already saved to localStorage above
+      showToast(`Added ${quantity} items to cart!`);
     }
   };
 
