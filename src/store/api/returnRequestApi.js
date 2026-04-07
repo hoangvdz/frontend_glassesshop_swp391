@@ -13,6 +13,9 @@ export const updateReturnRequestStatusApi = (id, payload) => {
     return axiosClient.patch(`/return-requests/${id}/status`, payload);
 };
 
-export const getReturnRequestByOrderItemApi = (orderItemId) => {
+// export const getReturnRequestByOrderItemApi = (orderItemId) => {
+//     return axiosClient.get(`/return-requests/order-item/${orderItemId}`);
+// };
+export const getReturnRequestsByOrderItemApi = (orderItemId) => {
     return axiosClient.get(`/return-requests/order-item/${orderItemId}`);
 };

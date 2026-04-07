@@ -12,7 +12,8 @@ import {
 } from "react-icons/fi";
 import {
     createReturnRequestApi,
-    getReturnRequestByOrderItemApi,
+    // getReturnRequestByOrderItemApi,
+    getReturnRequestsByOrderItemApi,
 } from "../api/returnRequestApi";
 import { motion } from "framer-motion";
 
@@ -35,9 +36,11 @@ function ReturnFormPage() {
     useEffect(() => {
         const checkExisting = async () => {
             try {
-                const res = await getReturnRequestByOrderItemApi(orderItemId);
-                if (res?.data?.data) {
-                    setExistingRequest(res.data.data);
+                const res = await getReturnRequestsByOrderItemApi(orderItemId);
+                const requests = Array.isArray(res?.data?.data) ? res.data.data : [];
+
+                if (requests.length > 0) {
+                    setExistingRequest(requests[0]);
                 }
             } catch {
                 // no existing request
@@ -58,6 +61,7 @@ function ReturnFormPage() {
         try {
             const payload = {
                 orderItemId: parseInt(orderItemId, 10),
+                returnQuantity: 1,
                 reason: formData.reason,
                 description: formData.details,
                 imageUrl: "",
