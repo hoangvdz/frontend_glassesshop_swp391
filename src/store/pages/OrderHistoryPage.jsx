@@ -1,4 +1,5 @@
-import { getReturnRequestByOrderItemApi } from "../api/returnRequestApi";
+// import { getReturnRequestByOrderItemApi } from "../api/returnRequestApi";
+import { getReturnRequestsByOrderItemApi } from "../api/returnRequestApi";
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -25,6 +26,7 @@ function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
   const [returnMap, setReturnMap] = useState({});
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -34,18 +36,20 @@ function OrderHistoryPage() {
         setOrders(data);
         const map = {};
 
-        for (const order of data) {
-          for (const item of order.items || []) {
-            try {
-              const res = await getReturnRequestByOrderItemApi(
-                item.orderItemId,
-              );
-              map[item.orderItemId] = res.data.data;
-            } catch {
-              // nếu chưa có return request thì bỏ qua
-            }
+          for (const order of data) {
+              for (const item of order.items || []) {
+                  try {
+                      const res = await getReturnRequestsByOrderItemApi(item.orderItemId);
+                      const requests = Array.isArray(res?.data?.data) ? res.data.data : [];
+
+                      if (requests.length > 0) {
+                          map[item.orderItemId] = requests[0];
+                      }
+                  } catch {
+                      // nếu chưa có return request thì bỏ qua
+                  }
+              }
           }
-        }
 
         setReturnMap(map);
       } catch (err) {
@@ -140,6 +144,9 @@ function OrderHistoryPage() {
   const filteredOrders = orders.filter(
     (order) => activeTab === "All" || order.status === activeTab,
   );
+  const toggleOrderDetail = (orderId) => {
+      setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
+  };
 
   return (
     <div className="min-h-screen bg-stone-50 pt-24 pb-20 px-6 font-sans">
@@ -181,12 +188,9 @@ function OrderHistoryPage() {
           /* ── DANH SÁCH ĐƠN HÀNG ── */
           <div className="flex flex-col gap-6">
             {filteredOrders.map((order, index) => {
-              const statusInfo = getStatusInfo(order.status);
-              const firstItem = order.items && order.items[0];
-                const returnRequest = firstItem ? returnMap[firstItem.orderItemId] : null;
-                const returnStatusInfo = returnRequest
-                    ? getReturnStatusInfo(returnRequest.status)
-                    : null;
+                const statusInfo = getStatusInfo(order.status);
+                const isExpanded = expandedOrderId === order.id;
+                const itemCount = order.items?.length || 0;
               return (
                 <div
                   key={order.id}
@@ -218,64 +222,149 @@ function OrderHistoryPage() {
                     </div>
                   </div>
 
-                  {/* Thông tin sản phẩm */}
-                  {firstItem && (
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="w-16 h-16 bg-stone-50 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 border border-stone-100">
-                        {firstItem.image ? (
-                          <img
-                            src={firstItem.image}
-                            alt={firstItem.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <FiBox size={24} className="text-stone-300" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-stone-800 text-sm md:text-base">
-                          {firstItem.name}
-                        </p>
-                        <p className="text-xs md:text-sm text-stone-500 mt-1">
-                          Quantity: {firstItem.quantity}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                    {/* THÔNG TIN YÊU CẦU ĐỔI TRẢ */}
-                    {returnRequest && (
-                        <div className="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                                <p className="text-sm font-semibold text-stone-800">
-                                    Return / Exchange Request
-                                </p>
-                                <span
-                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${returnStatusInfo.bg} ${returnStatusInfo.color}`}
-                                >
-                                {returnStatusInfo.text}
-                                </span>
-                            </div>
+                    {/* Preview sản phẩm + nút xem chi tiết */}
+                    {order.items?.length > 0 && (
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between gap-4 flex-wrap">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-stone-50 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 border border-stone-100">
+                                        {order.items[0]?.image ? (
+                                            <img
+                                                src={order.items[0].image}
+                                                alt={order.items[0].name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <FiBox size={24} className="text-stone-300" />
+                                        )}
+                                    </div>
 
-                            {returnRequest.status === "REJECTED" && returnRequest.rejectionReason && (
-                                <div className="mt-3 text-sm text-red-600 font-medium">
-                                    <span className="font-semibold">Reason: </span>
-                                    {returnRequest.rejectionReason}
+                                    <div>
+                                        <p className="font-semibold text-stone-800 text-sm md:text-base">
+                                            {order.items[0]?.name}
+                                        </p>
+                                        <p className="text-xs md:text-sm text-stone-500 mt-1">
+                                            {itemCount > 1
+                                                ? `and ${itemCount - 1} more product(s)`
+                                                : `Quantity: ${order.items[0]?.quantity}`}
+                                        </p>
+                                    </div>
                                 </div>
-                            )}
 
-                            {returnRequest.status === "REJECTED" &&
-                                (returnRequest.rejectReason ||
-                                    returnRequest.rejectedReason ||
-                                    returnRequest.adminNote ||
-                                    returnRequest.note) && (
-                                    <p className="mt-3 text-sm text-red-600 font-medium">
-                                        <span className="font-semibold">Admin rejection reason:</span>{" "}
-                                        {returnRequest.rejectReason ||
-                                            returnRequest.rejectedReason ||
-                                            returnRequest.adminNote ||
-                                            returnRequest.note}
-                                    </p>
+                                {(itemCount > 1 || order.items[0]?.quantity > 1) && (
+                                    <button
+                                        onClick={() => toggleOrderDetail(order.id)}
+                                        className="px-4 py-2 border border-stone-200 text-stone-700 font-medium rounded-xl hover:bg-stone-50 transition-colors text-sm"
+                                    >
+                                        {isExpanded ? "Hide detail" : "View detail"}
+                                    </button>
                                 )}
+                            </div>
+                        </div>
+                    )}
+                    {/* Detail danh sách sản phẩm */}
+                    {isExpanded && (
+                        <div className="space-y-4 mb-6">
+                            {order.items.map((item) => {
+                                const itemReturnRequest = returnMap[item.orderItemId];
+                                const itemReturnStatusInfo = itemReturnRequest
+                                    ? getReturnStatusInfo(itemReturnRequest.status)
+                                    : null;
+
+                                return (
+                                    <div
+                                        key={item.orderItemId}
+                                        className="border border-stone-200 rounded-2xl p-4 bg-stone-50"
+                                    >
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 border border-stone-100">
+                                                    {item.image ? (
+                                                        <img
+                                                            src={item.image}
+                                                            alt={item.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <FiBox size={24} className="text-stone-300" />
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <p className="font-semibold text-stone-800 text-sm md:text-base">
+                                                        {item.name}
+                                                    </p>
+                                                    <p className="text-xs md:text-sm text-stone-500 mt-1">
+                                                        Quantity: {item.quantity}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {statusInfo.code === 3 && (
+                                                <div className="flex flex-wrap gap-3 md:justify-end">
+                                                    {!itemReturnRequest ? (
+                                                        <Link
+                                                            to={`/return-request?orderItemId=${item.orderItemId}`}
+                                                            className="px-4 py-2 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-100 transition-colors text-sm"
+                                                        >
+                                                            Return/Exchange
+                                                        </Link>
+                                                    ) : (
+                                                        <button
+                                                            disabled
+                                                            className="px-4 py-2 bg-stone-200 border border-stone-200 text-stone-500 font-semibold rounded-xl text-sm cursor-not-allowed"
+                                                        >
+                                                            {itemReturnRequest.status === "PENDING" && "Request Submitted"}
+                                                            {itemReturnRequest.status === "APPROVED" && "Approved"}
+                                                            {itemReturnRequest.status === "REJECTED" && "Rejected"}
+                                                            {itemReturnRequest.status === "COMPLETED" && "Completed"}
+                                                        </button>
+                                                    )}
+
+                                                    <Link
+                                                        to={`/product/${item.productId}#review-form`}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm"
+                                                    >
+                                                        <FiCheckCircle />
+                                                        Review
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {itemReturnRequest && (
+                                            <div className="mt-4 rounded-xl border border-stone-200 bg-white p-4">
+                                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                                    <p className="text-sm font-semibold text-stone-800">
+                                                        Return / Exchange Request
+                                                    </p>
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-semibold ${itemReturnStatusInfo.bg} ${itemReturnStatusInfo.color}`}
+                                                    >
+                                                        {itemReturnStatusInfo.text}
+                                                     </span>
+                                                </div>
+
+                                                {itemReturnRequest.status === "REJECTED" &&
+                                                    (itemReturnRequest.rejectionReason ||
+                                                        itemReturnRequest.rejectReason ||
+                                                        itemReturnRequest.rejectedReason ||
+                                                        itemReturnRequest.adminNote ||
+                                                        itemReturnRequest.note) && (
+                                                        <p className="mt-3 text-sm text-red-600 font-medium">
+                                                            <span className="font-semibold">Reason: </span>
+                                                            {itemReturnRequest.rejectionReason ||
+                                                                itemReturnRequest.rejectReason ||
+                                                                itemReturnRequest.rejectedReason ||
+                                                                itemReturnRequest.adminNote ||
+                                                                itemReturnRequest.note}
+                                                        </p>
+                                                    )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                   {/* CÁC NÚT CHỨC NĂNG */}
@@ -304,11 +393,11 @@ function OrderHistoryPage() {
                     )}
 
                     {/* Đã giao (Completed) */}
-                      {statusInfo.code === 3 && (
+                      {statusInfo.code === 3 && order.items?.length === 1 && (
                           <>
-                              {!returnRequest ? (
+                              {!returnMap[order.items[0].orderItemId] ? (
                                   <Link
-                                      to={`/return-request?orderItemId=${firstItem.orderItemId}`}
+                                      to={`/return-request?orderItemId=${order.items[0].orderItemId}`}
                                       className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-colors text-sm"
                                   >
                                       Return/Exchange Request
@@ -318,22 +407,20 @@ function OrderHistoryPage() {
                                       disabled
                                       className="px-5 py-2.5 bg-stone-100 border border-stone-200 text-stone-500 font-semibold rounded-xl text-sm cursor-not-allowed"
                                   >
-                                      {returnRequest.status === "PENDING" && "Request Submitted"}
-                                      {returnRequest.status === "APPROVED" && "Approved"}
-                                      {returnRequest.status === "REJECTED" && "Rejected"}
-                                      {returnRequest.status === "COMPLETED" && "Completed"}
+                                      {returnMap[order.items[0].orderItemId]?.status === "PENDING" && "Request Submitted"}
+                                      {returnMap[order.items[0].orderItemId]?.status === "APPROVED" && "Approved"}
+                                      {returnMap[order.items[0].orderItemId]?.status === "REJECTED" && "Rejected"}
+                                      {returnMap[order.items[0].orderItemId]?.status === "COMPLETED" && "Completed"}
                                   </button>
                               )}
 
-                              {firstItem && (
-                                  <Link
-                                      to={`/product/${firstItem.productId}#review-form`}
-                                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md shadow-blue-500/20"
-                                  >
-                                      <FiCheckCircle />
-                                      Review Product
-                                  </Link>
-                              )}
+                              <Link
+                                  to={`/product/${order.items[0].productId}#review-form`}
+                                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-md shadow-blue-500/20"
+                              >
+                                  <FiCheckCircle />
+                                  Review Product
+                              </Link>
                           </>
                       )}
 

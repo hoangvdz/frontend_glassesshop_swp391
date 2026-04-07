@@ -90,7 +90,7 @@ function ReturnRequestManagementPage() {
 
             if (newStatus === "APPROVED" && updated?.replacementOrderId) {
                 alert(
-                    `Request approved successfully. Replacement order #${updated.replacementOrderId} has been created.`
+                    `Request approved successfully. Replacement order  #${updated.replacementOrderId} has been created.`
                 );
             } else {
                 alert("Status updated successfully");
@@ -243,7 +243,7 @@ function ReturnRequestManagementPage() {
                                 <th className="px-4">Reason</th>
                                 <th className="px-4">Description</th>
                                 <th className="px-4">Rejection Reason</th>
-                                <th className="px-4">Replacement Order</th>
+                                <th className="px-4">Replacement Order ID</th>
                                 <th className="px-4">Status</th>
                                 <th className="px-4">Created At</th>
                                 <th className="px-4">Resolved At</th>
