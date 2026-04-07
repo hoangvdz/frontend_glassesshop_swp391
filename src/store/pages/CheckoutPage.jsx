@@ -21,6 +21,7 @@ import {
 } from "../services/cartService";
 
 import { checkoutOrder, createVNPayPayment } from "../services/checkoutService";
+import { useToast } from "../../context/ToastContext";
 
 function Toast({ message, visible }) {
   if (!visible) return null;
@@ -48,7 +49,7 @@ function Field({ label, required, icon: Icon, children }) {
 
 function CheckoutPage() {
   const navigate = useNavigate();
-
+  const { showToast: showGlobalToast } = useToast();
   const southernCities = [
     { name: "Hồ Chí Minh", distance: 1 },
     { name: "Bình Dương", distance: 5 },
@@ -118,36 +119,40 @@ function CheckoutPage() {
           } catch { return false; }
         };
 
-        const mapped = cartData.map((item) => ({
-          cartItemId: item.cartItemId,
-          productId: item.productId,
-          name: item.productName || item.product?.name,
-          image:
-            item.imageUrl ||
-            item.product?.imageUrl ||
-            "https://placehold.co/100",
-          price: item.unitPrice || 0,
-          quantity: item.quantity,
-          // Preserving prescription data
-          isLens: item.isLens,
-          sphLeft: item.sphLeft,
-          sphRight: item.sphRight,
-          cylLeft: item.cylLeft,
-          cylRight: item.cylRight,
-          axisLeft: item.axisLeft,
-          axisRight: item.axisRight,
-          addLeft: item.addLeft,
-          addRight: item.addRight,
-          pd: item.pd,
-          prescription: item.prescription,
-          itemType: item.itemType || item.type,
-          isPreorder: item.isPreorder || checkLocalPreorder(item.variantId),
-          variant: {
-            variantId: item.variantId,
-            color: item.variantColor,
-            frameSize: item.variantSize,
-          },
-        }));
+        const mapped = cartData.map((item) => {
+          const rx = item.prescription || {};
+          return {
+            cartItemId: item.cartItemId,
+            productId: item.productId,
+            name: item.productName || item.product?.name || item.name,
+            image:
+              item.imageUrl ||
+              item.product?.imageUrl ||
+              item.variant?.imageUrl ||
+              "https://placehold.co/100",
+            price: item.unitPrice || item.price || 0,
+            quantity: item.quantity,
+            // Preserving prescription data (flat fields with nested fallback)
+            isLens: item.isLens,
+            sphLeft: item.sphLeft ?? rx.sphLeft,
+            sphRight: item.sphRight ?? rx.sphRight,
+            cylLeft: item.cylLeft ?? rx.cylLeft,
+            cylRight: item.cylRight ?? rx.cylRight,
+            axisLeft: item.axisLeft ?? rx.axisLeft,
+            axisRight: item.axisRight ?? rx.axisRight,
+            addLeft: item.addLeft ?? rx.addLeft,
+            addRight: item.addRight ?? rx.addRight,
+            pd: item.pd ?? rx.pd,
+            prescription: item.prescription,
+            itemType: item.itemType || item.type,
+            isPreorder: item.isPreorder || item.isPreOrder || checkLocalPreorder(item.variantId || item.variant?.variantId),
+            variant: item.variant || {
+              variantId: item.variantId,
+              color: item.variantColor,
+              frameSize: item.variantSize,
+            },
+          };
+        });
 
         setCartItems(mapped);
         localStorage.setItem("cart", JSON.stringify(mapped));
@@ -192,7 +197,7 @@ function CheckoutPage() {
 
   const updateQty = async (productId, variantId, delta, cartItemId) => {
     const item = cartItems.find(
-      (i) => String(i.cartItemId) === String(cartItemId),
+      (i) => String(i.cartItemId || i.variant?.variantId) === String(cartItemId || variantId),
     );
     if (!item) return;
     const newQty = item.quantity + delta;
@@ -200,28 +205,39 @@ function CheckoutPage() {
       await removeItem(productId, variantId, cartItemId);
       return;
     }
+
+    const user = localStorage.getItem("currentUser") || localStorage.getItem("token");
+
     try {
-      await updateCartItemService(cartItemId, newQty);
+      if (user && cartItemId) {
+        await updateCartItemService(cartItemId, newQty);
+      }
       const updated = cartItems.map((i) =>
-        String(i.cartItemId) === String(cartItemId)
+        String(i.cartItemId || i.variant?.variantId) === String(cartItemId || variantId)
           ? { ...i, quantity: newQty }
           : i,
       );
       setCartItems(updated);
       localStorage.setItem("cart", JSON.stringify(updated));
+      window.dispatchEvent(new Event("storage"));
     } catch (error) {
       showToast("Quantity update failed!");
     }
   };
 
   const removeItem = async (productId, variantId, cartItemId) => {
+    const user = localStorage.getItem("currentUser") || localStorage.getItem("token");
+
     try {
-      await deleteCartItemService(cartItemId);
+      if (user && cartItemId) {
+        await deleteCartItemService(cartItemId);
+      }
       const updated = cartItems.filter(
-        (i) => String(i.cartItemId) !== String(cartItemId),
+        (i) => String(i.cartItemId || i.variant?.variantId) !== String(cartItemId || variantId),
       );
       setCartItems(updated);
       localStorage.setItem("cart", JSON.stringify(updated));
+      window.dispatchEvent(new Event("storage"));
       if (updated.length === 0) navigate("/shop");
     } catch (error) {
       showToast("Failed to remove product!");
@@ -230,6 +246,16 @@ function CheckoutPage() {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+
+    // Guest check — must be logged in to place an order
+    const currentUser = localStorage.getItem("currentUser") || localStorage.getItem("token");
+    if (!currentUser) {
+      showGlobalToast("Please log in to place your order.");
+      setTimeout(() => {
+        navigate("/login", { state: { from: "/checkout" } });
+      }, 1500);
+      return;
+    }
 
     if (
       !formData.fullName ||

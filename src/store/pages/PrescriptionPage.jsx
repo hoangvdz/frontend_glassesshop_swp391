@@ -222,12 +222,17 @@ export default function PrescriptionPage() {
       const cartItem = {
         cartItemId: Date.now(),
         productId: productId,
+        variantId: variantId,
         name: product.name,
+        productName: product.name,
         brand: product.brand,
         imageUrl: variant?.imageUrl || product.imageUrl || product.img,
         price: finalPrice,
+        unitPrice: finalPrice,
         quantity: quantityFromUrl,
         variant: variant,
+        variantColor: variant?.color,
+        variantSize: variant?.frameSize,
         isPreOrder: isOutOfStock,
         isLens: false,
       };
@@ -323,16 +328,22 @@ export default function PrescriptionPage() {
       const cartItemFrame = {
         cartItemId: Date.now(), // Temp ID for guest
         productId: productId,
+        variantId: variantId,
         name: product.name,
+        productName: product.name,
         brand: product.brand,
         imageUrl: variant?.imageUrl || product.imageUrl || product.img,
         price: framePrice,
         unitPrice: framePrice, // For CheckoutPage mapping compatibility
         quantity: quantityFromUrl,
         variant: variant,
+        variantColor: variant?.color,
+        variantSize: variant?.frameSize,
         isPreOrder: variant?.stockQuantity === 0,
         isLens: true,
         prescription: prescriptionData,
+        // Flat prescription fields for merge/checkout compatibility
+        ...prescriptionData,
       };
 
       cart.push(cartItemFrame);
@@ -342,13 +353,17 @@ export default function PrescriptionPage() {
         const cartItemLens = {
           cartItemId: Date.now() + 1, // Temp ID for guest
           productId: lensProduct.id || lensProduct.productId,
+          variantId: lensVariantId,
           name: lensProduct.name,
+          productName: lensProduct.name,
           brand: lensProduct.brand,
           imageUrl: lensVariant?.imageUrl || lensProduct.imageUrl || lensProduct.img,
           price: lensPrice,
           unitPrice: lensPrice,
           quantity: quantityFromUrl,
           variant: lensVariant,
+          variantColor: lensVariant?.color,
+          variantSize: lensVariant?.frameSize,
           isPreOrder: lensVariant?.stockQuantity === 0,
           isLens: false,
         };
