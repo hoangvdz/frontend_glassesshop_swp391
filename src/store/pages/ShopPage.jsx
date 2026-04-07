@@ -13,14 +13,13 @@ import {
 // API
 import { getAllProducts } from "../services/productService";
 
-const CATEGORIES = ["All", "frame", "lens", "accessory"];
+const CATEGORIES = ["All", "frame", "lens"];
 
 // Label hiển thị đẹp hơn cho từng category
 const CATEGORY_LABELS = {
   All: "All",
   frame: "Frame",
   lens: "Lens",
-  accessory: "Accessory",
 };
 
 const SORT_OPTIONS = [
@@ -382,7 +381,7 @@ function ShopPage() {
                       <img
                         src={product.img}
                         alt={product.name}
-                        className="w-full h-full object-contain bg-white p-2 group-hover:scale-105 transition-transform duration-700 ease-out"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
                       <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm text-stone-600 text-[10px] font-medium tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">
                         {product.brand}
