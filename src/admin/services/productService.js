@@ -35,7 +35,7 @@ export const getAllProducts = async () => {
 
 export const createProduct = async (form) => {
   const payload = {
-    productType: form.type, // FRAME / ACCESSORY
+    productType: form.type, // FRAME / LENS
     name: form.name,
     brand: form.brand,
     description: form.description || "",

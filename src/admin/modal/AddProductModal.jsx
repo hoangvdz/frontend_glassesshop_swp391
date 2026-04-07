@@ -130,28 +130,6 @@ const CATEGORIES = [
       { name: "stock", label: "Stock", placeholder: "0", isNumber: true },
     ],
   },
-  {
-    value: "ACCESSORY",
-    label: "Accessories",
-    desc: "Glasses case, cloth, strap...",
-    emoji: "🧴",
-    color: "emerald",
-    variantFields: [
-      { name: "color", label: "Color", placeholder: "e.g. Navy Blue, Pink..." },
-      {
-        name: "material",
-        label: "Material",
-        placeholder: "e.g. Leather, Microfiber...",
-      },
-      {
-        name: "image",
-        label: "Image URL",
-        placeholder: "https://…",
-        isImage: true,
-      },
-      { name: "stock", label: "Stock", placeholder: "0", isNumber: true },
-    ],
-  },
 ];
 
 const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.value, c]));
