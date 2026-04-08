@@ -18,10 +18,13 @@ import {
     FiDollarSign,
     FiFileText
 } from "react-icons/fi";
-import { getOrderDetails, updatePaymentMethod } from "../services/orderService";
+import { getOrderDetails, updatePaymentMethod, cancelOrder } from "../services/orderService";
+import { getReturnRequestsByOrderItemApi } from "../api/returnRequestApi";
 import { createVNPayPayment } from "../services/checkoutService";
+import { addToCartService } from "../services/cartService";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "../../context/ToastContext";
+import { useNavigate } from "react-router-dom";
 
 const PrescriptionInfoBlock = ({ item }) => {
   if (!item) return null;
@@ -79,14 +82,31 @@ const PrescriptionInfoBlock = ({ item }) => {
 function ShippingProgressPage() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
+  const [returnMap, setReturnMap] = useState({});
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         const data = await getOrderDetails(id);
         setOrder(data);
+
+        // Fetch return requests for items
+        const map = {};
+        for (const item of data.items || []) {
+          try {
+            const res = await getReturnRequestsByOrderItemApi(item.orderItemId);
+            const requests = Array.isArray(res?.data?.data) ? res.data.data : [];
+            if (requests.length > 0) {
+              map[item.orderItemId] = requests[0];
+            }
+          } catch {
+            // Ignore
+          }
+        }
+        setReturnMap(map);
       } catch (err) {
         console.error("Error fetching order dashboard:", err);
       } finally {
@@ -94,6 +114,8 @@ function ShippingProgressPage() {
       }
     };
     fetchOrder();
+    const interval = setInterval(fetchOrder, 10000); // 10s
+    return () => clearInterval(interval);
   }, [id]);
 
   if (loading) {
@@ -125,21 +147,94 @@ function ShippingProgressPage() {
 
   const handlePayBalance = async (method) => {
     if (method === "VNPAY") {
-      const remaining = order.finalTotal - order.depositAmount;
+      const remaining = order.total - (order.depositAmount || 0);
       try {
-        const url = await createVNPayPayment(remaining, order.orderId);
+        const url = await createVNPayPayment(remaining, order.orderId || order.id);
         window.location.href = url;
       } catch (err) {
         showToast("Failed to initiate VNPay payment", "error");
       }
     } else {
       try {
-        await updatePaymentMethod(order.orderId, "COD");
+        await updatePaymentMethod(order.orderId || order.id, "COD");
         showToast("Balance will be paid via COD upon delivery");
         setTimeout(() => window.location.reload(), 1500);
       } catch (err) {
         showToast("Failed to update payment method", "error");
       }
+    }
+  };
+
+  const handleBuyAgain = async () => {
+    try {
+      showToast("Adding items to cart...");
+      for (const item of order.items) {
+        await addToCartService({
+          variantId: item.variantId,
+          productId: item.productId,
+          quantity: item.quantity,
+          lensOptionId: item.lensOptionId,
+          isPreorder: item.isPreorder,
+          isLens: item.sphLeft != null || item.sphRight != null || item.prescription != null,
+          prescriptionId: item.prescriptionId || item.prescription?.prescriptionId || null,
+          // Pass full prescription parameters down
+          sphLeft: item.sphLeft,
+          sphRight: item.sphRight,
+          cylLeft: item.cylLeft,
+          cylRight: item.cylRight,
+          axisLeft: item.axisLeft,
+          axisRight: item.axisRight,
+          addLeft: item.addLeft,
+          addRight: item.addRight,
+          pd: item.pd
+        });
+      }
+
+      // SYNC CART: Fetch latest from backend and update local storage
+      try {
+        const user = JSON.parse(localStorage.getItem("currentUser"));
+        if (user) {
+          const res = await getCartByUserService(user.userId);
+          const latestCart = Array.isArray(res) ? res : res?.data || [];
+          localStorage.setItem("cart", JSON.stringify(latestCart));
+          window.dispatchEvent(new Event("storage"));
+        }
+      } catch (syncErr) {
+        console.error("Cart sync failed:", syncErr);
+      }
+
+      showToast("Items added to cart! Redirecting to checkout...");
+      setTimeout(() => navigate("/checkout"), 1500);
+    } catch (err) {
+      showToast("Failed to re-order items.", "error");
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    const isPreorder = order.items?.some(i => i.isPreorder);
+    const msg = isPreorder
+      ? "WARNING: This is a pre-order with a deposit already paid. If you cancel now, your deposit will NOT be refunded. Are you sure you want to proceed?"
+      : "Are you sure you want to cancel this order?";
+    if (window.confirm(msg)) {
+      try {
+        const res = await cancelOrder(order.orderId || order.id);
+        if (res.success) {
+          showToast("Order cancelled successfully!");
+          window.location.reload();
+        }
+      } catch (error) {
+        showToast("Cancellation failed: " + (error.response?.data?.message || "System error"), "error");
+      }
+    }
+  };
+
+  const getReturnStatusInfo = (status) => {
+    switch (status) {
+      case "PENDING": return { text: "Pending", color: "text-amber-600", bg: "bg-amber-50" };
+      case "APPROVED": return { text: "Approved", color: "text-blue-600", bg: "bg-blue-50" };
+      case "REJECTED": return { text: "Rejected", color: "text-red-600", bg: "bg-red-50" };
+      case "COMPLETED": return { text: "Completed", color: "text-emerald-600", bg: "bg-emerald-50" };
+      default: return { text: status, color: "text-stone-600", bg: "bg-stone-50" };
     }
   };
 
@@ -176,6 +271,19 @@ function ShippingProgressPage() {
                     </div>
                     
                     <div className="flex flex-col items-end gap-1.5">
+                        {order.rawStatus === "Pending" && (
+                            <button 
+                                onClick={handleCancelOrder}
+                                className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold border border-red-100 hover:bg-red-100 transition-all uppercase tracking-widest mb-1"
+                            >
+                                Cancel Order
+                            </button>
+                        )}
+                        {order.rawStatus === "Cancelled" && (
+                            <span className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold border border-red-100 uppercase tracking-widest mb-1 shadow-sm">
+                                Order Cancelled
+                            </span>
+                        )}
                         {order.depositType === "PARTIAL" && (
                             <div className="flex flex-col items-end text-[11px] space-y-1">
                                 <span className="text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
@@ -204,14 +312,15 @@ function ShippingProgressPage() {
                         <div className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-[2px] bg-slate-100 -z-0">
                             <motion.div 
                                 initial={{ width: 0 }}
-                                animate={{ width: `${(order.status / (steps.length - 1)) * 100}%` }}
-                                className="h-full bg-blue-500" 
+                                animate={{ width: order.rawStatus === "Cancelled" ? "0%" : `${(order.status / (steps.length - 1)) * 100}%` }}
+                                className={`h-full ${order.rawStatus === "Cancelled" ? "bg-red-400" : "bg-blue-500"}`}
                             />
                         </div>
 
                         {steps.map((step) => {
-                            const isActive = order.status >= step.id;
-                            const isCurrent = order.status === step.id;
+                            const isCancelled = order.rawStatus === "Cancelled";
+                            const isActive = !isCancelled && order.status >= step.id;
+                            const isCurrent = !isCancelled && order.status === step.id;
 
                             return (
                                 <div key={step.id} className="relative z-10 flex flex-col items-center group">
@@ -316,26 +425,55 @@ function ShippingProgressPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {order.items.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <img src={item.image || "https://placehold.co/100"} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-100" />
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                                        {item.name}
-                                                        {item.isPreorder && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-bold border border-amber-100 uppercase tracking-tighter">Pre-order</span>}
-                                                    </p>
-                                                    <p className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">ID: #{item.variantId || item.productId}</p>
+                                {order.items.map((item, idx) => {
+                                    const itReq = returnMap[item.orderItemId];
+                                    const itStatus = itReq ? getReturnStatusInfo(itReq.status) : null;
+                                    const isCompleted = order.rawStatus === "Delivered" || order.rawStatus === "Completed";
+
+                                    return (
+                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={item.image || "https://placehold.co/100"} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-100" />
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                                            {item.name}
+                                                            {item.isPreorder && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-bold border border-amber-100 uppercase tracking-tighter">Pre-order</span>}
+                                                        </p>
+                                                        <p className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">ID: #{item.variantId || item.productId}</p>
+                                                        
+                                                        {isCompleted && (
+                                                            <div className="flex items-center gap-2 mt-3">
+                                                                {!itReq ? (
+                                                                    <Link 
+                                                                        to={`/return-request?orderItemId=${item.orderItemId}&orderId=${order.orderId || order.id}`}
+                                                                        className="px-2 py-1 bg-white border border-slate-200 text-slate-600 rounded text-[9px] font-bold hover:bg-slate-50 transition-all uppercase tracking-tight"
+                                                                    >
+                                                                        Return
+                                                                    </Link>
+                                                                ) : (
+                                                                    <span className={`px-2 py-1 rounded text-[9px] font-bold border uppercase tracking-tight ${itStatus.bg} ${itStatus.color} ${itStatus.color.replace('text', 'border')}`}>
+                                                                        Return: {itStatus.text}
+                                                                    </span>
+                                                                )}
+                                                                <Link 
+                                                                    to={`/product/${item.productId}#review-form`}
+                                                                    className="px-2 py-1 bg-blue-600 text-white rounded text-[9px] font-bold hover:bg-blue-700 transition-all uppercase tracking-tight"
+                                                                >
+                                                                    Review
+                                                                </Link>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <PrescriptionInfoBlock item={item} />
-                                        </td>
-                                        <td className="px-4 py-4 text-center text-sm font-semibold text-slate-600">{item.quantity}</td>
-                                        <td className="px-4 py-4 text-right text-xs font-semibold text-slate-500">{(item.unitPrice || 0).toLocaleString()}₫</td>
-                                        <td className="px-6 py-4 text-right text-sm font-bold text-slate-900">{(item.total || 0).toLocaleString()}₫</td>
-                                    </tr>
-                                ))}
+                                                <PrescriptionInfoBlock item={item} />
+                                            </td>
+                                            <td className="px-4 py-4 text-center text-sm font-semibold text-slate-600">{item.quantity}</td>
+                                            <td className="px-4 py-4 text-right text-xs font-semibold text-slate-500">{(item.unitPrice || 0).toLocaleString()}₫</td>
+                                            <td className="px-6 py-4 text-right text-sm font-bold text-slate-900">{(item.total || 0).toLocaleString()}₫</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -474,7 +612,15 @@ function ShippingProgressPage() {
                         </div>
                     </div>
 
-                    <button className="w-full mt-8 py-2.5 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest">
+                    {(order.rawStatus === "Cancelled" || order.rawStatus === "Delivered" || order.rawStatus === "Completed") && (
+                        <button 
+                            onClick={handleBuyAgain}
+                            className="w-full mt-4 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-bold hover:bg-blue-700 transition-all uppercase tracking-widest shadow-md shadow-blue-500/10"
+                        >
+                            Buy Again
+                        </button>
+                    )}
+                    <button className="w-full mt-3 py-2.5 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest">
                         Support Center
                     </button>
                 </div>

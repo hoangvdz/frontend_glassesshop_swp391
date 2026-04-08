@@ -112,6 +112,8 @@ function AdminOverview() {
     };
 
     fetchData();
+    const interval = setInterval(fetchData, 20000); // 20s
+    return () => clearInterval(interval);
   }, []);
 
   const stats = useMemo(() => {

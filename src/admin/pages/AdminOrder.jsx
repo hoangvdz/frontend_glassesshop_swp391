@@ -218,6 +218,8 @@ function AdminOrders() {
 
   useEffect(() => {
     fetchOrders();
+    const interval = setInterval(fetchOrders, 10000); // refresh orders list every 10s for real-time sync
+    return () => clearInterval(interval);
   }, [fetchOrders]);
 
   const itemsPerPage = 5;

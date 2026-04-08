@@ -15,8 +15,10 @@ import {
 
 import { getMyOrders, cancelOrder } from "../services/orderService";
 import { createVNPayPayment } from "../services/checkoutService";
+import { addToCartService } from "../services/cartService";
 import { updatePaymentMethodApi } from "../api/orderApi";
 import { useToast } from "../../context/ToastContext";
+import { useNavigate } from "react-router-dom";
 
 const PrescriptionInfoBlock = ({ item }) => {
   if (!item) return null;
@@ -77,6 +79,7 @@ function OrderHistoryPage() {
   const [returnMap, setReturnMap] = useState({});
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const TABS = [
     { id: "All", label: "All" },
@@ -103,7 +106,7 @@ function OrderHistoryPage() {
                 map[item.orderItemId] = requests[0];
               }
             } catch {
-              // Ignore if no return request
+              // Ignore
             }
           }
         }
@@ -112,7 +115,10 @@ function OrderHistoryPage() {
         console.error("Fetch orders error:", err);
       }
     };
+
     fetchOrders();
+    const interval = setInterval(fetchOrders, 10000); // 10s
+    return () => clearInterval(interval);
   }, []);
 
   const getReturnStatusInfo = (status) => {
@@ -160,6 +166,51 @@ function OrderHistoryPage() {
       setOrders(prev => prev.map(o => o.orderId === order.orderId ? { ...o, paymentMethod: "COD" } : o));
     } catch (err) {
       showToast("Failed to update payment method.", "error");
+    }
+  };
+
+  const handleBuyAgain = async (orderItems) => {
+    try {
+      showToast("Adding items to cart...");
+      for (const item of orderItems) {
+        await addToCartService({
+          variantId: item.variantId,
+          productId: item.productId,
+          quantity: item.quantity,
+          lensOptionId: item.lensOptionId,
+          isPreorder: item.isPreorder,
+          isLens: item.sphLeft != null || item.sphRight != null || item.prescription != null,
+          prescriptionId: item.prescriptionId || item.prescription?.prescriptionId || null,
+          // Pass full prescription parameters in case it's a direct prescription
+          sphLeft: item.sphLeft,
+          sphRight: item.sphRight,
+          cylLeft: item.cylLeft,
+          cylRight: item.cylRight,
+          axisLeft: item.axisLeft,
+          axisRight: item.axisRight,
+          addLeft: item.addLeft,
+          addRight: item.addRight,
+          pd: item.pd
+        });
+      }
+      
+      // SYNC CART: Fetch latest from backend and update local storage
+      try {
+        const user = JSON.parse(localStorage.getItem("currentUser"));
+        if (user) {
+          const res = await getCartByUserService(user.userId);
+          const latestCart = Array.isArray(res) ? res : res?.data || [];
+          localStorage.setItem("cart", JSON.stringify(latestCart));
+          window.dispatchEvent(new Event("storage"));
+        }
+      } catch (syncErr) {
+        console.error("Cart sync failed:", syncErr);
+      }
+
+      showToast("Items added to cart!", "success");
+      navigate("/checkout");
+    } catch (err) {
+      showToast("Failed to re-order items.", "error");
     }
   };
 
@@ -357,9 +408,7 @@ function OrderHistoryPage() {
                       {statusInfo.code === 1 && (
                         <button onClick={() => handleCancelOrder(order.orderId, order.depositType === "PARTIAL")} className="px-5 py-2.5 bg-white border border-stone-200 text-stone-500 font-semibold rounded-xl hover:bg-red-50 hover:text-red-500 transition-all text-sm flex items-center gap-2"><FiAlertCircle size={16} /> Cancel Order</button>
                       )}
-                      {(statusInfo.code === 2 || statusInfo.code === 1.5 || statusInfo.code === 1) && (
-                        <Link to={`/shipping-progress/${order.orderId}`} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all text-sm shadow-md shadow-blue-500/10"><FiTruck size={16} /> Track Progress</Link>
-                      )}
+                      <Link to={`/shipping-progress/${order.orderId}`} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all text-sm shadow-md shadow-blue-500/10"><FiTruck size={16} /> Track Order</Link>
                       {statusInfo.code === 3 && order.items?.length === 1 && (
                         <>
                           {!returnMap[order.items[0].orderItemId] ? (
@@ -370,8 +419,13 @@ function OrderHistoryPage() {
                           <Link to={`/product/${order.items[0].productId}#review-form`} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 text-sm shadow-md"><FiCheckCircle /> Review</Link>
                         </>
                       )}
-                      {statusInfo.code === 4 && (
-                        <Link to="/shop" className="px-5 py-2.5 bg-stone-100 text-stone-600 font-bold rounded-xl hover:bg-stone-200 transition-all text-sm flex items-center gap-2"><FiShoppingBag size={16} /> Buy Again</Link>
+                      {(statusInfo.code === 4 || statusInfo.code === 3) && (
+                        <button 
+                          onClick={() => handleBuyAgain(order.items)} 
+                          className="px-5 py-2.5 bg-stone-100 text-stone-600 font-bold rounded-xl hover:bg-stone-200 transition-all text-sm flex items-center gap-2"
+                        >
+                          <FiShoppingBag size={16} /> Buy Again
+                        </button>
                       )}
                     </div>
                   </div>

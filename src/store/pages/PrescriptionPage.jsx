@@ -340,10 +340,8 @@ export default function PrescriptionPage() {
         variantColor: variant?.color,
         variantSize: variant?.frameSize,
         isPreorder: variant?.stockQuantity === 0,
-        isLens: true,
-        prescription: prescriptionData,
-        // Flat prescription fields for merge/checkout compatibility
-        ...prescriptionData,
+        isLens: false,
+        prescription: null,
       };
 
       cart.push(cartItemFrame);
@@ -365,7 +363,9 @@ export default function PrescriptionPage() {
           variantColor: lensVariant?.color,
           variantSize: lensVariant?.frameSize,
           isPreorder: lensVariant?.stockQuantity === 0,
-          isLens: false,
+          isLens: true,
+          prescription: prescriptionData,
+          ...prescriptionData,
         };
         cart.push(cartItemLens);
       }
@@ -402,9 +402,8 @@ export default function PrescriptionPage() {
           productId: productId,
           variantId: variantId,
           quantity: quantityFromUrl,
-          isLens: true,
+          isLens: false,
           isPreorder: isOutOfStock,
-          ...prescriptionData,
         };
         await addToCartApi(framePayload);
 
@@ -414,8 +413,9 @@ export default function PrescriptionPage() {
             productId: lensProduct.id || lensProduct.productId,
             variantId: lensVariantId,
             quantity: quantityFromUrl,
-            isLens: false,
-            isPreorder: lensOutOfStock
+            isLens: true,
+            isPreorder: lensOutOfStock,
+            ...prescriptionData,
           };
           await addToCartApi(lensPayload);
         }
