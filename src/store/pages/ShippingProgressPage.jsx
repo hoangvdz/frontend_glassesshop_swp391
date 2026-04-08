@@ -12,15 +12,21 @@ import {
     FiMail, 
     FiMapPin,
     FiClock,
-    FiCalendar
+    FiCalendar,
+    FiAlertCircle,
+    FiZap,
+    FiDollarSign
 } from "react-icons/fi";
-import { getOrderDetails } from "../services/orderService";
+import { getOrderDetails, updatePaymentMethod } from "../services/orderService";
+import { createVNPayPayment } from "../services/checkoutService";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "../../context/ToastContext";
 
 function ShippingProgressPage() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -57,11 +63,31 @@ function ShippingProgressPage() {
   }
 
   const steps = [
-    { id: 0, title: "Confirmed", icon: <FiCheck />, desc: "Order confirmed" },
-    { id: 1, title: "Packaging", icon: <FiPackage />, desc: "Preparing" },
+    { id: 0, title: "Pending", icon: <FiClock />, desc: "Order placed" },
+    { id: 1, title: "Processing", icon: <FiPackage />, desc: "Preparing items" },
     { id: 2, title: "Shipping", icon: <FiTruck />, desc: "On the way" },
-    { id: 3, title: "Delivered", icon: <FiHome />, desc: "Arrived" },
+    { id: 3, title: "Delivered", icon: <FiHome />, desc: "Order completed" },
   ];
+
+  const handlePayBalance = async (method) => {
+    if (method === "VNPAY") {
+      const remaining = order.finalTotal - order.depositAmount;
+      try {
+        const url = await createVNPayPayment(remaining, order.orderId);
+        window.location.href = url;
+      } catch (err) {
+        showToast("Failed to initiate VNPay payment", "error");
+      }
+    } else {
+      try {
+        await updatePaymentMethod(order.orderId, "COD");
+        showToast("Balance will be paid via COD upon delivery");
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (err) {
+        showToast("Failed to update payment method", "error");
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] pt-24 pb-20 font-sans text-slate-900">
@@ -134,7 +160,45 @@ function ShippingProgressPage() {
                             );
                         })}
                     </div>
-                    <div className="h-10" /> {/* Extra space for labels */}
+                    <div className="h-10" /> 
+
+                    {/* Pre-order Balance Payment UI */}
+                    {order.depositType === "PARTIAL" && 
+                     order.status >= 1 && 
+                     order.rawStatus !== "Cancelled" && 
+                     order.paymentStatus !== "PAID" && (
+                        <div className="mt-8 p-6 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="text-sm font-bold text-blue-900 flex items-center gap-2">
+                                        <FiZap className="text-blue-500" /> Settle Remaining Balance
+                                    </h3>
+                                    <p className="text-[11px] text-blue-600 mt-1 max-w-md">
+                                        Your items are ready! Please choose a payment method for the remaining 
+                                        <span className="font-bold mx-1">{(order.finalTotal - order.depositAmount).toLocaleString()}₫</span>.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                    <button 
+                                        onClick={() => handlePayBalance("VNPAY")}
+                                        className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
+                                    >
+                                        VNPay
+                                    </button>
+                                    <button 
+                                        onClick={() => handlePayBalance("COD")}
+                                        className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-blue-200 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-50 transition-all shadow-md shadow-blue-50/50"
+                                    >
+                                        COD
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-blue-100/50 flex items-start gap-2 text-[10px] text-blue-500 italic">
+                                <FiAlertCircle className="mt-0.5" />
+                                <p>You have 12 hours to settle. If no choice is made, it defaults to COD.</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Order Items Table Card */}
@@ -254,6 +318,7 @@ function ShippingProgressPage() {
                     <div className="space-y-6 relative ml-2">
                         <div className="absolute top-1 bottom-1 left-[5px] w-[1px] bg-slate-100" />
                         
+                        {/* Event: Confirmed */}
                         <div className="flex gap-4">
                             <div className="relative z-10 w-[11px] h-[11px] rounded-full bg-blue-500 border-2 border-white shadow-sm mt-1" />
                             <div>
@@ -262,17 +327,46 @@ function ShippingProgressPage() {
                             </div>
                         </div>
                         
+                        {/* Event: Processing / Stock Availability */}
                         <div className="flex gap-4">
-                            <div className="relative z-10 w-[11px] h-[11px] rounded-full bg-slate-100 border-2 border-white mt-1" />
+                            <div className={`relative z-10 w-[11px] h-[11px] rounded-full border-2 border-white mt-1 ${order.status >= 1 ? "bg-blue-500 shadow-sm" : "bg-slate-100"}`} />
                             <div>
-                                <p className="text-xs font-bold text-slate-300 italic uppercase tracking-tighter">Preparing Package</p>
+                                <p className={`text-xs font-bold ${order.status >= 1 ? "text-slate-800" : "text-slate-300"}`}>
+                                    {order.stockReadyAt ? "Inventory Prepared" : "Preparing Package"}
+                                </p>
+                                {order.stockReadyAt ? (
+                                    <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase leading-none">
+                                        {new Date(order.stockReadyAt).toLocaleString("en-US", { month: 'numeric', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                ) : (
+                                    <p className="text-[9px] text-slate-400 mt-1 italic">
+                                        {order.items.some(i => i.isPreorder) ? "Waiting for pre-order stock arrival..." : "Our staff is checking and packing your items."}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
+                        {/* Event: Shipping */}
                         <div className="flex gap-4">
-                            <div className="relative z-10 w-[11px] h-[11px] rounded-full bg-slate-100 border-2 border-white mt-1" />
+                            <div className={`relative z-10 w-[11px] h-[11px] rounded-full border-2 border-white mt-1 ${order.status >= 2 ? "bg-blue-500 shadow-sm" : "bg-slate-100"}`} />
                             <div>
-                                <p className="text-xs font-bold text-slate-300 italic uppercase tracking-tighter">Shipper Pickup</p>
+                                <p className={`text-xs font-bold ${order.status >= 2 ? "text-slate-800" : "text-slate-300"}`}>Shipper Pickup</p>
+                                {order.status >= 2 && (
+                                    <p className="text-[9px] text-blue-500 mt-1 font-bold uppercase tracking-tight">Package handed over to carrier</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Event: Delivered */}
+                        <div className="flex gap-4">
+                            <div className={`relative z-10 w-[11px] h-[11px] rounded-full border-2 border-white mt-1 ${order.status >= 3 ? "bg-green-500 shadow-sm" : "bg-slate-100"}`} />
+                            <div>
+                                <p className={`text-xs font-bold ${order.status >= 3 ? "text-green-600" : "text-slate-300"}`}>Delivered</p>
+                                {order.status >= 3 && order.deliveredAt && (
+                                    <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase leading-none">
+                                        {new Date(order.deliveredAt).toLocaleDateString("en-US")}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>

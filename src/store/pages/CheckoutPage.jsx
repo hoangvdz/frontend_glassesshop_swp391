@@ -15,13 +15,16 @@ import {
 } from "react-icons/fi";
 
 import {
+  clearCartService,
   deleteCartItemService,
   getCartByUserService,
   updateCartItemService,
 } from "../services/cartService";
 
 import { checkoutOrder, createVNPayPayment } from "../services/checkoutService";
+import { cancelOrder, getOrderDetails } from "../services/orderService";
 import { useToast } from "../../context/ToastContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 function Toast({ message, visible }) {
   if (!visible) return null;
@@ -83,6 +86,7 @@ function CheckoutPage() {
     phone: "",
     address: "",
     note: "",
+    depositType: "FULL", 
   });
   const [toast, setToast] = useState({ visible: false, message: "" });
   const [placing, setPlacing] = useState(false);
@@ -108,16 +112,6 @@ function CheckoutPage() {
           // GUEST FLOW: Load from localStorage
           cartData = JSON.parse(localStorage.getItem("cart")) || [];
         }
-
-
-
-        const checkLocalPreorder = (vId) => {
-          try {
-            const raw = localStorage.getItem("frontend_preorders");
-            if (!raw) return false;
-            return !!(JSON.parse(raw)[vId]);
-          } catch { return false; }
-        };
 
         const mapped = cartData.map((item) => {
           const rx = item.prescription || {};
@@ -145,7 +139,7 @@ function CheckoutPage() {
             pd: item.pd ?? rx.pd,
             prescription: item.prescription,
             itemType: item.itemType || item.type,
-            isPreorder: item.isPreorder || item.isPreOrder || checkLocalPreorder(item.variantId || item.variant?.variantId),
+            isPreorder: !!(item.isPreorder ?? item.isPreOrder ?? false),
             variant: item.variant || {
               variantId: item.variantId,
               color: item.variantColor,
@@ -167,6 +161,13 @@ function CheckoutPage() {
     fetchCart();
     if (user) setFormData((prev) => ({ ...prev, fullName: user.name || "" }));
   }, [navigate]);
+
+  // 🔥 TỰ ĐỘNG CHỌN VNPAY NẾU CÓ PREORDER
+  useEffect(() => {
+    if (cartItems.some(i => i.isPreorder)) {
+        setPaymentMethod("VNPAY");
+    }
+  }, [cartItems]);
 
   const total = cartItems.reduce(
     (acc, item) => acc + Number(item.price) * item.quantity,
@@ -244,25 +245,20 @@ function CheckoutPage() {
     }
   };
 
+  const [paymentWindow, setPaymentWindow] = useState(null);
+  const [waitingPayment, setWaitingPayment] = useState(false);
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
 
-    // Guest check — must be logged in to place an order
     const currentUser = localStorage.getItem("currentUser") || localStorage.getItem("token");
     if (!currentUser) {
       showGlobalToast("Please log in to place your order.");
-      setTimeout(() => {
-        navigate("/login", { state: { from: "/checkout" } });
-      }, 1500);
+      setTimeout(() => navigate("/login", { state: { from: "/checkout" } }), 1500);
       return;
     }
 
-    if (
-      !formData.fullName ||
-      !formData.phone ||
-      !formData.address ||
-      !formData.city
-    ) {
+    if (!formData.fullName || !formData.phone || !formData.address || !formData.city) {
       showToast("Please fill in all information!");
       return;
     }
@@ -270,37 +266,89 @@ function CheckoutPage() {
     setPlacing(true);
 
     try {
-      const order = await checkoutOrder(
-        formData,
-        shippingFee,
-        cartItems,
-        paymentMethod,
-      );
+      const order = await checkoutOrder(formData, shippingFee, cartItems, paymentMethod);
 
-
-
-      // ✅ VNPay
+      // ✅ VNPay Payment Flow (Popup + Polling)
       if (paymentMethod === "VNPAY") {
-        const paymentUrl = await createVNPayPayment(
-          order.finalPrice,
-          order.orderId,
-        );
+        let amountToPay = 0;
+        const hasPreorder = cartItems.some(i => i.isPreorder);
 
+        if (hasPreorder && formData.depositType === "PARTIAL") {
+            const inStockTotal = cartItems.filter(i => !i.isPreorder).reduce((acc, i) => acc + (i.price * i.quantity), 0);
+            const preOrderTotal = cartItems.filter(i => i.isPreorder).reduce((acc, i) => acc + (i.price * i.quantity), 0);
+            amountToPay = inStockTotal + (preOrderTotal / 2) + shippingFee;
+        } else {
+            amountToPay = order.finalPrice;
+        }
 
+        const paymentUrl = await createVNPayPayment(amountToPay, order.orderId);
+        
+        // Open Popup
+        const width = 600, height = 700;
+        const left = (window.innerWidth / 2) - (width / 2);
+        const top = (window.innerHeight / 2) - (height / 2);
+        const popup = window.open(paymentUrl, "VNPay Payment", `width=${width},height=${height},left=${left},top=${top}`);
+        
+        setPaymentWindow(popup);
+        setWaitingPayment(true);
 
+        // Start Polling backend for payment confirmation
+        const pollInterval = setInterval(async () => {
+           try {
+              const updatedOrder = await getOrderDetails(order.orderId);
 
-        window.location.href = paymentUrl; // 🚀 chuyển trang
+              if (updatedOrder.paymentStatus === "PAID") {
+                  clearInterval(pollInterval);
+                  popup.close();
+                  setSuccess(true);
+                  // ✅ Chỉ xóa giỏ hàng khi thanh toán THÀNH CÔNG
+                  try {
+                      await clearCartService();
+                  } catch (e) {
+                      console.error("Cart clear failed:", e);
+                  }
+                  localStorage.setItem("cart", JSON.stringify([]));
+                  window.dispatchEvent(new Event("storage"));
+                  setTimeout(() => navigate("/order-success", { state: { order: updatedOrder } }), 2200);
+                  return;
+              }
+              
+              if (popup.closed) {
+                  clearInterval(pollInterval);
+                  // ❌ TỰ ĐỘNG HỦY ĐƠN NẾU ĐÓNG POPUP MÀ CHƯA THANH TOÁN
+                  try {
+                      await cancelOrder(order.orderId);
+                  } catch (err) {
+                      console.error("Cleanup failed:", err);
+                  }
+                  
+                  setWaitingPayment(false);
+                  setPlacing(false);
+                  showToast("Payment cancelled. Order has been removed.");
+              }
+           } catch (pollErr) {
+              console.error("Polling error:", pollErr);
+           }
+        }, 3000);
+
+        // Auto-stop polling after 10 minutes
+        setTimeout(() => clearInterval(pollInterval), 600000);
         return;
       }
 
-      // ✅ COD
+      // ✅ COD Flow
       setSuccess(true);
+      // ✅ Xóa giỏ hàng cho đơn COD (vì đơn này coi như thành công bước đầu)
+      try {
+          await clearCartService();
+      } catch (e) {
+          console.error("Cart clear failed:", e);
+      }
       localStorage.setItem("cart", JSON.stringify([]));
       window.dispatchEvent(new Event("storage"));
-      setTimeout(() => navigate("/"), 2200);
+      setTimeout(() => navigate("/order-success", { state: { order: order } }), 2200);
     } catch (error) {
       showToast(error.message || "Order failed");
-    } finally {
       setPlacing(false);
     }
   };
@@ -402,33 +450,68 @@ function CheckoutPage() {
               Payment
             </h2>
 
-            {/* COD */}
-            <div
-              onClick={() => setPaymentMethod("COD")}
-              className={`p-4 border rounded-xl flex items-center gap-3 cursor-pointer ${
-                paymentMethod === "COD"
-                  ? "border-black bg-stone-50"
-                  : "border-stone-200"
-              }`}
-            >
-              <FiTruck />
-              <div>
-                <p className="text-sm font-medium">Cash on Delivery (COD)</p>
+            {cartItems.some(i => i.isPreorder) && (
+              <div className="mb-6 animate-fadeIn">
+                <p className="text-[10px] text-indigo-500 tracking-[0.2em] font-bold uppercase mb-3 px-1">
+                  Pre-order Options
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(p => ({ ...p, depositType: "FULL" }))}
+                    className={`py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all ${
+                      formData.depositType !== "PARTIAL" ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-stone-100 text-stone-400"
+                    }`}
+                  >
+                    Full Payment (100%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(p => ({ ...p, depositType: "PARTIAL" }))}
+                    className={`py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all ${
+                      formData.depositType === "PARTIAL" ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-stone-100 text-stone-400"
+                    }`}
+                  >
+                    Deposit (50%)
+                  </button>
+                </div>
+                <p className="mt-3 text-[11px] text-stone-400 px-1 italic">
+                  * Pre-orders require VNPay payment.
+                </p>
               </div>
-            </div>
+            )}
 
-            {/* VNPay */}
-            <div
-              onClick={() => setPaymentMethod("VNPAY")}
-              className={`p-4 border rounded-xl flex items-center gap-3 cursor-pointer mt-3 ${
-                paymentMethod === "VNPAY"
-                  ? "border-black bg-stone-50"
-                  : "border-stone-200"
-              }`}
-            >
-              <FiCreditCard />
-              <div>
-                <p className="text-sm font-medium">VNPay Payment</p>
+            <div className="space-y-3">
+              {/* COD */}
+              {!cartItems.some(i => i.isPreorder) && (
+                <div
+                  onClick={() => setPaymentMethod("COD")}
+                  className={`p-4 border rounded-xl flex items-center gap-3 cursor-pointer transition-all ${
+                    paymentMethod === "COD"
+                      ? "border-black bg-stone-50"
+                      : "border-stone-200 hover:border-stone-300"
+                  }`}
+                >
+                  <FiTruck className={paymentMethod === "COD" ? "text-black" : "text-stone-400"} />
+                  <div>
+                    <p className={`text-sm font-medium ${paymentMethod === "COD" ? "text-black" : "text-stone-500"}`}>Cash on Delivery (COD)</p>
+                  </div>
+                </div>
+              )}
+
+              {/* VNPay */}
+              <div
+                onClick={() => setPaymentMethod("VNPAY")}
+                className={`p-4 border rounded-xl flex items-center gap-3 cursor-pointer transition-all ${
+                  paymentMethod === "VNPAY"
+                    ? "border-black bg-stone-50"
+                    : "border-stone-200 hover:border-stone-300"
+                }`}
+              >
+                <FiCreditCard className={paymentMethod === "VNPAY" ? "text-indigo-600" : "text-stone-400"} />
+                <div>
+                  <p className={`text-sm font-medium ${paymentMethod === "VNPAY" ? "text-black" : "text-stone-500"}`}>VNPay Payment</p>
+                </div>
               </div>
             </div>
           </div>
@@ -470,6 +553,18 @@ function CheckoutPage() {
                 {totalWithShipping.toLocaleString()}₫
               </span>
             </div>
+            {cartItems.some(i => i.isPreorder) && formData.depositType === "PARTIAL" && (
+              <div className="flex justify-between font-bold text-lg pt-2 border-t border-indigo-100 bg-indigo-50/50 -mx-6 px-6 py-2 mt-2">
+                <span className="text-indigo-600 text-sm">Pay Today (Items + Shipping)</span>
+                <span className="text-indigo-600">
+                  {(
+                    cartItems.filter(i => !i.isPreorder).reduce((acc, i) => acc + (i.price * i.quantity), 0) +
+                    (cartItems.filter(i => i.isPreorder).reduce((acc, i) => acc + (i.price * i.quantity), 0) / 2) +
+                    shippingFee
+                  ).toLocaleString()}₫
+                </span>
+              </div>
+            )}
           </div>
           <button
             type="submit"
@@ -480,6 +575,46 @@ function CheckoutPage() {
           </button>
         </div>
       </form>
+      
+      {/* ── PAYING OVERLAY ── */}
+      <AnimatePresence>
+        {waitingPayment && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 text-center"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <FiCreditCard size={32} className="animate-pulse" />
+              </div>
+              <h3 className="text-xl font-bold text-stone-900 mb-2">Awaiting Payment</h3>
+              <p className="text-sm text-stone-500 mb-8 leading-relaxed">
+                A secure payment window has been opened. Please complete your transaction there.
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-3 text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 py-3 rounded-2xl">
+                   <div className="w-4 h-4 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                   Waiting for response...
+                </div>
+                
+                <button 
+                  onClick={() => paymentWindow?.focus()}
+                  className="w-full py-4 text-stone-400 hover:text-stone-900 text-xs font-bold uppercase tracking-widest transition-colors"
+                >
+                  Click here if window is hidden
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

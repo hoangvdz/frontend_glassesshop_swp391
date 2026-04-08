@@ -6,7 +6,7 @@ export const checkoutOrder = async (
   items,
   paymentMethod = [],
 ) => {
-  const hasPreOrder = items.some(item => item.isPreorder || item.isPreOrder);
+  const hasPreOrder = items.some(item => (item.isPreorder === true || item.isPreOrder === true));
 
   const payload = {
     fullName: formData.fullName,
@@ -17,7 +17,9 @@ export const checkoutOrder = async (
     shippingFee: parseFloat(shippingFee) || 0,
     voucherDiscount: 0,
     idempotencyKey: String(Date.now()),
-    isPreorder: hasPreOrder 
+    isPreorder: !!hasPreOrder,
+    depositType: formData.depositType || "FULL",
+    shipmentStatus: hasPreOrder ? "PREORDER" : "PENDING"
   };
 
   try {

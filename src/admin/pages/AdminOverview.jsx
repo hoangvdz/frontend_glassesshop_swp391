@@ -9,7 +9,7 @@ import {
   FiTrendingUp,
   FiArrowUpRight,
   FiArrowDownRight,
-  FiCalendar,
+  FiCalendar, FiX
 } from "react-icons/fi";
 
 import { useEffect, useState, useMemo } from "react";
@@ -223,7 +223,7 @@ function AdminOverview() {
   const cancelledOrders = useMemo(() => {
     return orders.filter((o) => o.status === "cancelled");
   }, [orders]);
-  
+
   return (
     <div className="px-8 pt-8 pb-16 bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen">
       {/* ── TITLE ── */}

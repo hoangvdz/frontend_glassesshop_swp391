@@ -11,10 +11,10 @@ import { getAllProducts } from "../services/productService";
 import { addToCartApi } from "../api/cartApi";
 
 import {
-  getMyPrescriptionsApi,
-  savePrescriptionApi,
-  deletePrescriptionApi
-} from "../api/prescriptionApi";
+  getMyUserPrescriptions,
+  saveUserPrescription,
+  deleteUserPrescription
+} from "../services/userPrescriptionService";
 import { FiCheck } from "react-icons/fi";
 import { useToast } from "../../context/ToastContext";
 export default function PrescriptionPage() {
@@ -233,7 +233,7 @@ export default function PrescriptionPage() {
         variant: variant,
         variantColor: variant?.color,
         variantSize: variant?.frameSize,
-        isPreOrder: isOutOfStock,
+        isPreorder: isOutOfStock,
         isLens: false,
       };
 
@@ -339,7 +339,7 @@ export default function PrescriptionPage() {
         variant: variant,
         variantColor: variant?.color,
         variantSize: variant?.frameSize,
-        isPreOrder: variant?.stockQuantity === 0,
+        isPreorder: variant?.stockQuantity === 0,
         isLens: true,
         prescription: prescriptionData,
         // Flat prescription fields for merge/checkout compatibility
@@ -364,7 +364,7 @@ export default function PrescriptionPage() {
           variant: lensVariant,
           variantColor: lensVariant?.color,
           variantSize: lensVariant?.frameSize,
-          isPreOrder: lensVariant?.stockQuantity === 0,
+          isPreorder: lensVariant?.stockQuantity === 0,
           isLens: false,
         };
         cart.push(cartItemLens);

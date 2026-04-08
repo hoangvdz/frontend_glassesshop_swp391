@@ -31,10 +31,9 @@ function AdminSidebar({ collapsed }) {
       aria-label={label}
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
-        `${navItem} ${
-          isActive
-            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        `${navItem} ${isActive
+          ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
         }`
       }
     >
@@ -177,17 +176,15 @@ function AdminSidebar({ collapsed }) {
             )}
           </div>
 
-            {renderItem("/dashboard/return-requests",
-                <FiEye size={18} />,
-                "Return Requests")}
+          {renderItem("/dashboard/return-requests",
+            <FiEye size={18} />,
+            "Return Requests")}
 
-          <div className="relative">
-            {renderItem(
-              "/dashboard/preoders",
-              <CiDeliveryTruck size={18} />,
-              "Delivery",
-            )}
-          </div>
+          {renderItem(
+            "/dashboard/preoders",
+            <CiDeliveryTruck size={18} />,
+            "Pre-order",
+          )}
           <div className="relative">
             {renderItem(
               "/dashboard/prescriptions",

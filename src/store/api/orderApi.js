@@ -26,3 +26,7 @@ export const createPaymentApi = (amount, orderId) => {
 export const updatePaymentStatusApi = (orderId, status) => {
     return axiosClient.patch(`/orders/${orderId}/paymentStatus?status=${status}`)
 }
+
+export const updatePaymentMethodApi = (orderId, method) => {
+    return axiosClient.patch(`/orders/${orderId}/paymentMethod?method=${method}`);
+}

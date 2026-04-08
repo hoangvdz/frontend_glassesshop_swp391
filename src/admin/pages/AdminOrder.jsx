@@ -116,8 +116,34 @@ const OrderRow = memo(({ order, onView }) => {
       </td>
 
       {/* Total */}
-      <td className="px-6 py-4 text-right font-semibold text-gray-800">
-        {order.total.toLocaleString("en-US")} ₫
+      <td className="px-6 py-4 text-right">
+        <div className="flex flex-col items-end">
+          <span className="font-bold text-gray-900">
+            {order.total.toLocaleString("en-US")} ₫
+          </span>
+          {order.depositType === "PARTIAL" && (
+            <div className="flex flex-col items-end mt-1 text-[10px]">
+              <span className="text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
+                Deposit: {order.depositAmount?.toLocaleString("en-US")} ₫
+              </span>
+              <span className="text-gray-400 mt-0.5 whitespace-nowrap">
+                Remain: {(order.total - order.depositAmount).toLocaleString("en-US")} ₫
+              </span>
+            </div>
+          )}
+          {order.depositType === "FULL" && (
+            <span className="text-green-600 text-[10px] font-bold bg-green-50 px-1.5 py-0.5 rounded border border-green-100 mt-1">
+              Paid Full
+            </span>
+          )}
+        </div>
+      </td>
+
+      {/* Payment Method */}
+      <td className="px-6 py-4 text-center">
+        <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-[11px] font-bold uppercase tracking-wider border border-gray-200">
+          {order.paymentMethod || "N/A"}
+        </span>
       </td>
 
       {/* Status */}
@@ -131,6 +157,11 @@ const OrderRow = memo(({ order, onView }) => {
           {order.orderItems?.some((item) => item.isPreorder) && (
             <span className="px-2 py-0.5 text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded-md font-bold uppercase tracking-tight">
               Pre-order
+            </span>
+          )}
+          {order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.status !== "pending" && (
+            <span className="px-2 py-0.5 text-[10px] bg-rose-100 text-rose-700 border border-rose-200 rounded-md font-bold uppercase tracking-tight animate-pulse">
+                Waiting for Balance
             </span>
           )}
           {isOrderPrescription(order) && (
@@ -441,13 +472,13 @@ function AdminOrders() {
           <table className="w-full table-fixed text-sm">
             <thead>
               <tr className="text-xs uppercase text-gray-400 border-b border-gray-100 bg-gray-50/60">
-                <th className="w-[14%] text-left px-6 py-3.5 font-semibold tracking-wider">
+                <th className="w-[12%] text-left px-6 py-3.5 font-semibold tracking-wider">
                   Order Code
                 </th>
-                <th className="w-[30%] text-left px-6 py-3.5 font-semibold tracking-wider">
+                <th className="w-[25%] text-left px-6 py-3.5 font-semibold tracking-wider">
                   Customer
                 </th>
-                <th className="w-[15%] text-right px-6 py-3.5 font-semibold tracking-wider">
+                <th className="w-[18%] text-right px-6 py-3.5 font-semibold tracking-wider">
                   <span
                     onClick={() =>
                       setSortOrder((p) =>
@@ -459,20 +490,23 @@ function AdminOrders() {
                     Total Amount <SortIcon sortOrder={sortOrder} />
                   </span>
                 </th>
+                <th className="w-[10%] text-center px-6 py-3.5 font-semibold tracking-wider">
+                  Method
+                </th>
                 <th className="w-[15%] text-center px-6 py-3.5 font-semibold tracking-wider">
                   Status
                 </th>
-                <th className="w-[16%] text-center px-6 py-3.5 font-semibold tracking-wider">
+                <th className="w-[12%] text-center px-6 py-3.5 font-semibold tracking-wider">
                   Created At
                 </th>
-                <th className="w-[10%] px-6 py-3.5" />
+                <th className="w-[8%] px-6 py-3.5" />
               </tr>
             </thead>
 
             <tbody className="divide-y divide-gray-50">
               {isEmpty ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
+                  <td colSpan={7} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <FiShoppingBag
                         size={40}
