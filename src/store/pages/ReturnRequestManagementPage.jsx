@@ -51,7 +51,7 @@ function ReturnRequestManagementPage() {
                 (item.description || "").toLowerCase().includes(q) ||
                 (item.rejectionReason || "").toLowerCase().includes(q) ||
                 (item.requestType || "").toLowerCase().includes(q) ||
-                String(item.replacementOrderId || "").includes(q);
+                String(item.replacementOrderItemId || "").includes(q);
 
             return matchStatus && matchKeyword;
         });
@@ -88,9 +88,9 @@ function ReturnRequestManagementPage() {
                 )
             );
 
-            if (newStatus === "APPROVED" && updated?.replacementOrderId) {
+            if (newStatus === "APPROVED" && updated?.replacementOrderItemId) {
                 alert(
-                    `Request approved successfully. Replacement order  #${updated.replacementOrderId} has been created.`
+                    `Request approved successfully. Replacement order  #${updated.replacementOrderItemId} has been created.`
                 );
             } else {
                 alert("Status updated successfully");
@@ -243,7 +243,7 @@ function ReturnRequestManagementPage() {
                                 <th className="px-4">Reason</th>
                                 <th className="px-4">Description</th>
                                 <th className="px-4">Rejection Reason</th>
-                                <th className="px-4">Replacement Order ID</th>
+                                <th className="px-4">Replacement Order Item ID</th>
                                 <th className="px-4">Status</th>
                                 <th className="px-4">Created At</th>
                                 <th className="px-4">Resolved At</th>
@@ -286,7 +286,7 @@ function ReturnRequestManagementPage() {
                                     </td>
 
                                     <td className="px-4 py-4 text-stone-700">
-                                        {item.replacementOrderId ? `#${item.replacementOrderId}` : "-"}
+                                        {item.replacementOrderItemId ? `#${item.replacementOrderItemId}` : "-"}
                                     </td>
 
                                     <td className="px-4 py-4">
