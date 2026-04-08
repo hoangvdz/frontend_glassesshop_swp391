@@ -15,12 +15,66 @@ import {
     FiCalendar,
     FiAlertCircle,
     FiZap,
-    FiDollarSign
+    FiDollarSign,
+    FiFileText
 } from "react-icons/fi";
 import { getOrderDetails, updatePaymentMethod } from "../services/orderService";
 import { createVNPayPayment } from "../services/checkoutService";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "../../context/ToastContext";
+
+const PrescriptionInfoBlock = ({ item }) => {
+  if (!item) return null;
+  const rx = item.prescription || item;
+  
+  if (
+    rx.sphLeft == null && rx.sphRight == null &&
+    rx.cylLeft == null && rx.cylRight == null &&
+    rx.addLeft == null && rx.addRight == null &&
+    rx.pd == null
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 bg-blue-50/60 border border-blue-100 rounded-xl p-4 text-left max-w-lg">
+      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-1.5 font-sans">
+        <FiFileText size={14} /> Prescription Details
+      </p>
+      
+      <div className="grid grid-cols-5 gap-2 text-center text-[9px] font-bold text-blue-400 uppercase mb-2">
+        <div className="text-left">Eye</div>
+        <div>SPH</div>
+        <div>CYL</div>
+        <div>AXIS</div>
+        <div>ADD</div>
+      </div>
+      
+      <div className="grid grid-cols-5 gap-2 text-center text-[11px] font-mono text-slate-700 mb-2 items-center bg-white border border-blue-50/50 rounded-lg p-2 shadow-sm shadow-blue-100/20">
+        <div className="text-left font-bold text-slate-500 font-sans text-[10px]">Right (OD)</div>
+        <div>{rx.sphRight ?? "—"}</div>
+        <div>{rx.cylRight ?? "—"}</div>
+        <div>{rx.axisRight != null ? `${rx.axisRight}°` : "—"}</div>
+        <div>{rx.addRight ?? "—"}</div>
+      </div>
+      
+      <div className="grid grid-cols-5 gap-2 text-center text-[11px] font-mono text-slate-700 items-center bg-white border border-blue-50/50 rounded-lg p-2 shadow-sm shadow-blue-100/20">
+        <div className="text-left font-bold text-slate-500 font-sans text-[10px]">Left (OS)</div>
+        <div>{rx.sphLeft ?? "—"}</div>
+        <div>{rx.cylLeft ?? "—"}</div>
+        <div>{rx.axisLeft != null ? `${rx.axisLeft}°` : "—"}</div>
+        <div>{rx.addLeft ?? "—"}</div>
+      </div>
+      
+      {rx.pd && (
+        <div className="mt-3 pt-3 border-t border-blue-100/50 text-[10px] text-slate-500 flex items-center gap-2">
+          <span className="font-bold text-blue-700/70 uppercase tracking-tighter">Pupillary Distance (PD):</span>
+          <span className="font-bold text-blue-800 font-mono tracking-wide bg-white px-2 py-0.5 rounded-md border border-blue-100/50 shadow-sm">{rx.pd} mm</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 function ShippingProgressPage() {
   const { id } = useParams();
@@ -227,6 +281,7 @@ function ShippingProgressPage() {
                                                     <p className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">ID: #{item.variantId}</p>
                                                 </div>
                                             </div>
+                                            <PrescriptionInfoBlock item={item} />
                                         </td>
                                         <td className="px-4 py-4 text-center text-sm font-semibold text-slate-600">{item.quantity}</td>
                                         <td className="px-4 py-4 text-right text-xs font-semibold text-slate-500">{(item.unitPrice || 0).toLocaleString()}₫</td>

@@ -262,6 +262,9 @@ function OrderHistoryPage() {
                           </button>
                         )}
                       </div>
+                      
+                      {/* Show prescription for the first item if it exists and we're not expanded (or always if it matches screenshot) */}
+                      {!isExpanded && <PrescriptionInfoBlock item={order.items[0]} />}
                     </div>
                   )}
 
@@ -301,6 +304,9 @@ function OrderHistoryPage() {
                                 </div>
                               )}
                             </div>
+                            
+                            <PrescriptionInfoBlock item={item} />
+
                             {itReq && (
                               <div className="mt-4 rounded-xl border border-stone-200 bg-white p-4">
                                 <div className="flex items-center justify-between flex-wrap gap-2">
