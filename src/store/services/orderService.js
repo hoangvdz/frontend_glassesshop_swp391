@@ -3,17 +3,21 @@ import {
   cancelOrderApi,
   getOrderByIdApi,
   updatePaymentStatusApi,
+  updatePaymentMethodApi,
 } from "../api/orderApi";
 
 // map status backend → frontend
 const mapStatus = (status) => {
-  switch (status) {
+  const s = status?.toUpperCase() || "PENDING";
+  switch (s) {
     case "PENDING":
+    case "PREORDER":
       return "PENDING";
     case "PROCESSING":
       return "PROCESSING";
     case "DELIVERING":
     case "SHIPPING":
+    case "SHIPPED":
       return "SHIPPING";
     case "DELIVERED":
     case "COMPLETED":
@@ -22,18 +26,21 @@ const mapStatus = (status) => {
     case "CANCELLED":
       return "CANCELLED";
     default:
-      return status || "PENDING";
+      return s;
   }
 };
 
 const mapStatusLabel = (status) => {
-  switch (status) {
+  const s = status?.toUpperCase() || "PENDING";
+  switch (s) {
     case "PENDING":
+    case "PREORDER":
       return "Pending";
     case "PROCESSING":
       return "Processing";
     case "DELIVERING":
     case "SHIPPING":
+    case "SHIPPED":
       return "Shipping";
     case "DELIVERED":
     case "COMPLETED":
@@ -42,7 +49,7 @@ const mapStatusLabel = (status) => {
     case "CANCELLED":
       return "Cancelled";
     default:
-      return status || "Pending";
+      return "Pending";
   }
 };
 
@@ -58,6 +65,10 @@ export const getMyOrders = async () => {
     date: new Date(order.orderDate).toLocaleDateString("en-US"),
     status: mapStatus(order.status),
     total: order.finalPrice,
+    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
+    depositAmount: order.depositAmount,
+    depositType: order.depositType,
 
     items: order.orderItems.map((item) => ({
       orderItemId: item.orderItemId, // ✅ Cần để đổi trả
@@ -150,4 +161,9 @@ export const updatePaymentStatus = async (orderId, resCode, transCode) => {
   }
 
   return responseData;
+};
+
+export const updatePaymentMethod = async (orderId, method) => {
+  const res = await updatePaymentMethodApi(orderId, method);
+  return res.data;
 };

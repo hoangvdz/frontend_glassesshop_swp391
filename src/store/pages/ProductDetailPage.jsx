@@ -263,7 +263,7 @@ function ProductDetailPage() {
       variant: selectedVariant,
       variantColor: selectedVariant.color,
       variantSize: selectedVariant.frameSize,
-      isPreOrder: isOutOfStock,
+      isPreorder: isOutOfStock,
     };
 
     const idx = cart.findIndex(

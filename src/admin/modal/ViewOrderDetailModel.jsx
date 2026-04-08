@@ -57,7 +57,7 @@ const STATUS_CONFIG = {
 const ORDER_STEPS = [
   {
     key: "pending",
-    label: "Order Placed",
+    label: "Pending",
     icon: FiClock,
     description: "Order received",
   },
@@ -69,7 +69,7 @@ const ORDER_STEPS = [
   },
   {
     key: "shipped",
-    label: "Shipped",
+    label: "Shipping",
     icon: FiTruck,
     description: "On the way",
   },
@@ -86,9 +86,10 @@ function OrderProgressStepper({ currentStatus }) {
     .toString()
     .toLowerCase()
     .trim();
+  const normalizedStatus = statusLower === "delivering" ? "shipped" : statusLower;
   const isCancelled = statusLower === "cancelled";
   const currentStepIndex = ORDER_STEPS.findIndex(
-    (step) => step.key === statusLower,
+    (step) => step.key === normalizedStatus,
   );
 
   if (isCancelled) {
@@ -187,7 +188,10 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
     .toString()
     .toLowerCase()
     .trim();
-  const status = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.pending;
+  const normalizedStatus = (currentStatus === "delivering" || currentStatus === "shipped") ? "shipped" 
+                         : (currentStatus === "preorder" || currentStatus === "pending") ? "pending"
+                         : currentStatus;
+  const status = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.pending;
 
   // Kiểm tra đơn hàng có prescription không (Broad + Deep scan)
   const isPrescriptionOrder =
@@ -247,7 +251,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
   });
 
   // Chặn xử lý đơn hàng Pre-order tại trang Order thông thường
-  const isPreOrderBlocked = isPreOrderOrder && currentStatus === "pending";
+  const isPreOrderBlocked = isPreOrderOrder && (currentStatus === "pending" || currentStatus === "preorder");
 
   return (
     <AnimatePresence>
@@ -576,6 +580,31 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                         ₫
                       </span>
                     </div>
+
+                    {/* Pre-order Payment Info */}
+                    {order.depositType === "PARTIAL" && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
+                        <div className="flex justify-between text-[11px]">
+                          <span className="text-stone-400">Deposit Paid ({order.paymentMethod})</span>
+                          <span className="font-bold text-stone-600">
+                            {order.depositAmount?.toLocaleString("vi-VN")} ₫
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 px-3 bg-white rounded-lg border border-blue-100">
+                          <span className="text-xs font-bold text-blue-700">Remaining Balance</span>
+                          <div className="flex flex-col items-end">
+                            <span className="font-extrabold text-blue-600">
+                              {(order.finalPrice - order.depositAmount).toLocaleString("vi-VN")} ₫
+                            </span>
+                            {order.paymentStatus === "PAID" ? (
+                              <span className="text-[10px] text-green-600 font-bold uppercase">Settled</span>
+                            ) : (
+                              <span className="text-[10px] text-amber-600 font-bold uppercase animate-pulse">Unsettled</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -676,46 +705,72 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                   ) : (
                     /* 3. Actions bình thường cho các trường hợp còn lại */
                     <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
-                      {currentStatus === "pending" && (
-                        <button
-                          onClick={() => onUpdateStatus("processing")}
-                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
-                        >
-                          Confirm & Pack
-                        </button>
-                      )}
-                      {currentStatus === "processing" && (
-                        <button
-                          onClick={() => onUpdateStatus("shipped")}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
-                        >
-                          Ship Now
-                        </button>
-                      )}
-                      {currentStatus === "shipped" && (
-                        <button
-                          onClick={() => onUpdateStatus("completed")}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
-                        >
-                          Delivery Success
-                        </button>
-                      )}
-                      {["pending", "processing"].includes(currentStatus) && (
-                        <button
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                "Are you sure you want to cancel this order?",
-                              )
-                            ) {
-                              onUpdateStatus("cancelled");
-                            }
-                          }}
-                          className="px-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors"
-                        >
-                          Cancel Order
-                        </button>
-                      )}
+                       {currentStatus === "pending" && (
+                         <button
+                           onClick={() => onUpdateStatus("processing")}
+                           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                         >
+                           Confirm & Pack
+                         </button>
+                       )}
+                       {currentStatus === "processing" && (
+                         <div className="flex-1 flex flex-col gap-2">
+                           {order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD" && (
+                             <div className="flex items-center gap-1.5 p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-[10px] font-bold uppercase animate-pulse">
+                               <FiAlertCircle size={12} /> Waiting for customer to pay balance or choose COD
+                             </div>
+                           )}
+                           <div className="flex gap-2">
+                             <button
+                               onClick={() => {
+                                 const isPartialUnpaid = order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD";
+                                 if (isPartialUnpaid) {
+                                   alert("Cannot ship pre-order. The customer must pay the remaining balance or it must default to COD (after 12h).");
+                                   return;
+                                 }
+                                 onUpdateStatus("shipped");
+                               }}
+                               disabled={order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD"}
+                               className={`flex-1 text-white text-xs font-semibold py-2 rounded-lg transition-colors ${order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD"
+                                   ? "bg-gray-400 cursor-not-allowed"
+                                   : "bg-blue-600 hover:bg-blue-700"
+                                 }`}
+                             >
+                               Ship Now
+                             </button>
+                             <button
+                               onClick={() => {
+                                 if (window.confirm("Are you sure you want to cancel this order?")) {
+                                   onUpdateStatus("cancelled");
+                                 }
+                               }}
+                               className="px-4 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center gap-2"
+                             >
+                               <FiX size={14} /> Cancel
+                             </button>
+                           </div>
+                         </div>
+                       )}
+                       {["shipped", "delivering"].includes(currentStatus) && (
+                         <button
+                           onClick={() => onUpdateStatus("completed")}
+                           className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                         >
+                           Delivery Success
+                         </button>
+                       )}
+                       {currentStatus === "pending" && (
+                         <button
+                           onClick={() => {
+                             if (window.confirm("Are you sure you want to cancel this order?")) {
+                               onUpdateStatus("cancelled");
+                             }
+                           }}
+                           className="px-4 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors"
+                         >
+                           Cancel Order
+                         </button>
+                       )}
                     </div>
                   )}
                 </div>
