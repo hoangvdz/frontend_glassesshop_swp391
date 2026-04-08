@@ -10,12 +10,66 @@ import {
   FiAlertCircle,
   FiDollarSign,
   FiZap,
+  FiFileText,
 } from "react-icons/fi";
 
 import { getMyOrders, cancelOrder } from "../services/orderService";
 import { createVNPayPayment } from "../services/checkoutService";
 import { updatePaymentMethodApi } from "../api/orderApi";
 import { useToast } from "../../context/ToastContext";
+
+const PrescriptionInfoBlock = ({ item }) => {
+  if (!item) return null;
+  const rx = item.prescription || item;
+  
+  if (
+    rx.sphLeft == null && rx.sphRight == null &&
+    rx.cylLeft == null && rx.cylRight == null &&
+    rx.addLeft == null && rx.addRight == null &&
+    rx.pd == null
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 bg-indigo-50/60 border border-indigo-100 rounded-xl p-4">
+      <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+        <FiFileText size={14} /> Prescription Details
+      </p>
+      
+      <div className="grid grid-cols-5 gap-2 text-center text-[10px] font-bold text-indigo-400 uppercase mb-2">
+        <div className="text-left">Eye</div>
+        <div>SPH</div>
+        <div>CYL</div>
+        <div>AXIS</div>
+        <div>ADD</div>
+      </div>
+      
+      <div className="grid grid-cols-5 gap-2 text-center text-xs font-mono text-gray-700 mb-2 items-center bg-white border border-indigo-50/50 rounded-lg p-2 shadow-sm shadow-indigo-100/20">
+        <div className="text-left font-semibold text-gray-500 font-sans text-[11px]">Right (OD)</div>
+        <div>{rx.sphRight ?? "—"}</div>
+        <div>{rx.cylRight ?? "—"}</div>
+        <div>{rx.axisRight != null ? `${rx.axisRight}°` : "—"}</div>
+        <div>{rx.addRight ?? "—"}</div>
+      </div>
+      
+      <div className="grid grid-cols-5 gap-2 text-center text-xs font-mono text-gray-700 items-center bg-white border border-indigo-50/50 rounded-lg p-2 shadow-sm shadow-indigo-100/20">
+        <div className="text-left font-semibold text-gray-500 font-sans text-[11px]">Left (OS)</div>
+        <div>{rx.sphLeft ?? "—"}</div>
+        <div>{rx.cylLeft ?? "—"}</div>
+        <div>{rx.axisLeft != null ? `${rx.axisLeft}°` : "—"}</div>
+        <div>{rx.addLeft ?? "—"}</div>
+      </div>
+      
+      {rx.pd && (
+        <div className="mt-3 pt-3 border-t border-indigo-100/50 text-[11px] text-gray-500 flex items-center gap-2">
+          <span className="font-medium text-indigo-700/70">Pupillary Distance (PD):</span>
+          <span className="font-bold text-indigo-800 font-mono tracking-wide bg-white px-2 py-0.5 rounded-md border border-indigo-100/50 shadow-sm">{rx.pd} mm</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
