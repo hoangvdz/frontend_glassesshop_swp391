@@ -127,7 +127,7 @@ function OrderHistoryPage() {
 
   const handleCancelOrder = async (orderId, isPreorder) => {
     const msg = isPreorder
-      ? "Are you sure? This is a pre-order with a deposit. If you cancel, your deposit WILL NOT be refunded."
+      ? "WARNING: This is a pre-order with a deposit already paid. If you cancel now, your deposit will NOT be refunded. Are you sure you want to proceed?"
       : "Are you sure you want to cancel this order?";
     if (window.confirm(msg)) {
       try {
@@ -226,10 +226,10 @@ function OrderHistoryPage() {
                         {order.depositType === "PARTIAL" && (
                           <div className="flex flex-col items-end text-[11px] mt-0.5 space-y-0.5">
                             <span className="text-stone-400 bg-stone-100 px-2 py-0.5 rounded-md font-medium">
-                              Paid: {order.depositAmount?.toLocaleString("en-US")}₫ ({order.paymentMethod})
+                              Paid: {order.depositAmount?.toLocaleString("en-US")}₫ ({order.depositPaymentMethod || order.paymentMethod})
                             </span>
-                            <span className={`px-2 py-0.5 rounded-md font-bold border ${order.paymentStatus === "PAID" ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-blue-600 bg-blue-50 border-blue-100"}`}>
-                              {order.paymentStatus === "PAID" ? "Settled" : `Remaining: ${(order.total - order.depositAmount).toLocaleString("en-US")}₫`}
+                            <span className={`px-2 py-0.5 rounded-md font-bold border ${order.paymentStatus === "PAID" && (order.paymentMethod === "COD" || order.remainingPaymentStatus === "PAID") ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-blue-600 bg-blue-50 border-blue-100"}`}>
+                              {(order.paymentStatus === "PAID" && (order.paymentMethod === "COD" || order.remainingPaymentStatus === "PAID")) ? "Settled" : `Remaining: ${(order.total - order.depositAmount).toLocaleString("en-US")}₫`}
                             </span>
                             {order.status === "PENDING" && <span className="text-amber-600 font-medium italic mt-1 text-[10px]">Waiting for stock...</span>}
                           </div>
@@ -325,13 +325,24 @@ function OrderHistoryPage() {
                   )}
 
                   <div className="flex flex-col gap-4 mt-6 pt-4 border-t border-stone-100">
-                    {order.depositType === "PARTIAL" && order.status !== "PENDING" && order.status !== "CANCELLED" && order.paymentStatus !== "PAID" && (
+                    {order.depositType === "PARTIAL" && 
+                     order.status !== "PENDING" && 
+                     order.status !== "CANCELLED" && 
+                     (order.paymentStatus !== "PAID" || (order.paymentMethod !== "COD" && order.remainingPaymentStatus !== "PAID")) && (
                       <div className="bg-blue-50/40 border border-blue-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">{order.paymentMethod === "COD" ? "Status: COD Delivery" : "Action: Settle Balance"}</p>
-                          <p className="text-xs text-blue-600/80 leading-relaxed font-medium">{order.paymentMethod === "COD" ? "Remaining balance will be collected on delivery." : "Your items are ready! Please pay via VNPay or switch to COD."}</p>
+                          <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">
+                            {order.paymentMethod === "COD" || (order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) 
+                              ? "Automatic Selection: COD" 
+                              : "Action Required: Balance Payment"}
+                          </p>
+                          <p className="text-xs text-blue-600/80 leading-relaxed font-medium">
+                            {order.paymentMethod === "COD" || (order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12)
+                              ? "Remaining balance will be collected on delivery as the 12h payment window passed or COD was selected."
+                              : "Your items are ready! Please pay the remaining balance via VNPay or switch to COD."}
+                          </p>
                         </div>
-                        {order.paymentMethod !== "COD" ? (
+                        {order.paymentMethod !== "COD" && !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) ? (
                           <div className="flex gap-2 shrink-0">
                             <button onClick={() => handlePayRemainingVNPay(order)} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-1.5 shadow-sm"><FiZap size={14} /> VNPay</button>
                             <button onClick={() => handlePayRemainingCOD(order)} className="px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-xl text-xs font-bold hover:bg-stone-50 transition-all flex items-center gap-1.5 shadow-sm"><FiDollarSign size={14} /> Use COD</button>

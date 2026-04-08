@@ -69,6 +69,8 @@ export const getMyOrders = async () => {
     paymentMethod: order.paymentMethod,
     depositAmount: order.depositAmount,
     depositType: order.depositType,
+    depositPaymentMethod: order.depositPaymentMethod,
+    remainingPaymentStatus: order.remainingPaymentStatus,
 
     items: order.orderItems.map((item) => ({
       orderItemId: item.orderItemId, // ✅ Cần để đổi trả
@@ -113,6 +115,8 @@ export const getOrderDetails = async (id) => {
 
   return {
     ...order,
+    depositPaymentMethod: order.depositPaymentMethod,
+    remainingPaymentStatus: order.remainingPaymentStatus,
     id: order.orderCode,
     orderId: order.orderId,
     date: new Date(order.orderDate).toLocaleDateString("en-US"),

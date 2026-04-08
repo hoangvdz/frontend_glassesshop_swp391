@@ -174,6 +174,26 @@ function ShippingProgressPage() {
                             </p>
                         </div>
                     </div>
+                    
+                    <div className="flex flex-col items-end gap-1.5">
+                        {order.depositType === "PARTIAL" && (
+                            <div className="flex flex-col items-end text-[11px] space-y-1">
+                                <span className="text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
+                                    Paid: {order.depositAmount?.toLocaleString()}₫ ({order.depositPaymentMethod || order.paymentMethod})
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-md font-bold border tracking-tight ${(order.paymentStatus === "PAID_FULL" || order.remainingPaymentStatus === "PAID" || (order.paymentStatus === "PAID" && order.paymentMethod === "COD")) ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-blue-600 bg-blue-50 border-blue-100"}`}>
+                                    {(order.paymentStatus === "PAID_FULL" || order.remainingPaymentStatus === "PAID" || (order.paymentStatus === "PAID" && order.paymentMethod === "COD")) ? "SETTLED" : `REMAINING: ${(order.finalTotal - order.depositAmount).toLocaleString()}₫`}
+                                </span>
+                                {order.rawStatus === "Pending" && <span className="text-amber-600 font-bold italic text-[9px] uppercase tracking-widest">Waiting for stock...</span>}
+                            </div>
+                        )}
+                        {order.depositType === "FULL" && (
+                            <div className="flex flex-col items-end space-y-1">
+                                <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-widest shadow-sm">Full Prepayment ({order.paymentMethod})</span>
+                                {order.rawStatus === "Pending" && order.items?.some(i => i.isPreorder) && <span className="text-amber-600 font-bold italic text-[9px] uppercase tracking-widest text-right">Waiting for stock arrival...</span>}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Progress Card */}
@@ -220,36 +240,61 @@ function ShippingProgressPage() {
                     {order.depositType === "PARTIAL" && 
                      order.status >= 1 && 
                      order.rawStatus !== "Cancelled" && 
-                     order.paymentStatus !== "PAID" && (
-                        <div className="mt-8 p-6 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                     order.remainingPaymentStatus !== "PAID" &&
+                     order.paymentStatus !== "PAID_FULL" &&
+                     order.paymentMethod !== "COD" &&
+                     !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) && (
+                        <div className="mt-8 p-6 bg-blue-50/50 border border-blue-100 rounded-2xl shadow-sm border-dashed">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div>
+                                <div className="flex-1">
                                     <h3 className="text-sm font-bold text-blue-900 flex items-center gap-2">
-                                        <FiZap className="text-blue-500" /> Settle Remaining Balance
+                                        <FiZap className="text-blue-500 animate-pulse" /> ACTION REQUIRED: BALANCE PAYMENT
                                     </h3>
-                                    <p className="text-[11px] text-blue-600 mt-1 max-w-md">
-                                        Your items are ready! Please choose a payment method for the remaining 
-                                        <span className="font-bold mx-1">{(order.finalTotal - order.depositAmount).toLocaleString()}₫</span>.
+                                    <p className="text-[11px] text-blue-600 mt-1 max-w-lg leading-relaxed">
+                                        Your items are ready for shipment! Please settle the remaining balance of 
+                                        <span className="font-bold mx-1">{(order.finalTotal - order.depositAmount).toLocaleString()}₫</span> 
+                                        to proceed. You can pay via VNPay or switch to COD.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
                                     <button 
                                         onClick={() => handlePayBalance("VNPAY")}
-                                        className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
+                                        className="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 flex items-center justify-center gap-2"
                                     >
-                                        VNPay
+                                        <FiDollarSign /> VNPay
                                     </button>
                                     <button 
                                         onClick={() => handlePayBalance("COD")}
-                                        className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-blue-200 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-50 transition-all shadow-md shadow-blue-50/50"
+                                        className="flex-1 sm:flex-none px-5 py-2.5 bg-white border border-blue-200 text-blue-600 rounded-xl text-[11px] font-bold hover:bg-blue-50 transition-all shadow-md shadow-blue-50/50 flex items-center justify-center gap-2"
                                     >
-                                        COD
+                                        <FiTruck /> Use COD
                                     </button>
                                 </div>
                             </div>
-                            <div className="mt-4 pt-4 border-t border-blue-100/50 flex items-start gap-2 text-[10px] text-blue-500 italic">
-                                <FiAlertCircle className="mt-0.5" />
-                                <p>You have 12 hours to settle. If no choice is made, it defaults to COD.</p>
+                            <div className="mt-4 pt-4 border-t border-blue-100/50 flex items-start gap-2.5 text-[10px] text-blue-500">
+                                <FiClock className="mt-0.5 animate-spin-slow" />
+                                <div className="flex flex-col gap-0.5">
+                                    <p className="font-bold uppercase tracking-tight">Time remaining: {Math.max(0, 12 - Math.floor((new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60)))}h left</p>
+                                    <p className="opacity-70">After 12 hours, the payment method will automatically default to COD for shipment.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Show Auto-COD Info if timed out */}
+                    {order.depositType === "PARTIAL" && 
+                     order.status >= 1 && 
+                     order.paymentMethod !== "COD" &&
+                     order.remainingPaymentStatus !== "PAID" &&
+                     order.paymentStatus !== "PAID_FULL" &&
+                     (order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) && (
+                        <div className="mt-8 p-5 bg-emerald-50/50 border border-emerald-100 rounded-2xl flex items-center gap-4">
+                            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">
+                                <FiTruck size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-emerald-800">Payment Period Expired - Defaulting to COD</p>
+                                <p className="text-[10px] text-emerald-600 mt-0.5">The 12-hour window has passed. Your remaining 50% will be collected on delivery.</p>
                             </div>
                         </div>
                     )}
@@ -277,8 +322,11 @@ function ShippingProgressPage() {
                                             <div className="flex items-center gap-3">
                                                 <img src={item.image || "https://placehold.co/100"} alt="" className="w-10 h-10 rounded-lg object-cover border border-slate-100" />
                                                 <div>
-                                                    <p className="text-sm font-bold text-slate-800">{item.name}</p>
-                                                    <p className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">ID: #{item.variantId}</p>
+                                                    <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                                        {item.name}
+                                                        {item.isPreorder && <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-bold border border-amber-100 uppercase tracking-tighter">Pre-order</span>}
+                                                    </p>
+                                                    <p className="text-[10px] font-semibold text-slate-400 uppercase mt-0.5">ID: #{item.variantId || item.productId}</p>
                                                 </div>
                                             </div>
                                             <PrescriptionInfoBlock item={item} />

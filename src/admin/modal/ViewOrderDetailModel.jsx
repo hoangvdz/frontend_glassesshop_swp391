@@ -585,7 +585,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                     {order.depositType === "PARTIAL" && (
                       <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
                         <div className="flex justify-between text-[11px]">
-                          <span className="text-stone-400">Deposit Paid ({order.paymentMethod})</span>
+                          <span className="text-stone-400">Deposit Paid ({order.depositPaymentMethod || order.paymentMethod})</span>
                           <span className="font-bold text-stone-600">
                             {order.depositAmount?.toLocaleString("vi-VN")} ₫
                           </span>
@@ -596,10 +596,12 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                             <span className="font-extrabold text-blue-600">
                               {(order.finalPrice - order.depositAmount).toLocaleString("vi-VN")} ₫
                             </span>
-                            {order.paymentStatus === "PAID" ? (
-                              <span className="text-[10px] text-green-600 font-bold uppercase">Settled</span>
+                            {order.paymentMethod === "COD" || (order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) ? (
+                              <span className="text-[10px] text-green-600 font-bold uppercase">COD (Collect on Delivery)</span>
+                            ) : order.remainingPaymentStatus === "PAID" || order.paymentStatus === "PAID_FULL" ? (
+                              <span className="text-[10px] text-emerald-600 font-bold uppercase">Settled</span>
                             ) : (
-                              <span className="text-[10px] text-amber-600 font-bold uppercase animate-pulse">Unsettled</span>
+                              <span className="text-[10px] text-amber-600 font-bold uppercase animate-pulse">Waiting for customer ({Math.max(0, 12 - Math.floor((new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60)))}h left)</span>
                             )}
                           </div>
                         </div>
@@ -715,40 +717,63 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                        )}
                        {currentStatus === "processing" && (
                          <div className="flex-1 flex flex-col gap-2">
-                           {order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD" && (
-                             <div className="flex items-center gap-1.5 p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-[10px] font-bold uppercase animate-pulse">
-                               <FiAlertCircle size={12} /> Waiting for customer to pay balance or choose COD
-                             </div>
-                           )}
-                           <div className="flex gap-2">
-                             <button
-                               onClick={() => {
-                                 const isPartialUnpaid = order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD";
-                                 if (isPartialUnpaid) {
-                                   alert("Cannot ship pre-order. The customer must pay the remaining balance or it must default to COD (after 12h).");
-                                   return;
-                                 }
-                                 onUpdateStatus("shipped");
-                               }}
-                               disabled={order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD"}
-                               className={`flex-1 text-white text-xs font-semibold py-2 rounded-lg transition-colors ${order.depositType === "PARTIAL" && order.paymentStatus !== "PAID" && order.paymentMethod !== "COD"
+                            {order.depositType === "PARTIAL" && 
+                             order.paymentMethod !== "COD" && 
+                             order.remainingPaymentStatus !== "PAID" && 
+                             order.paymentStatus !== "PAID_FULL" &&
+                             !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) && (
+                              <div className="flex items-center gap-1.5 p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-[10px] font-bold uppercase animate-pulse">
+                                <FiAlertCircle size={12} /> Waiting for customer payment (12h window)
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  const hoursPassed = order.stockReadyAt ? (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) : 0;
+                                  const is12hPassed = hoursPassed > 12;
+                                  const isBalanceSettled = order.paymentMethod === "COD" || 
+                                                          order.remainingPaymentStatus === "PAID" || 
+                                                          order.paymentStatus === "PAID_FULL" ||
+                                                          is12hPassed;
+                                  
+                                  const canShip = order.depositType !== "PARTIAL" || isBalanceSettled;
+                                  
+                                  if (!canShip) {
+                                    alert(`Cannot ship yet. Premium pre-order requires full payment. Customer has ${Math.max(0, 12 - Math.floor(hoursPassed))}h left to pay via VNPay before it defaults to COD.`);
+                                    return;
+                                  }
+                                  onUpdateStatus("shipped");
+                                }}
+                                disabled={
+                                  order.depositType === "PARTIAL" && 
+                                  order.paymentMethod !== "COD" && 
+                                  order.remainingPaymentStatus !== "PAID" && 
+                                  order.paymentStatus !== "PAID_FULL" &&
+                                  !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12)
+                                }
+                                className={`flex-1 text-white text-xs font-semibold py-2 rounded-lg transition-colors ${
+                                  (order.depositType === "PARTIAL" && 
+                                   order.paymentMethod !== "COD" && 
+                                   order.remainingPaymentStatus !== "PAID" && 
+                                   order.paymentStatus !== "PAID_FULL" &&
+                                   !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12))
                                    ? "bg-gray-400 cursor-not-allowed"
                                    : "bg-blue-600 hover:bg-blue-700"
-                                 }`}
-                             >
-                               Ship Now
-                             </button>
-                             <button
-                               onClick={() => {
-                                 if (window.confirm("Are you sure you want to cancel this order?")) {
-                                   onUpdateStatus("cancelled");
-                                 }
-                               }}
-                               className="px-4 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center gap-2"
-                             >
-                               <FiX size={14} /> Cancel
-                             </button>
-                           </div>
+                                }`}
+                              >
+                                Ship Now
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to cancel this order?")) {
+                                    onUpdateStatus("cancelled");
+                                  }
+                                }}
+                                className="px-4 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center gap-2"
+                              >
+                                <FiX size={14} /> Cancel
+                              </button>
+                            </div>
                          </div>
                        )}
                        {["shipped", "delivering"].includes(currentStatus) && (
