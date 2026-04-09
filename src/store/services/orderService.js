@@ -70,7 +70,7 @@ export const getMyOrders = async () => {
     depositAmount: order.depositAmount,
     depositType: order.depositType,
     depositPaymentMethod: order.depositPaymentMethod,
-    remainingPaymentStatus: order.remainingPaymentStatus,
+    remainingPaymentStatus: order.paymentStatus === "PAID_FULL" ? "PAID" : "UNPAID",
 
     items: order.orderItems.map((item) => ({
       orderItemId: item.orderItemId, // ✅ Cần để đổi trả
@@ -116,7 +116,7 @@ export const getOrderDetails = async (id) => {
   return {
     ...order,
     depositPaymentMethod: order.depositPaymentMethod,
-    remainingPaymentStatus: order.remainingPaymentStatus,
+    remainingPaymentStatus: order.paymentStatus === "PAID_FULL" ? "PAID" : "UNPAID",
     id: order.orderCode,
     orderId: order.orderId,
     date: new Date(order.orderDate).toLocaleDateString("en-US"),
@@ -136,35 +136,21 @@ export const getOrderDetails = async (id) => {
 };
 
 export const updatePaymentStatus = async (orderId, resCode, transCode) => {
-  const isSuccess = resCode === "00" && transCode === "00";
+  // Đối với VNPay, mã resCode "00" là chỉ số quan trọng nhất cho thành công
+  const isSuccess = resCode === "00";
   const status = isSuccess ? "PAID" : "UNPAID";
   
-  // Clean orderId just in case VNPay attached spaces or characters
+  // Trích lọc ID số (VD: "ORD-123" -> "123") để đảm bảo gọi API chính xác
   const cleanOrderId = String(orderId).replace(/\D/g, "");
-
-  let responseData = null;
 
   try {
     const res = await updatePaymentStatusApi(cleanOrderId, status);
-    console.log("Service response payment status:", res.data);
-    responseData = res.data;
+    console.log("Payment status update success:", res.data);
+    return res.data;
   } catch (error) {
     console.error("Failed to update payment status API:", error.response?.data || error);
-    // Continue execution to try cancelling the order anyway
+    throw error;
   }
-
-  // Nếu thanh toán thất bại hoặc bị hủy (mã 24 = user cancel, các mã khác = lỗi giao dịch)
-  // → Hủy đơn hàng để không bị kẹt ở PENDING
-  if (!isSuccess) {
-    try {
-      await cancelOrderApi(cleanOrderId);
-      console.log("Order cancelled due to failed/cancelled VNPAY payment. ResponseCode:", resCode);
-    } catch (cancelErr) {
-      console.error("Failed to cancel order after payment failure:", cancelErr.response?.data || cancelErr);
-    }
-  }
-
-  return responseData;
 };
 
 export const updatePaymentMethod = async (orderId, method) => {
