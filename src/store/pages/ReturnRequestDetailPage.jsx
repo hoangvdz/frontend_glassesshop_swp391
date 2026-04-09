@@ -116,8 +116,6 @@ function ReturnRequestDetailPage() {
                             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                                 <InfoChip label="Color" value={request.variantColor} />
                                 <InfoChip label="Size" value={request.variantSize} />
-                                <InfoChip label="Purchased Quantity" value={request.purchasedQuantity} />
-                                <InfoChip label="Return Quantity" value={request.returnQuantity} />
                                 <InfoChip label="Unit Price" value={formatCurrency(request.unitPrice)} />
                                 <InfoChip label="Status" value={<StatusBadge status={request.status} />} />
                             </div>

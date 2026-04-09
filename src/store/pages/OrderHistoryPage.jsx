@@ -444,11 +444,17 @@ function OrderHistoryPage() {
                             const statusInfo = getStatusInfo(order.status);
                             const isExpanded = expandedOrderId === order.id;
                             const itemCount = order.items?.length || 0;
+                            const isSingleItemOrder = itemCount === 1;
+                            const shouldShowBottomReturnAction = statusInfo.code === 3 && (isSingleItemOrder || comboOrder);
                             const singleItemRequest =
-                                order.items?.length === 1
+                                isSingleItemOrder
                                     ? (comboOrder ? comboRequest : returnMap[order.items[0]?.orderItemId])
                                     : null;
-
+                            const displayAmount =
+                                order.finalPrice ??
+                                order.totalPrice ??
+                                order.total ??
+                                0;
                             return (
                                 <div
                                     key={order.id}
@@ -477,7 +483,7 @@ function OrderHistoryPage() {
 
                                             <div className="flex flex-col items-end mt-1">
                                                 <p className="font-bold text-stone-900 text-lg">
-                                                    {order.total?.toLocaleString("en-US")}₫
+                                                    {displayAmount.toLocaleString("en-US")}₫
                                                 </p>
 
                                                 {order.depositType === "PARTIAL" && (
@@ -749,10 +755,10 @@ function OrderHistoryPage() {
                                                 Track Order
                                             </Link>
 
-                                            {statusInfo.code === 3 && (
+                                            {shouldShowBottomReturnAction && (
                                                 <>
-                                                    {!singleItemRequest ? (
-                                                        comboOrder ? (
+                                                    {comboOrder ? (
+                                                        !comboRequest ? (
                                                             <Link
                                                                 to={`/return-request?orderId=${order.orderId}&combo=true`}
                                                                 className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 text-sm"
@@ -760,21 +766,30 @@ function OrderHistoryPage() {
                                                                 Return Combo
                                                             </Link>
                                                         ) : (
+                                                            <button
+                                                                disabled
+                                                                className="px-5 py-2.5 bg-stone-100 border border-stone-200 text-stone-500 rounded-xl text-sm font-semibold"
+                                                            >
+                                                                {getReturnActionLabel(comboRequest)}
+                                                            </button>
+                                                        )
+                                                    ) : isSingleItemOrder ? (
+                                                        !singleItemRequest ? (
                                                             <Link
                                                                 to={`/return-request?orderItemId=${order.items[0].orderItemId}`}
                                                                 className="px-5 py-2.5 bg-white border border-stone-200 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 text-sm"
                                                             >
                                                                 Return Request
                                                             </Link>
+                                                        ) : (
+                                                            <button
+                                                                disabled
+                                                                className="px-5 py-2.5 bg-stone-100 border border-stone-200 text-stone-500 rounded-xl text-sm font-semibold"
+                                                            >
+                                                                {getReturnActionLabel(singleItemRequest)}
+                                                            </button>
                                                         )
-                                                    ) : (
-                                                        <button
-                                                            disabled
-                                                            className="px-5 py-2.5 bg-stone-100 border border-stone-200 text-stone-500 rounded-xl text-sm font-semibold"
-                                                        >
-                                                            {getReturnActionLabel(singleItemRequest)}
-                                                        </button>
-                                                    )}
+                                                    ) : null}
 
                                                     <Link
                                                         to={`/product/${order.items[0].productId}#review-form`}

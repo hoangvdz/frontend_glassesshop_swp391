@@ -26,16 +26,11 @@ function ReturnFormPage() {
     const orderId = queryParams.get("orderId");
     const isComboRequest = queryParams.get("combo") === "true";
 
-    console.log("URL =", location.search);
-    console.log("orderItemId =", orderItemId);
-    console.log("orderId =", orderId);
-    console.log("isComboRequest =", isComboRequest);
-
     const [existingRequest, setExistingRequest] = useState(null);
     const [checking, setChecking] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
-
+    const [bankInfoConfirmed, setBankInfoConfirmed] = useState(false);
     const [formData, setFormData] = useState({
         requestType: "RETURN",
         reason: "",
@@ -85,10 +80,18 @@ function ReturnFormPage() {
             if (!formData.bankAccountNumber.trim()) return true;
             if (!formData.bankName.trim()) return true;
             if (!formData.bankAccountHolder.trim()) return true;
+            if (!bankInfoConfirmed) return true;
         }
 
         return false;
-    }, [orderItemId, orderId, submitting, formData, isReturn]);
+    }, [
+        orderItemId,
+        orderId,
+        submitting,
+        formData,
+        isReturn,
+        bankInfoConfirmed,
+    ]);
 
     const handleChange = (field, value) => {
         setFormData((prev) => ({
@@ -102,6 +105,7 @@ function ReturnFormPage() {
             ...prev,
             requestType: type,
         }));
+        setBankInfoConfirmed(false);
         setSubmitError("");
     };
 
@@ -132,6 +136,10 @@ function ReturnFormPage() {
             }
             if (!formData.bankAccountHolder.trim()) {
                 setSubmitError("Account holder is required for return refund.");
+                return false;
+            }
+            if (!bankInfoConfirmed) {
+                setSubmitError("Please confirm the bank account information is correct.");
                 return false;
             }
         }
@@ -335,32 +343,6 @@ function ReturnFormPage() {
                             />
                         </div>
 
-                        <div>
-                            <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                                <FiPackage /> Return Quantity
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                value={formData.returnQuantity}
-                                onChange={(e) => handleChange("returnQuantity", e.target.value)}
-                                className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-blue-200 transition-all"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                                <FiPackage /> Evidence Image URL
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Optional image URL"
-                                value={formData.imageUrl}
-                                onChange={(e) => handleChange("imageUrl", e.target.value)}
-                                className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-700 outline-none focus:bg-white focus:border-blue-200 transition-all"
-                            />
-                        </div>
-
                         {isReturn && (
                             <div className="space-y-5 rounded-2xl border border-blue-100 bg-blue-50/40 p-5">
                                 <div>
@@ -413,6 +395,19 @@ function ReturnFormPage() {
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 outline-none focus:border-blue-300"
                                         placeholder="Enter account holder name"
                                     />
+                                    <div className="pt-1">
+                                        <label className="flex items-start gap-3 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={bankInfoConfirmed}
+                                                onChange={(e) => setBankInfoConfirmed(e.target.checked)}
+                                                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-sm font-medium text-slate-600 leading-relaxed">
+                                                Please check that the bank account information is correct.
+                                            </span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         )}
