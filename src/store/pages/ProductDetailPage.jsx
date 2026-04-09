@@ -808,7 +808,7 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
           <p
             className={`text-[11px] mt-0.5 ${lensOption === "manual" ? "text-emerald-600" : "text-stone-400"}`}
           >
-            Enter SPH · CYL · AXIS · ADD · PD
+            Enter SPH · CYL · AXIS · ADD
           </p>
         </div>
         <FiChevronDown
@@ -877,25 +877,6 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
                 ))}
               </tbody>
             </table>
-          </div>
-
-          {/* PD row */}
-          <div className="flex items-center gap-3 px-4 py-3 mt-1 border-t border-stone-100 bg-stone-50">
-            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider whitespace-nowrap">
-              PD (mm)
-            </span>
-            <input
-              type="number"
-              value={prescription.pd}
-              onChange={(e) =>
-                setPrescription((p) => ({ ...p, pd: e.target.value }))
-              }
-              placeholder="62"
-              className="w-16 border border-stone-200 rounded-lg px-2 py-1.5 text-sm font-mono text-center bg-white focus:border-emerald-400 focus:ring-1 focus:ring-emerald-200 focus:outline-none transition-all"
-            />
-            <span className="text-[11px] text-stone-400">
-              Pupillary Distance
-            </span>
           </div>
         </div>
       )}
