@@ -3,17 +3,21 @@ import {
   cancelOrderApi,
   getOrderByIdApi,
   updatePaymentStatusApi,
+  updatePaymentMethodApi,
 } from "../api/orderApi";
 
 // map status backend → frontend
 const mapStatus = (status) => {
-  switch (status) {
+  const s = status?.toUpperCase() || "PENDING";
+  switch (s) {
     case "PENDING":
+    case "PREORDER":
       return "PENDING";
     case "PROCESSING":
       return "PROCESSING";
     case "DELIVERING":
     case "SHIPPING":
+    case "SHIPPED":
       return "SHIPPING";
     case "DELIVERED":
     case "COMPLETED":
@@ -22,18 +26,21 @@ const mapStatus = (status) => {
     case "CANCELLED":
       return "CANCELLED";
     default:
-      return status || "PENDING";
+      return s;
   }
 };
 
 const mapStatusLabel = (status) => {
-  switch (status) {
+  const s = status?.toUpperCase() || "PENDING";
+  switch (s) {
     case "PENDING":
+    case "PREORDER":
       return "Pending";
     case "PROCESSING":
       return "Processing";
     case "DELIVERING":
     case "SHIPPING":
+    case "SHIPPED":
       return "Shipping";
     case "DELIVERED":
     case "COMPLETED":
@@ -42,7 +49,7 @@ const mapStatusLabel = (status) => {
     case "CANCELLED":
       return "Cancelled";
     default:
-      return status || "Pending";
+      return "Pending";
   }
 };
 
@@ -58,6 +65,12 @@ export const getMyOrders = async () => {
     date: new Date(order.orderDate).toLocaleDateString("en-US"),
     status: mapStatus(order.status),
     total: order.finalPrice,
+    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
+    depositAmount: order.depositAmount,
+    depositType: order.depositType,
+    depositPaymentMethod: order.depositPaymentMethod,
+    remainingPaymentStatus: order.remainingPaymentStatus,
 
     items: order.orderItems.map((item) => ({
       orderItemId: item.orderItemId, // ✅ Cần để đổi trả
@@ -65,6 +78,19 @@ export const getMyOrders = async () => {
       name: item.productName,
       quantity: item.quantity,
       image: item.imageUrl,
+      variantId: item.variantId,
+      lensOptionId: item.lensOptionId,
+      lensType: item.lensType,
+      sphLeft: item.sphLeft,
+      sphRight: item.sphRight,
+      cylLeft: item.cylLeft,
+      cylRight: item.cylRight,
+      axisLeft: item.axisLeft,
+      axisRight: item.axisRight,
+      addLeft: item.addLeft,
+      addRight: item.addRight,
+      pd: item.pd,
+      isPreorder: item.isPreorder
     })),
   }));
 };
@@ -89,6 +115,8 @@ export const getOrderDetails = async (id) => {
 
   return {
     ...order,
+    depositPaymentMethod: order.depositPaymentMethod,
+    remainingPaymentStatus: order.remainingPaymentStatus,
     id: order.orderCode,
     orderId: order.orderId,
     date: new Date(order.orderDate).toLocaleDateString("en-US"),
@@ -110,14 +138,36 @@ export const getOrderDetails = async (id) => {
 export const updatePaymentStatus = async (orderId, resCode, transCode) => {
   const isSuccess = resCode === "00" && transCode === "00";
   const status = isSuccess ? "PAID" : "UNPAID";
+  
+  // Clean orderId just in case VNPay attached spaces or characters
+  const cleanOrderId = String(orderId).replace(/\D/g, "");
+
+  let responseData = null;
+
   try {
-    const res = await updatePaymentStatusApi(orderId, status);
-
-    console.log("Service response:", res.data);
-
-    return res.data;
+    const res = await updatePaymentStatusApi(cleanOrderId, status);
+    console.log("Service response payment status:", res.data);
+    responseData = res.data;
   } catch (error) {
-    console.error("Service error:", error);
-    throw error;
+    console.error("Failed to update payment status API:", error.response?.data || error);
+    // Continue execution to try cancelling the order anyway
   }
+
+  // Nếu thanh toán thất bại hoặc bị hủy (mã 24 = user cancel, các mã khác = lỗi giao dịch)
+  // → Hủy đơn hàng để không bị kẹt ở PENDING
+  if (!isSuccess) {
+    try {
+      await cancelOrderApi(cleanOrderId);
+      console.log("Order cancelled due to failed/cancelled VNPAY payment. ResponseCode:", resCode);
+    } catch (cancelErr) {
+      console.error("Failed to cancel order after payment failure:", cancelErr.response?.data || cancelErr);
+    }
+  }
+
+  return responseData;
+};
+
+export const updatePaymentMethod = async (orderId, method) => {
+  const res = await updatePaymentMethodApi(orderId, method);
+  return res.data;
 };

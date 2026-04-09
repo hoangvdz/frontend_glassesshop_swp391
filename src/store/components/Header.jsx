@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { FiShoppingBag, FiClipboard } from "react-icons/fi";
+import { FiShoppingBag, FiClipboard, FiBell } from "react-icons/fi";
+import notificationService from "../services/notificationService";
 
 function Header() {
   const navigate = useNavigate();
@@ -31,6 +32,25 @@ function Header() {
   const [scrolled, setScrolled] = useState(false);
 
   const userRef = useRef(null);
+  const notificationRef = useRef(null);
+
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const fetchNotifications = async () => {
+    if (currentUser?.userId) {
+      const data = await notificationService.getNotifications(currentUser.userId);
+      setNotifications(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 5000); // poll every 5s for real-time feel
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
@@ -61,11 +81,17 @@ function Header() {
     };
   }, []);
 
-  /* close dropdown on outside click */
+  /* close dropdowns on outside click */
   useEffect(() => {
     const fn = (e) => {
       if (userRef.current && !userRef.current.contains(e.target)) {
         setShowUserMenu(false);
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(e.target)
+      ) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener("mousedown", fn);
@@ -153,6 +179,118 @@ function Header() {
                 />
                 <span className="mt-0.5">Orders</span>
               </Link>
+
+              {/* NOTIFICATIONS */}
+              {currentUser && (
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="relative p-2 rounded-full hover:bg-stone-100 hover:text-blue-600 transition-colors"
+                    title="Notifications"
+                  >
+                    <FiBell size={18} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full shadow animate-pulse">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {showNotifications && (
+                    <div className="dropdown absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 py-2 z-50">
+                      <div className="px-4 py-2 border-b border-stone-100 flex justify-between items-center">
+                        <span className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                          Notifications
+                        </span>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={async () => {
+                              await notificationService.markAllAsRead(
+                                currentUser.userId
+                              );
+                              fetchNotifications();
+                            }}
+                            className="text-[10px] font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            Mark read
+                          </button>
+                        )}
+                        <button
+                          onClick={async () => {
+                            if (window.confirm("Clear all notifications?")) {
+                              await notificationService.clearAllNotifications(
+                                currentUser.userId
+                              );
+                              fetchNotifications();
+                            }
+                          }}
+                          className="text-[10px] font-medium text-red-500 hover:text-red-600 ml-3"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+
+                      <div className="max-h-[350px] overflow-y-auto scrollbar-hide">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-8 text-center">
+                            <FiBell
+                              size={24}
+                              className="mx-auto text-stone-200 mb-2"
+                            />
+                            <p className="text-xs text-stone-400">
+                              No notifications yet
+                            </p>
+                          </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.notificationId}
+                              onClick={async () => {
+                                if (!n.isRead) {
+                                  await notificationService.markAsRead(
+                                    n.notificationId
+                                  );
+                                  fetchNotifications();
+                                }
+                                setShowNotifications(false);
+                                
+                                const type = n.type?.toUpperCase();
+                                const refId = n.referenceId;
+
+                                if (type === "ORDER" && refId) {
+                                  navigate(`/shipping-progress/${refId}`);
+                                } else if (type === "RETURN") {
+                                  navigate("/my-orders");
+                                } else if (type === "PRESCRIPTION" && refId) {
+                                  navigate(`/prescription/${refId}`);
+                                } else if (n.title?.toLowerCase().includes("order")) {
+                                  // Fallback for legacy notifications or non-typed ones
+                                  navigate("/my-orders");
+                                }
+                              }}
+                              className={`px-4 py-3 border-b border-stone-50 hover:bg-stone-50 cursor-pointer transition-colors ${
+                                !n.isRead ? "bg-blue-50/30" : ""
+                              }`}
+                            >
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="text-[11px] font-bold text-blue-600 uppercase">
+                                  {n.title}
+                                </span>
+                                <span className="text-[9px] text-stone-400">
+                                  {new Date(n.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
+                                {n.message}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* CART */}
               <div className="relative">

@@ -8,8 +8,11 @@ import {
   FiSettings,
   FiUser,
   FiLogOut,
+  FiTrash2,
+  FiCheckCircle
 } from "react-icons/fi";
 import { adminMock } from "../data/adminMock";
+import notificationService from "../../store/services/notificationService";
 
 function AdminTopHeader({ onToggleSidebar, collapsed }) {
   const [open, setOpen] = useState(false);
@@ -19,39 +22,64 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
   const notifRef = useRef(null);
   const navigate = useNavigate();
 
-  const stored = localStorage.getItem("currentUser");
-
-  const admin = stored ? JSON.parse(stored) : adminMock;
+  const [admin, setAdmin] = useState(() => {
+    try {
+      const stored = localStorage.getItem("currentUser");
+      return stored ? JSON.parse(stored) : adminMock;
+    } catch {
+      return adminMock;
+    }
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
     localStorage.removeItem("token");
-
     navigate("/login");
   };
 
-  // Mock notifications
-  const notifications = [
-    {
-      id: 1,
-      text: "Order #1042 has been created",
-      time: "2 minutes ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      text: "Product 'Kính A1' is low on stock",
-      time: "15 minutes ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      text: "June report is ready",
-      time: "1 hour ago",
-      unread: false,
-    },
-  ];
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  const [notifications, setNotifications] = useState([]);
+
+  const fetchNotifications = async () => {
+    const userId = admin?.userId || admin?.id; // Support both naming conventions
+    if (userId) {
+      const data = await notificationService.getNotifications(userId);
+      setNotifications(data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 5000); // 5s for real-time feel
+    
+    const handleStorage = () => {
+      try {
+        const stored = localStorage.getItem("currentUser");
+        if (stored) setAdmin(JSON.parse(stored));
+      } catch (e) {
+        console.error("Storage sync error", e);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [admin?.userId, admin?.id]);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const handleMarkAsRead = async (id) => {
+    await notificationService.markAsRead(id);
+    fetchNotifications();
+  };
+
+  const handleClearAll = async () => {
+    if (window.confirm("Clear all notifications?")) {
+      await notificationService.clearAllNotifications(admin.userId);
+      fetchNotifications();
+    }
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -156,33 +184,65 @@ function AdminTopHeader({ onToggleSidebar, collapsed }) {
                     )}
                   </div>
 
-                  <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-                    {notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`px-4 py-3 flex items-start gap-3 hover:bg-slate-50 transition cursor-pointer ${
-                          n.unread ? "bg-blue-50/40" : ""
-                        }`}
-                      >
-                        {n.unread && (
-                          <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500 " />
-                        )}
-                        {!n.unread && <span className="mt-1.5 w-2 h-2 " />}
-                        <div>
-                          <p className="text-sm text-slate-700 leading-snug">
-                            {n.text}
-                          </p>
-                          <p className="text-xs text-slate-400 mt-1">
-                            {n.time}
-                          </p>
-                        </div>
+                  <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center">
+                        <p className="text-xs text-slate-400">No notifications</p>
                       </div>
-                    ))}
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.notificationId}
+                          onClick={() => {
+                            if (!n.isRead) handleMarkAsRead(n.notificationId);
+                            
+                            // Specific Admin navigation
+                            if (n.type === "ORDER") navigate("/dashboard/orders");
+                            else if (n.type === "RETURN") navigate("/dashboard/return-requests");
+                            else if (n.type === "PRESCRIPTION") navigate("/dashboard/prescriptions");
+                            else if (n.type === "PRODUCT") navigate("/dashboard/products");
+                            else if (n.title.toLowerCase().includes("order")) navigate("/dashboard/orders");
+                            
+                            setNotifOpen(false);
+                          }}
+                          className={`px-4 py-3 flex items-start gap-3 hover:bg-slate-50 transition cursor-pointer ${
+                            !n.isRead ? "bg-blue-50/40" : ""
+                          }`}
+                        >
+                          {!n.isRead && (
+                            <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                          )}
+                          <div>
+                            <p className="text-xs font-bold text-blue-600 uppercase mb-0.5">
+                              {n.title}
+                            </p>
+                            <p className="text-sm text-slate-700 leading-snug">
+                              {n.message}
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
 
-                  <div className="px-4 py-2.5 border-t border-slate-100 text-center">
-                    <button className="text-xs text-blue-500 hover:underline font-medium">
-                      View all notifications
+                  <div className="px-4 py-2 border-t border-slate-100 flex justify-between bg-slate-50/50">
+                    <button 
+                      onClick={async () => {
+                        await notificationService.markAllAsRead(admin.userId);
+                        fetchNotifications();
+                      }}
+                      className="text-[10px] text-blue-500 hover:text-blue-700 font-bold flex items-center gap-1"
+                    >
+                      <FiCheckCircle size={12} /> Mark read
+                    </button>
+                    <button 
+                      onClick={handleClearAll}
+                      className="text-[10px] text-red-500 hover:text-red-700 font-bold flex items-center gap-1"
+                    >
+                      <FiTrash2 size={12} /> Clear all
                     </button>
                   </div>
                 </motion.div>

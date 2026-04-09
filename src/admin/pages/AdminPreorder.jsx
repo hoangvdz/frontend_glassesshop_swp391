@@ -13,6 +13,9 @@ import {
   FiEye,
   FiClock,
   FiAlertCircle,
+  FiZap,
+  FiCheckCircle,
+  FiRefreshCw,
 } from "react-icons/fi";
 import { updateOrderStatus } from "../services/orderService";
 import { motion, AnimatePresence } from "framer-motion";
@@ -126,9 +129,11 @@ function MiniPipeline({ currentStep, cancelled }) {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    PREORDER ROW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const PreorderRow = memo(({ order, onView, checkStock }) => {
+const PreorderRow = memo(({ order, checkStock, onFastApprove }) => {
+  const canApprove = !order.cancelled && order.step === 0 && order.stock >= (order.quantity || 0);
+
   return (
-    <tr className="hover:bg-gray-50/50 group">
+    <tr className="hover:bg-gray-50/50 group text-gray-700">
       {/* ID */}
       <td className="px-5 py-4">
         <span className="font-mono text-xs font-bold bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg tracking-wider">
@@ -167,9 +172,9 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
       </td>
 
       <td className="px-5 py-4">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-          {order.stock}
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${order.stock >= order.quantity ? "bg-green-50 text-green-700 border-green-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${order.stock >= order.quantity ? "bg-green-500" : "bg-purple-400"}`} />
+          In Stock: {order.stock}
         </span>
       </td>
 
@@ -210,7 +215,20 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
         {order.createdAt}
       </td>
       <td className="px-5 py-4 text-right">
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {canApprove && (
+            <div className="relative group/tip">
+              <button
+                onClick={() => onFastApprove(order)}
+                className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+              >
+                <FiCheckCircle size={18} />
+              </button>
+              <span className="pointer-events-none absolute bottom-full mb-2 right-0 px-2 py-1 text-[10px] rounded-md bg-gray-800 text-white opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+                Quick Approve (FIFO)
+              </span>
+            </div>
+          )}
           <div className="relative group/tip">
             <button
               onClick={() => checkStock(order)}
@@ -219,7 +237,7 @@ const PreorderRow = memo(({ order, onView, checkStock }) => {
               <FiEye size={18} />
             </button>
             <span className="pointer-events-none absolute bottom-full mb-2 right-0 px-2 py-1 text-[10px] rounded-md bg-gray-800 text-white opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-              View & Approve
+              View details
             </span>
           </div>
         </div>
@@ -238,6 +256,7 @@ export default function AdminPreorders() {
   const [stepFilter, setStepFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewing, setViewing] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { showToast } = useToast();
   const itemsPerPage = 7;
   const mapStatusToStep = (status) => {
@@ -292,7 +311,7 @@ export default function AdminPreorders() {
             address: item.address,
 
             createdAt: new Date(item.createdAt).toLocaleDateString("en-US"),
-
+            rawDate: new Date(item.createdAt),
             note: item.note,
 
             avatar: `https://ui-avatars.com/api/?name=${item.customerName}`,
@@ -316,7 +335,7 @@ export default function AdminPreorders() {
         }),
       );
 
-      setOrders(mapped);
+      setOrders(mapped.sort((a, b) => a.rawDate - b.rawDate));
     };
 
     fetchPreorder();
@@ -325,7 +344,6 @@ export default function AdminPreorders() {
   const checkStockBeforeConfirm = async (order) => {
     try {
       const stockData = await getStockVariantById(order.variantId);
-
       const currentStock = stockData?.stockQuantity ?? 0;
 
       if (currentStock <= 0) {
@@ -333,22 +351,97 @@ export default function AdminPreorders() {
         return;
       }
 
-      const qtyOrder = order.items?.[0]?.quantity || 0;
+      const qtyOrder = order.quantity || 0;
 
-      if (currentStock < qtyOrder.quantity || qtyOrder.quantity === 0) {
+      if (currentStock < qtyOrder || qtyOrder === 0) {
         showToast("Not enough stock!", "error");
         return;
       }
 
-      showToast("Order confirmed & inventory deducted successfully!");
-
-      // ✅ update UI (trừ stock local)
-
-      // 👉 mở modal nếu bạn vẫn cần
+      showToast("Inventory available for this order.");
       setViewing(order);
     } catch (error) {
       console.error(error);
-      showToast("Error updating stock!", "error");
+      showToast("Error checking stock!", "error");
+    }
+  };
+
+  const handleFastApprove = async (order) => {
+    if (!window.confirm(`Approve order ${order.id} immediately?`)) return;
+    setIsProcessing(true);
+    try {
+      const variantRes = await getStockVariantById(order.variantId);
+      const currentStock = variantRes?.stockQuantity ?? variantRes?.quantity ?? 0;
+      const qtyToDeduct = Number(order.quantity) || 0;
+      const newQuantity = Math.max(0, currentStock - qtyToDeduct);
+
+      await updateStockService(order.variantId, newQuantity);
+      await updateOrderStatus(order.orderId, "PROCESSING");
+
+      showToast(`Order ${order.id} approved!`);
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to approve order.", "error");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAutoFulfill = async () => {
+    // 1. Lọc đơn có thể xử lý (Pending, chưa hủy, có đủ stock)
+    const eligible = orders.filter(o => o.step === 0 && !o.cancelled && o.stock >= o.quantity);
+
+    if (eligible.length === 0) {
+      showToast("No pending orders with sufficient stock were found.", "info");
+      return;
+    }
+
+    // 2. Sắp xếp theo ngày (FIFO)
+    const sorted = [...eligible].sort((a, b) => a.rawDate - b.rawDate);
+
+    // 3. Gom nhóm theo variantId để tính toán tồn kho lũy kế
+    const variantPool = {}; // variantId -> currentAvailableStock
+    const tasks = [];
+
+    for (const o of sorted) {
+      if (variantPool[o.variantId] === undefined) {
+        variantPool[o.variantId] = o.stock;
+      }
+
+      if (variantPool[o.variantId] >= o.quantity) {
+        tasks.push({
+          orderId: o.orderId,
+          variantId: o.variantId,
+          code: o.id,
+          newQuantity: variantPool[o.variantId] - o.quantity
+        });
+        variantPool[o.variantId] -= o.quantity;
+      }
+    }
+
+    if (tasks.length === 0) {
+      showToast("Not enough stock to fulfill any orders.", "info");
+      return;
+    }
+
+    if (!window.confirm(`Found ${tasks.length} orders eligible for auto-fulfillment (FIFO). System will deduct stock and approve them. Continue?`)) return;
+
+    setIsProcessing(true);
+    let count = 0;
+    try {
+      for (const t of tasks) {
+        await updateStockService(t.variantId, t.newQuantity);
+        await updateOrderStatus(t.orderId, "PROCESSING");
+        count++;
+      }
+      showToast(`Successfully auto-approved ${count} orders!`);
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      console.error(error);
+      showToast("Error occurred during batch processing.", "error");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -486,6 +579,18 @@ export default function AdminPreorders() {
             Track and process custom eyeglass production
           </p>
         </div>
+        <button
+          onClick={handleAutoFulfill}
+          disabled={isProcessing}
+          className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all disabled:opacity-50 active:scale-95"
+        >
+          {isProcessing ? (
+            <FiRefreshCw className="animate-spin" size={16} />
+          ) : (
+            <FiZap size={16} />
+          )}
+          Auto-Approve (FIFO)
+        </button>
       </div>
 
       {/* Table card */}
@@ -573,8 +678,8 @@ export default function AdminPreorders() {
                   <PreorderRow
                     key={o.id}
                     order={o}
-                    onView={setViewing}
                     checkStock={checkStockBeforeConfirm}
+                    onFastApprove={handleFastApprove}
                   />
                 ))
               )}

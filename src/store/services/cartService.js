@@ -1,5 +1,6 @@
 import {
   addToCartApi,
+  clearCartApi,
   deletesCartItemApi,
   getCartByUserApi,
   updateCartItemApi,
@@ -33,5 +34,10 @@ export const updateCartItemService = async (cartItemId, quantity) => {
 
 export const deleteCartItemService = async (cartItemId) => {
   const res = await deletesCartItemApi(cartItemId);
+  return res.data;
+};
+
+export const clearCartService = async () => {
+  const res = await clearCartApi();
   return res.data;
 };

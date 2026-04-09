@@ -3,24 +3,21 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   FiSearch,
   FiShoppingBag,
-  FiX,
-  FiLock,
   FiCheck,
   FiChevronDown,
   FiArrowRight,
-  FiSliders,
+  FiSliders, FiX
 } from "react-icons/fi";
 // API
 import { getAllProducts } from "../services/productService";
 
-const CATEGORIES = ["All", "frame", "lens", "accessory"];
+const CATEGORIES = ["All", "frame", "lens"];
 
 // Label hiển thị đẹp hơn cho từng category
 const CATEGORY_LABELS = {
   All: "All",
   frame: "Frame",
   lens: "Lens",
-  accessory: "Accessory",
 };
 
 const SORT_OPTIONS = [
@@ -29,93 +26,7 @@ const SORT_OPTIONS = [
   { label: "Price Max → Min", value: "desc" },
 ];
 
-/* LoginModal — identical to HomePage */
-function LoginModal({ isOpen, onClose, productName }) {
-  const navigate = useNavigate();
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-  
-  if (!isOpen) return null;
-  
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ animation: "fadeIn .2s ease" }}
-    >
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div
-        className="relative bg-white rounded-2xl w-full max-w-sm mx-4 overflow-hidden shadow-2xl"
-        style={{ animation: "slideUp .3s cubic-bezier(.34,1.56,.64,1)" }}
-      >
-        <div className="h-0.5 w-full bg-blue-600" />
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all"
-        >
-          <FiX size={16} />
-        </button>
-        <div className="px-8 pt-8 pb-10">
-          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6">
-            <FiLock size={18} className="text-blue-600" />
-          </div>
-          <div className="text-center mb-7">
-            <h3 className="text-lg font-semibold text-stone-900 mb-2 tracking-tight">
-              Login to continue
-            </h3>
-            <p className="text-sm text-stone-500 leading-relaxed">
-              {productName ? (
-                <>
-                  You need to log in to view product details.{" "}
-                  <span className="font-medium text-stone-700">
-                    "{productName}"
-                  </span>{" "}
-                </>
-              ) : (
-                "You need to log in to view product details."
-              )}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <button
-              onClick={() => {
-                onClose();
-                // FIX LỖI: Sử dụng window.location.pathname thay vì location trống
-                navigate("/login", { state: { from: window.location.pathname } });
-              }}
-              className="w-full py-3 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => {
-                onClose();
-                navigate("/register");
-              }}
-              className="w-full py-3 border border-stone-200 cursor-pointer hover:border-stone-300 hover:bg-stone-50 text-stone-700 font-medium rounded-xl transition-all text-sm tracking-wide active:scale-95"
-            >
-              Create Account
-            </button>
-          </div>
-          <p className="text-center text-xs text-stone-400 mt-5">
-            <button
-              onClick={onClose}
-              className="hover:text-stone-700 transition-colors cursor-pointer"
-            >
-              Continue browsing products
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 /* Toast — identical to HomePage */
 function Toast({ message, visible }) {
@@ -136,15 +47,14 @@ function ShopPage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
   const [sortOpen, setSortOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [pendingProduct, setPendingProduct] = useState(null);
+
   const [visible, setVisible] = useState({});
   const sortRef = useRef(null);
 
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
-  
+
   // CALL API
   useEffect(() => {
     const fetchProducts = async () => {
@@ -167,7 +77,7 @@ function ShopPage() {
             img: finalImg,
           };
         });
-        
+
         setProducts(mapped);
       } catch (err) {
         console.error("Fetch products error:", err);
@@ -203,22 +113,7 @@ function ShopPage() {
   const handleAddToCart = (e, product) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!localStorage.getItem("currentUser") && !localStorage.getItem("token")) {
-      setPendingProduct(product);
-      setModalOpen(true);
-      return;
-    }
-
     navigate(`/product/${product.id}`);
-  };
-
-  const handleProductClick = (e) => {
-    if (!localStorage.getItem("currentUser") && !localStorage.getItem("token")) {
-      e.preventDefault();
-      setPendingProduct(null);
-      setModalOpen(true);
-    }
   };
 
   const filtered = products
@@ -252,15 +147,6 @@ function ShopPage() {
             "-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif",
         }}
       >
-        <LoginModal
-          isOpen={modalOpen}
-          onClose={() => {
-            setModalOpen(false);
-            setPendingProduct(null);
-          }}
-          productName={pendingProduct?.name}
-        />
-
         {/* ── PAGE HEADER ── */}
         <div className="border-b border-stone-100">
           <div className="max-w-6xl mx-auto px-6 pt-14 pb-10">
@@ -310,11 +196,10 @@ function ShopPage() {
                 <button
                   key={cat}
                   onClick={() => setFilter(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                    filter === cat
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${filter === cat
                       ? "bg-blue-600 text-white border-blue-600"
                       : "bg-white border-stone-200 text-stone-600 hover:border-blue-400"
-                  }`}
+                    }`}
                 >
                   {CATEGORY_LABELS[cat]}
                 </button>
@@ -375,14 +260,13 @@ function ShopPage() {
                 >
                   <Link
                     to={`/product/${product.id}`}
-                    onClick={handleProductClick}
                   >
                     <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-stone-100 mb-3 border border-stone-100">
                       {/* FIX LỖI ẢNH: Sử dụng object-contain và bg-white để ảnh không bị méo */}
                       <img
                         src={product.img}
                         alt={product.name}
-                        className="w-full h-full object-contain bg-white p-2 group-hover:scale-105 transition-transform duration-700 ease-out"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
                       <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm text-stone-600 text-[10px] font-medium tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">
                         {product.brand}
