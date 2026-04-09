@@ -6,7 +6,7 @@ import {
   FiCheck,
   FiChevronDown,
   FiArrowRight,
-  FiSliders,
+  FiSliders, FiX
 } from "react-icons/fi";
 // API
 import { getAllProducts } from "../services/productService";
@@ -54,7 +54,7 @@ function ShopPage() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
-  
+
   // CALL API
   useEffect(() => {
     const fetchProducts = async () => {
@@ -77,7 +77,7 @@ function ShopPage() {
             img: finalImg,
           };
         });
-        
+
         setProducts(mapped);
       } catch (err) {
         console.error("Fetch products error:", err);
@@ -196,11 +196,10 @@ function ShopPage() {
                 <button
                   key={cat}
                   onClick={() => setFilter(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                    filter === cat
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${filter === cat
                       ? "bg-blue-600 text-white border-blue-600"
                       : "bg-white border-stone-200 text-stone-600 hover:border-blue-400"
-                  }`}
+                    }`}
                 >
                   {CATEGORY_LABELS[cat]}
                 </button>
