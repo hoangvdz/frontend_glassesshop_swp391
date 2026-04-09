@@ -5,6 +5,7 @@ import {
   declinePrescriptionApi,
   createOfflinePrescriptionApi,
 } from "../api/prescriptionApi";
+import { updateOrderStatus } from "../services/orderService";
 import { useToast } from "../../context/ToastContext";
 import {
   FiSearch,
@@ -769,6 +770,8 @@ function AdminPrescription() {
           submittedAt: rx.submittedAt || rx.createdAt || "N/A",
           status: statusValue,
           source: rx.source || "online",
+          orderId: rx.orderId,
+          orderCode: rx.orderCode,
           note: rx.note || (rx.orderCode ? `Rx included with order # ${rx.orderCode}` : ""),
           reviewNote: rx.adminNote || rx.reviewNote || "",
 
@@ -852,6 +855,17 @@ function AdminPrescription() {
       // Ưu tiên dùng prescriptionId nếu id là dạng chuỗi 'order-rx-...'
       const targetId = rx?.prescriptionId || id;
       await approvePrescriptionApi(targetId, note);
+
+      // Tự động chuyển trạng thái đơn hàng sang PROCESSING giống như luồng Pre-order
+      if (rx?.orderId) {
+        try {
+          await updateOrderStatus(rx.orderId, "PROCESSING");
+          showToast(`Order #${rx.orderCode || rx.orderId} moved to Processing!`);
+        } catch (orderErr) {
+          console.error("Auto-update status failed:", orderErr);
+        }
+      }
+
       setPrescriptions((prev) =>
         prev.map((item) =>
           item.id === id ? { ...item, status: "approved", reviewNote: note } : item,

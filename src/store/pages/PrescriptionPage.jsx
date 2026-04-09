@@ -14,6 +14,7 @@ import {
   saveUserPrescription,
   deleteUserPrescription
 } from "../services/userPrescriptionService";
+
 import { FiCheck } from "react-icons/fi";
 import { useToast } from "../../context/ToastContext";
 export default function PrescriptionPage() {
@@ -411,47 +412,13 @@ export default function PrescriptionPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
         <HeaderBar />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-8 flex-1 items-start mt-16">
-        <div className="space-y-4 sticky top-[148px]">
-          <FrameSummary product={product} variantId={variantIdFromUrl} />
-          {lensProduct && (
-            <div
-              className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm"
-              style={{ animation: "slideUp .4s ease" }}
-            >
-              <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">
-                Selected Lens
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-stone-50 rounded-lg overflow-hidden border border-stone-100">
-                  <img
-                    src={
-                      lensProduct.variants?.[0]?.imageUrl ||
-                      lensProduct.img ||
-                      "https://placehold.co/100"
-                    }
-                    className="w-full h-full object-contain p-2"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800 text-sm leading-tight">
-                    {lensProduct.name}
-                  </p>
-                  <p className="text-xs text-blue-600 font-bold mt-1">
-                    {(
-                      lensProduct.price ||
-                      lensProduct.variants?.[0]?.price ||
-                      0
-                    ).toLocaleString("vi-VN")}
-                    ₫
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() =>
-                  navigate(`/prescription/${id}?variantId=${variantIdFromUrl}`)
-                }
-                className="w-full mt-4 py-2 border border-stone-200 rounded-lg text-[11px] font-semibold text-stone-500 hover:bg-stone-50 transition-all active:scale-[0.98]"
+        <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-8 flex-1 items-start mt-16">
+          <div className="space-y-4 sticky top-[148px]">
+            <FrameSummary product={product} variantId={variantIdFromUrl} />
+            {lensProduct && (
+              <div
+                className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm"
+                style={{ animation: "slideUp .4s ease" }}
               >
                 <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-medium font-sans mb-3">
                   Selected Lens
@@ -657,38 +624,34 @@ export default function PrescriptionPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <ExtrasSection form={form} updateField={updateField} />
-                  </div>
+                  <div className="space-y-12">
+                    <PrescriptionTable
+                      form={form}
+                      errors={errors}
+                      updateEye={updateEye}
+                    />
 
                     <div className="h-px bg-stone-100" />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                      <PDSection
-                        form={form}
-                        errors={errors}
-                        updateField={updateField}
-                      />
-                      <ExtrasSection form={form} updateField={updateField} />
-                    </div>
 
-                    <div className="mt-12 flex items-center gap-4 p-5 bg-stone-50 rounded-2xl border border-stone-200/50">
-                      <input
-                        type="checkbox"
-                        id="saveRx"
-                        className="w-5 h-5 rounded-lg border-stone-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-all"
-                        checked={form.savePrescription}
-                        onChange={(e) =>
-                          setForm({ ...form, savePrescription: e.target.checked })
-                        }
-                      />
-                      <label
-                        htmlFor="saveRx"
-                        className="text-sm font-semibold text-stone-700 cursor-pointer select-none"
-                      >
-                        Save this prescription to my profile for future use
-                      </label>
-                    </div>
+                  </div>
+
+                  <div className="mt-12 flex items-center gap-4 p-5 bg-stone-50 rounded-2xl border border-stone-200/50">
+                    <input
+                      type="checkbox"
+                      id="saveRx"
+                      className="w-5 h-5 rounded-lg border-stone-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-all"
+                      checked={form.savePrescription}
+                      onChange={(e) =>
+                        setForm({ ...form, savePrescription: e.target.checked })
+                      }
+                    />
+                    <label
+                      htmlFor="saveRx"
+                      className="text-sm font-semibold text-stone-700 cursor-pointer select-none"
+                    >
+                      Save this prescription to my profile for future use
+                    </label>
                   </div>
                 </div>
 
@@ -697,7 +660,7 @@ export default function PrescriptionPage() {
             )}
           </div>
         </div>
-      </div>
+      </div >
     </>
   );
 }

@@ -41,9 +41,16 @@ const PrescriptionInfoBlock = ({ item }) => {
 
   return (
     <div className="mt-4 bg-blue-50/60 border border-blue-100 rounded-xl p-4 text-left max-w-lg">
-      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-1.5 font-sans">
-        <FiFileText size={14} /> Prescription Details
-      </p>
+      <div className="flex justify-between items-center mb-3">
+        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1.5 font-sans">
+          <FiFileText size={14} /> Prescription Details
+        </p>
+        {(rx.status === true) && (
+          <span className="text-[9px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-sm flex items-center gap-1">
+            <FiCheck size={10} /> Approved
+          </span>
+        )}
+      </div>
       
       <div className="grid grid-cols-5 gap-2 text-center text-[9px] font-bold text-blue-400 uppercase mb-2">
         <div className="text-left">Eye</div>

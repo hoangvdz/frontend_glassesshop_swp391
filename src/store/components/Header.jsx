@@ -261,8 +261,13 @@ function Header() {
                                   navigate(`/shipping-progress/${refId}`);
                                 } else if (type === "RETURN") {
                                   navigate("/my-orders");
-                                } else if (type === "PRESCRIPTION" && refId) {
-                                  navigate(`/prescription/${refId}`);
+                                } else if (type === "PRESCRIPTION") {
+                                  const targetId = n.orderId || n.referenceId;
+                                  if (targetId) {
+                                    navigate(`/shipping-progress/${targetId}`);
+                                  } else {
+                                    navigate("/my-orders");
+                                  }
                                 } else if (n.title?.toLowerCase().includes("order")) {
                                   // Fallback for legacy notifications or non-typed ones
                                   navigate("/my-orders");
