@@ -34,18 +34,7 @@ export default function PDSection({ form, errors, updateField }) {
           )}
         </div>
 
-        <div className="flex items-center gap-3 bg-stone-50 px-4 py-2.5 rounded-lg border border-stone-100 cursor-pointer hover:bg-stone-100/50 transition-colors">
-          <input
-            id="twoPD"
-            type="checkbox"
-            checked={form.twoPD}
-            onChange={(e) => updateField("twoPD", e.target.checked)}
-            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-stone-300 transition-all"
-          />
-          <label htmlFor="twoPD" className="text-sm font-medium text-stone-600 cursor-pointer select-none">
-            Dual PD (For offset eyes)
-          </label>
-        </div>
+
       </div>
 
       <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">

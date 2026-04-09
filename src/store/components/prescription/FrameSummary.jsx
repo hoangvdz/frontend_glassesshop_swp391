@@ -3,7 +3,7 @@ export default function FrameSummary({ product, variantId }) {
   const variant = product.variants?.find(v => String(v.variantId) === String(variantId)) || product.variants?.[0] || {};
 
   return (
-    <div className="bg-white rounded-lg p-6 h-fit sticky top-6 border border-gray-100 shadow-sm">
+    <div className="bg-white rounded-lg p-6 h-fit border border-gray-100 shadow-sm">
       <div className="relative aspect-video mb-6 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
         <img
           src={variant.imageUrl || "/frames/sample.png"}
