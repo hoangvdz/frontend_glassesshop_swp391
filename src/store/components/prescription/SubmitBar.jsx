@@ -1,6 +1,6 @@
 export default function SubmitBar({ onSubmit, disabled }) {
   return (
-    <div className="sticky bottom-0 bg-white/90 backdrop-blur-md border-t border-gray-100 px-8 py-5 flex justify-end items-center gap-6 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 px-8 py-5 flex justify-end items-center gap-6 z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
       <div className="hidden sm:block text-right">
         <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">Confirm Information</p>
         <p className="text-[11px] text-gray-500 italic max-w-xs leading-tight">Ensure the prescription parameters match your doctor's orders.</p>

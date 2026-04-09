@@ -59,7 +59,6 @@ const EMPTY_RX = {
     right: { sphere: "", cylinder: "", axis: "", add: "" },
     left: { sphere: "", cylinder: "", axis: "", add: "" },
   },
-  pd: "",
 };
 
 /* ── prescription row ── */
@@ -327,14 +326,7 @@ function DetailModal({ rx, onClose, onApprove, onDecline }) {
                 </table>
               </div>
 
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-gray-400">
-                  PD (Pupillary Distance):
-                </span>
-                <span className="font-mono font-semibold text-sm text-gray-700">
-                  {rx.pd} mm
-                </span>
-              </div>
+
             </div>
 
             {/* Note */}
@@ -465,7 +457,7 @@ function AddOfflineModal({ onClose, onAdd }) {
             form.eyes.left.add !== "" ? parseFloat(form.eyes.left.add) : null,
         },
       },
-      pd: form.pd !== "" ? parseFloat(form.pd) : null,
+
     });
     onClose();
   };
@@ -605,20 +597,7 @@ function AddOfflineModal({ onClose, onAdd }) {
                     ))}
                   </div>
                 ))}
-                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-200">
-                  <span className="text-xs text-gray-500 font-medium">
-                    PD (mm):
-                  </span>
-                  <input
-                    type="number"
-                    value={form.pd}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, pd: e.target.value }))
-                    }
-                    placeholder="62"
-                    className="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none text-center"
-                  />
-                </div>
+
               </div>
             </div>
 
@@ -792,7 +771,7 @@ function AdminPrescription() {
           source: rx.source || "online",
           note: rx.note || (rx.orderCode ? `Rx included with order # ${rx.orderCode}` : ""),
           reviewNote: rx.adminNote || rx.reviewNote || "",
-          pd: rx.pd || 0,
+
           imgUrl: rx.imgUrl || rx.imageUrl || "",
           eyes: rx.eyes || {
             right: { 

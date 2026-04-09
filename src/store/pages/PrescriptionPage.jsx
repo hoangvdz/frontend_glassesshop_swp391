@@ -3,7 +3,6 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import HeaderBar from "../components/prescription/Headerbar";
 import FrameSummary from "../components/prescription/FrameSummary";
 import PrescriptionTable from "../components/prescription/PrescriptionTable";
-import PDSection from "../components/prescription/PDSection";
 import ExtrasSection from "../components/prescription/ExtrasSection";
 import SubmitBar from "../components/prescription/SubmitBar";
 import { getProductByIdApi } from "../api/productApi";
@@ -44,11 +43,8 @@ export default function PrescriptionPage() {
 
 
   const [form, setForm] = useState({
-    right: { sph: "", cyl: "", axis: "", add: "", prism: "", base: "" },
-    left: { sph: "", cyl: "", axis: "", add: "", prism: "", base: "" },
-    pd: "",
-    twoPD: false,
-    prism: false,
+    right: { sph: "", cyl: "", axis: "", add: "" },
+    left: { sph: "", cyl: "", axis: "", add: "" },
     savePrescription: false,
   });
 
@@ -109,32 +105,19 @@ export default function PrescriptionPage() {
   const applySavedPrescription = (rx) => {
     console.log(rx);
 
-    const hasPrism =
-      rx.prismLeft != null ||
-      rx.prismRight != null ||
-      rx.baseLeft != null ||
-      rx.baseRight != null;
-
     setForm({
       right: {
         sph: format(rx.sphRight),
         cyl: format(rx.cylRight),
         axis: rx.axisRight ?? "",
         add: format(rx.addRight),
-        prism: format(rx.prismRight),
-        base: rx.baseRight ?? "",
       },
       left: {
         sph: format(rx.sphLeft),
         cyl: format(rx.cylLeft),
         axis: rx.axisLeft ?? "",
         add: format(rx.addLeft),
-        prism: format(rx.prismLeft),
-        base: rx.baseLeft ?? "",
       },
-      pd: rx.pd != null ? String(rx.pd) : "",
-      twoPD: false,
-      prism: hasPrism,
       savePrescription: false,
     });
 
@@ -188,7 +171,6 @@ export default function PrescriptionPage() {
     const e = {};
     if (!form.right.sph) e.rightSph = "Required";
     if (!form.left.sph) e.leftSph = "Required";
-    if (!form.pd) e.pd = "Required";
 
     if (form.right.cyl && !form.right.axis)
       e.rightAxis = "Axis is required if CYL is entered";
@@ -300,12 +282,6 @@ export default function PrescriptionPage() {
       axisRight: toInt(form.right.axis),
       addLeft: toNum(form.left.add),
       addRight: toNum(form.right.add),
-      pd: toNum(form.pd),
-      // Prism Fields
-      prismLeft: form.prism ? toNum(form.left.prism) : null,
-      prismRight: form.prism ? toNum(form.right.prism) : null,
-      baseLeft: form.prism ? form.left.base : null,
-      baseRight: form.prism ? form.right.base : null,
     };
 
     setSubmitting(true);
@@ -416,11 +392,11 @@ export default function PrescriptionPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
         <HeaderBar />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-6 flex-1">
-        <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[450px_1fr] gap-8 px-8 py-8 flex-1 items-start mt-16">
+        <div className="space-y-4 sticky top-[148px]">
           <FrameSummary product={product} variantId={variantIdFromUrl} />
           {lensProduct && (
             <div
@@ -641,11 +617,6 @@ export default function PrescriptionPage() {
                   <div className="h-px bg-stone-100" />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <PDSection
-                      form={form}
-                      errors={errors}
-                      updateField={updateField}
-                    />
                     <ExtrasSection form={form} updateField={updateField} />
                   </div>
 
