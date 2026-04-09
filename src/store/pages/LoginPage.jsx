@@ -4,6 +4,50 @@ import { getUserById, loginApi } from "../api/authApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { loginGmail } from "../services/authService";
+import { addToCartService } from "../services/cartService";
+
+/* ── helper: merge guest cart into backend ── */
+async function mergeGuestCart() {
+  try {
+    const raw = localStorage.getItem("cart");
+    if (!raw) return;
+    const guestCart = JSON.parse(raw);
+    if (!Array.isArray(guestCart) || guestCart.length === 0) return;
+
+    for (const item of guestCart) {
+      try {
+        // Read prescription from nested object OR flat fields (both sources)
+        const rx = item.prescription || {};
+
+        await addToCartService({
+          productId: item.productId || item.variant?.productId,
+          variantId: item.variantId || item.variant?.variantId,
+          quantity: item.quantity || 1,
+          isLens: item.isLens || false,
+          isPreorder: item.isPreOrder || item.isPreorder || false,
+          sphLeft: item.sphLeft ?? rx.sphLeft ?? null,
+          sphRight: item.sphRight ?? rx.sphRight ?? null,
+          cylLeft: item.cylLeft ?? rx.cylLeft ?? null,
+          cylRight: item.cylRight ?? rx.cylRight ?? null,
+          axisLeft: item.axisLeft ?? rx.axisLeft ?? null,
+          axisRight: item.axisRight ?? rx.axisRight ?? null,
+          addLeft: item.addLeft ?? rx.addLeft ?? null,
+          addRight: item.addRight ?? rx.addRight ?? null,
+          pd: item.pd ?? rx.pd ?? null,
+        });
+      } catch (err) {
+        console.warn("Failed to merge cart item:", err);
+      }
+    }
+
+    // Clear guest cart after successful merge
+    localStorage.removeItem("cart");
+    window.dispatchEvent(new Event("storage"));
+  } catch (e) {
+    console.warn("Guest cart merge failed:", e);
+  }
+}
+
 /* ── decorative eyewear SVG lines ── */
 function GlassesDecor({ className }) {
   return (
@@ -79,6 +123,10 @@ export default function LoginPage() {
       const getUserRaw = await getUserById(decoded.userId);
       localStorage.setItem("currentUser", JSON.stringify(getUserRaw));
       window.dispatchEvent(new Event("storage"));
+
+      // Merge guest cart into backend
+      await mergeGuestCart();
+
       if (decoded.role === "ADMIN" || decoded.role === "OPERATIONAL_STAFF")
         navigate("/dashboard");
       else navigate(from);
@@ -111,13 +159,16 @@ export default function LoginPage() {
       // 5. get user
       const res = await getUserById(userDecode.userId);
 
-      // ❗ fix chỗ này
       localStorage.setItem("currentUser", JSON.stringify(res));
 
       window.dispatchEvent(new Event("storage"));
+
+      // Merge guest cart into backend
+      await mergeGuestCart();
+
       navigate(from);
     } catch (err) {
-      console.error("Google login error:", err); // ❗ thêm log
+      console.error("Google login error:", err);
       setError("Google login failed.");
     }
   };

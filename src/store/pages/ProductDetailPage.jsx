@@ -205,7 +205,7 @@ function ProductDetailPage() {
 
   const selectedVariantUI = productData.variants?.[activeColor];
   let stockText = "", stockColor = "", isOutOfStock = false;
-  
+
   if (!selectedVariantUI || selectedVariantUI.stockQuantity === 0) {
     stockText = "Out of stock · Pre-order available";
     stockColor = "text-red-500";
@@ -225,7 +225,7 @@ function ProductDetailPage() {
     const selectedVariant = productData.variants[activeColor];
     if (productCat === "frame") {
       // Go directly to prescription page
-      navigate(`/prescription/${product.id}?variantId=${selectedVariant.variantId}`);
+      navigate(`/prescription/${product.id}?variantId=${selectedVariant.variantId}&quantity=${quantity}`);
       return;
     }
 
@@ -241,7 +241,7 @@ function ProductDetailPage() {
     } catch {
       cart = [];
     }
-    
+
     if (!selectedVariant) {
       showToast("Please select a color");
       return;
@@ -252,61 +252,74 @@ function ProductDetailPage() {
 
     const cartItem = {
       productId: productData.id || productData.productId,
+      variantId: selectedVariant.variantId,
       name: productData.name,
+      productName: productData.name,
       brand: productData.brand,
-      price: finalPrice, 
+      price: finalPrice,
+      unitPrice: finalPrice,
+      imageUrl: selectedVariant.imageUrl || productData.imageUrl || productData.img || "",
       quantity,
       variant: selectedVariant,
-      isPreOrder: isOutOfStock,
+      variantColor: selectedVariant.color,
+      variantSize: selectedVariant.frameSize,
+      isPreorder: isOutOfStock,
     };
-    
+
     const idx = cart.findIndex(
       (item) => item.variant?.variantId === selectedVariant.variantId,
     );
-    
+
     if (idx !== -1) cart[idx].quantity += quantity;
     else cart.push(cartItem);
-    
+
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("storage"));
-    
-    try {
-      // Prepare prescription payload if manual entry is selected
-      const isLens = lensOption === "manual";
 
-      const apiRes = await addToCartService({
-        productId: productData.id || productData.productId,
-        variantId: selectedVariant.variantId,
-        quantity,
-        isLens,
-        sphLeft: isLens ? parseFloat(prescription.eyes.left.sphere) || 0 : null,
-        sphRight: isLens ? parseFloat(prescription.eyes.right.sphere) || 0 : null,
-        cylLeft: isLens ? parseFloat(prescription.eyes.left.cylinder) || 0 : null,
-        cylRight: isLens ? parseFloat(prescription.eyes.right.cylinder) || 0 : null,
-        axisLeft: isLens ? parseInt(prescription.eyes.left.axis) || 0 : null,
-        axisRight: isLens ? parseInt(prescription.eyes.right.axis) || 0 : null,
-        addLeft: isLens ? parseFloat(prescription.eyes.left.add) || 0 : null,
-        addRight: isLens ? parseFloat(prescription.eyes.right.add) || 0 : null,
-        pd: isLens ? parseFloat(prescription.pd) || 0 : null,
-      });
+    // Only call backend API if user is logged in
+    const currentUser = localStorage.getItem("currentUser") || localStorage.getItem("token");
+    if (currentUser) {
+      try {
+        // Prepare prescription payload if manual entry is selected
+        const isLens = lensOption === "manual";
 
-      if (apiRes) {
-        // Save preorder state locally to bypass backend strict API validation rejection (500)
-        if (isOutOfStock) {
-          try {
-            const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
-            preorders[selectedVariant.variantId] = true;
-            localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
-          } catch (e) {
-            // ignore
+        const apiRes = await addToCartService({
+          productId: productData.id || productData.productId,
+          variantId: selectedVariant.variantId,
+          quantity,
+          isLens,
+          sphLeft: isLens ? parseFloat(prescription.eyes.left.sphere) || 0 : null,
+          sphRight: isLens ? parseFloat(prescription.eyes.right.sphere) || 0 : null,
+          cylLeft: isLens ? parseFloat(prescription.eyes.left.cylinder) || 0 : null,
+          cylRight: isLens ? parseFloat(prescription.eyes.right.cylinder) || 0 : null,
+          axisLeft: isLens ? parseInt(prescription.eyes.left.axis) || 0 : null,
+          axisRight: isLens ? parseInt(prescription.eyes.right.axis) || 0 : null,
+          addLeft: isLens ? parseFloat(prescription.eyes.left.add) || 0 : null,
+          addRight: isLens ? parseFloat(prescription.eyes.right.add) || 0 : null,
+          pd: isLens ? parseFloat(prescription.pd) || 0 : null,
+        });
+
+        if (apiRes) {
+          // Save preorder state locally to bypass backend strict API validation rejection (500)
+          if (isOutOfStock) {
+            try {
+              const preorders = JSON.parse(localStorage.getItem("frontend_preorders")) || {};
+              preorders[selectedVariant.variantId] = true;
+              localStorage.setItem("frontend_preorders", JSON.stringify(preorders));
+            } catch (e) {
+              // ignore
+            }
           }
+          showToast(`Added ${quantity} items to cart!`);
+        } else {
+          showToast("Error adding to cart");
         }
-        showToast(`Added ${quantity} items to cart!`);
-      } else {
-        showToast("Error adding to cart");
+      } catch {
+        showToast("Saved to local cart!");
       }
-    } catch {
-      showToast("Saved to local cart!");
+    } else {
+      // Guest user — already saved to localStorage above
+      showToast(`Added ${quantity} items to cart!`);
     }
   };
 
@@ -407,11 +420,10 @@ function ProductDetailPage() {
                     <button
                       key={i}
                       onClick={() => setActiveImg(i)}
-                      className={`w-[72px] h-[72px] flex-shrink-0 rounded-xl overflow-hidden border-2 bg-white p-1 transition-all ${
-                        i === activeImg
+                      className={`w-[72px] h-[72px] flex-shrink-0 rounded-xl overflow-hidden border-2 bg-white p-1 transition-all ${i === activeImg
                           ? "thumb-ring border-stone-900"
                           : "border-stone-100 hover:border-stone-300"
-                      }`}
+                        }`}
                     >
                       <img
                         src={img}
@@ -549,11 +561,10 @@ function ProductDetailPage() {
                 </button>
                 <button
                   onClick={() => setWished((p) => !p)}
-                  className={`w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all active:scale-95 duration-150 ${
-                    wished
+                  className={`w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all active:scale-95 duration-150 ${wished
                       ? "bg-red-50 border-red-300 text-red-500"
                       : "bg-white border-stone-200 text-stone-400 hover:border-stone-300 hover:text-stone-600"
-                  }`}
+                    }`}
                 >
                   <FiHeart size={16} className={wished ? "fill-red-500" : ""} />
                 </button>
@@ -774,16 +785,14 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
       {/* Option 1 — Manual */}
       <button
         onClick={() => setLensOption(lensOption === "manual" ? null : "manual")}
-        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
-          lensOption === "manual"
+        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${lensOption === "manual"
             ? "border-emerald-400 bg-emerald-50"
             : "border-stone-200 hover:border-emerald-300 bg-white"
-        }`}
+          }`}
       >
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-            lensOption === "manual" ? "bg-emerald-100" : "bg-stone-100"
-          }`}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${lensOption === "manual" ? "bg-emerald-100" : "bg-stone-100"
+            }`}
         >
           <FiEye
             size={17}
@@ -799,7 +808,7 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
           <p
             className={`text-[11px] mt-0.5 ${lensOption === "manual" ? "text-emerald-600" : "text-stone-400"}`}
           >
-            Enter SPH · CYL · AXIS · ADD · PD
+            Enter SPH · CYL · AXIS · ADD
           </p>
         </div>
         <FiChevronDown
@@ -869,25 +878,6 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
               </tbody>
             </table>
           </div>
-
-          {/* PD row */}
-          <div className="flex items-center gap-3 px-4 py-3 mt-1 border-t border-stone-100 bg-stone-50">
-            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider whitespace-nowrap">
-              PD (mm)
-            </span>
-            <input
-              type="number"
-              value={prescription.pd}
-              onChange={(e) =>
-                setPrescription((p) => ({ ...p, pd: e.target.value }))
-              }
-              placeholder="62"
-              className="w-16 border border-stone-200 rounded-lg px-2 py-1.5 text-sm font-mono text-center bg-white focus:border-emerald-400 focus:ring-1 focus:ring-emerald-200 focus:outline-none transition-all"
-            />
-            <span className="text-[11px] text-stone-400">
-              Pupillary Distance
-            </span>
-          </div>
         </div>
       )}
 
@@ -907,16 +897,14 @@ function LensPurchaseOptions({ lensOption, setLensOption, prescription, setPresc
             lensOption === "no-prescription" ? null : "no-prescription",
           )
         }
-        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
-          lensOption === "no-prescription"
+        className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${lensOption === "no-prescription"
             ? "border-blue-700 bg-blue-600 text-white"
             : "border-stone-200 hover:border-blue-400 bg-white"
-        }`}
+          }`}
       >
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-            lensOption === "no-prescription" ? "bg-white/10" : "bg-stone-100"
-          }`}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${lensOption === "no-prescription" ? "bg-white/10" : "bg-stone-100"
+            }`}
         >
           <FiCheck
             size={17}

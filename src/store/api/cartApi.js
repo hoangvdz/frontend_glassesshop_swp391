@@ -18,3 +18,17 @@ export const updateCartItemApi = (cartItemId, quantity) => {
 export const deletesCartItemApi = (cartItemId) => {
   return axiosClient.delete(`/cart/item/${cartItemId}`);
 };
+
+export const deleteCartItemService = async (cartItemId) => {
+  const res = await deletesCartItemApi(cartItemId);
+  return res.data;
+};
+
+export const clearCartService = async () => {
+  const res = await clearCartApi();
+  return res.data;
+};
+
+export const clearCartApi = () => {
+  return axiosClient.delete("/cart/clear");
+};

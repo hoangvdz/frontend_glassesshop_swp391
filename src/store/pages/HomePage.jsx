@@ -279,7 +279,7 @@ function HomePage() {
           <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-20 lg:px-28">
             <div key={current}>
               <p className="slide-in text-blue-300 tracking-[0.35em] uppercase text-[11px] font-medium mb-5">
-                Bộ sưu tập mới 2026
+                New Collection 2026
               </p>
               <h1 className="slide-in-d1 text-5xl md:text-7xl font-semibold text-white leading-[1.05] tracking-tight mb-2">
                 {sliderData[current].title}
