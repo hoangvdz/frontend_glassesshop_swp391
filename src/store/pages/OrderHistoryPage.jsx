@@ -494,19 +494,19 @@ function OrderHistoryPage() {
                                                         </span>
                                                         <span
                                                             className={`px-2 py-0.5 rounded-md font-bold border ${
-                                                                order.paymentStatus === "PAID" &&
+                                                                (order.paymentStatus === "PAID" || order.paymentStatus === "PAID_FULL") &&
                                                                 (order.paymentMethod === "COD" ||
                                                                     order.remainingPaymentStatus === "PAID")
                                                                     ? "text-emerald-600 bg-emerald-50 border-emerald-100"
                                                                     : "text-blue-600 bg-blue-50 border-blue-100"
                                                             }`}
                                                         >
-                                                            {order.paymentStatus === "PAID" &&
+                                                            {(order.paymentStatus === "PAID" || order.paymentStatus === "PAID_FULL") &&
                                                             (order.paymentMethod === "COD" ||
                                                                 order.remainingPaymentStatus === "PAID")
                                                                 ? "Settled"
                                                                 : `Remaining: ${(
-                                                                    order.total - order.depositAmount
+                                                                    (order.total || order.finalPrice) - order.depositAmount
                                                                 ).toLocaleString("en-US")}₫`}
                                                         </span>
                                                         {order.status === "PENDING" && (
@@ -675,7 +675,9 @@ function OrderHistoryPage() {
                                     <div className="flex flex-col gap-4 mt-6 pt-4 border-t border-stone-100">
                                         {order.depositType === "PARTIAL" &&
                                             order.status !== "PENDING" &&
+                                            statusInfo.code < 3 && // Not delivered/completed
                                             order.status !== "CANCELLED" &&
+                                            order.paymentStatus !== "PAID_FULL" &&
                                             (order.paymentStatus !== "PAID" ||
                                                 (order.paymentMethod !== "COD" &&
                                                     order.remainingPaymentStatus !== "PAID")) && (

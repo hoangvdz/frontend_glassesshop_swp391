@@ -322,8 +322,12 @@ export default function AdminPreorders() {
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
                 img: item.imageUrl || "https://placehold.co/50",
+                prescription: item.prescription, // ✅ Thêm thông tin prescription
               },
             ],
+
+            hasPrescription: !!item.prescription,
+            prescriptionStatus: item.prescription?.status,
 
             stock, // ✅ thêm vào đây
 
@@ -389,53 +393,96 @@ export default function AdminPreorders() {
   };
 
   const handleAutoFulfill = async () => {
-    // 1. Lọc đơn có thể xử lý (Pending, chưa hủy, có đủ stock)
-    const eligible = orders.filter(o => o.step === 0 && !o.cancelled && o.stock >= o.quantity);
-
-    if (eligible.length === 0) {
-      showToast("No pending orders with sufficient stock were found.", "info");
-      return;
-    }
-
-    // 2. Sắp xếp theo ngày (FIFO)
-    const sorted = [...eligible].sort((a, b) => a.rawDate - b.rawDate);
-
-    // 3. Gom nhóm theo variantId để tính toán tồn kho lũy kế
-    const variantPool = {}; // variantId -> currentAvailableStock
-    const tasks = [];
-
-    for (const o of sorted) {
-      if (variantPool[o.variantId] === undefined) {
-        variantPool[o.variantId] = o.stock;
-      }
-
-      if (variantPool[o.variantId] >= o.quantity) {
-        tasks.push({
+    // 1. Gom nhóm các item theo orderId để kiểm tra toàn bộ đơn hàng
+    const ordersMap = {};
+    orders.forEach(o => {
+      if (o.step !== 0 || o.cancelled) return;
+      if (!ordersMap[o.orderId]) {
+        ordersMap[o.orderId] = {
           orderId: o.orderId,
-          variantId: o.variantId,
           code: o.id,
-          newQuantity: variantPool[o.variantId] - o.quantity
-        });
-        variantPool[o.variantId] -= o.quantity;
+          rawDate: o.rawDate,
+          items: []
+        };
       }
-    }
+      ordersMap[o.orderId].items.push(o);
+    });
 
-    if (tasks.length === 0) {
-      showToast("Not enough stock to fulfill any orders.", "info");
+    // 2. Lọc ra các đơn hàng mà TẤT CẢ các món đều còn đủ hàng
+    const eligibleOrders = Object.values(ordersMap).filter(orderGroup => {
+      return orderGroup.items.every(item => {
+        const s = Number(item.stock) || 0;
+        const q = Number(item.quantity) || 0;
+        return s > 0 && s >= q;
+      });
+    });
+
+    if (eligibleOrders.length === 0) {
+      showToast("No orders were found where ALL items have sufficient stock.", "info");
       return;
     }
 
-    if (!window.confirm(`Found ${tasks.length} orders eligible for auto-fulfillment (FIFO). System will deduct stock and approve them. Continue?`)) return;
+    // 3. Sắp xếp đơn hàng theo ngày (FIFO)
+    const sortedOrders = [...eligibleOrders].sort((a, b) => a.rawDate - b.rawDate);
+
+    // 4. Tính toán tồn kho lũy kế để đảm bảo không duyệt quá số lượng thực tế
+    const variantPool = {}; // variantId -> currentAvailableStock
+    const approvedTasks = [];
+
+    for (const group of sortedOrders) {
+      let canFulfillTotal = true;
+      const groupTasks = [];
+
+      for (const item of group.items) {
+        if (variantPool[item.variantId] === undefined) {
+          variantPool[item.variantId] = Number(item.stock) || 0;
+        }
+
+        if (variantPool[item.variantId] >= item.quantity) {
+          groupTasks.push({
+            variantId: item.variantId,
+            newQuantity: variantPool[item.variantId] - item.quantity,
+            quantity: item.quantity
+          });
+        } else {
+          canFulfillTotal = false;
+          break;
+        }
+      }
+
+      if (canFulfillTotal) {
+        // Trừ kho tạm thời trong pool để đơn hàng sau không dùng lại số lượng này
+        groupTasks.forEach(gt => {
+          variantPool[gt.variantId] -= gt.quantity;
+        });
+        approvedTasks.push({
+          orderId: group.orderId,
+          code: group.code,
+          stockUpdates: groupTasks // Danh sách các item cần trừ kho
+        });
+      }
+    }
+
+    if (approvedTasks.length === 0) {
+      showToast("Not enough aggregate stock to fulfill any complete orders.", "info");
+      return;
+    }
+
+    if (!window.confirm(`Found ${approvedTasks.length} orders where ALL items are in stock. Approve them now?`)) return;
 
     setIsProcessing(true);
     let count = 0;
     try {
-      for (const t of tasks) {
-        await updateStockService(t.variantId, t.newQuantity);
+      for (const t of approvedTasks) {
+        // Trừ kho cho từng món trong đơn hàng
+        for (const update of t.stockUpdates) {
+          await updateStockService(update.variantId, update.newQuantity);
+        }
+        // Chuyển trạng thái đơn hàng
         await updateOrderStatus(t.orderId, "PROCESSING");
         count++;
       }
-      showToast(`Successfully auto-approved ${count} orders!`);
+      showToast(`Successfully auto-approved ${count} complete orders!`);
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error(error);
@@ -868,28 +915,40 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                     <p className="text-xs text-gray-500 font-medium">
                       Color: {order.color} | Qty: {it.quantity}
                     </p>
-                    <div className="mt-1">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.stock >= it.quantity ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
-                      >
-                        In stock: {order.stock}
-                      </span>
+                    <div className="mt-1 flex items-center gap-2">
+                       <span
+                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.stock >= it.quantity ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                       >
+                         In stock: {order.stock}
+                       </span>
+                       {it.prescription && (
+                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${it.prescription.status ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-purple-50 text-purple-700 border border-purple-200 animate-pulse"}`}>
+                           {it.prescription.status ? <FiCheckCircle size={10} /> : <FiAlertCircle size={10} />}
+                           {it.prescription.status ? "Prescription confirmed" : "Prescription Pending"}
+                         </span>
+                       )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
-              <FiAlertCircle
-                className="text-amber-500 flex-shrink-0 mt-0.5"
-                size={16}
-              />
-              <div className="text-xs text-amber-800 leading-relaxed">
-                <strong>Note:</strong> When you click "Approve Order", the
-                system will move the order status to <strong>Packaging</strong>.
-                This order can then be further processed in the Order Management
-                page.
+            <div className={`rounded-xl p-4 flex gap-3 ${order.hasPrescription && !order.prescriptionStatus ? "bg-purple-50 border-purple-200" : "bg-amber-50 border-amber-200"}`}>
+              {order.hasPrescription && !order.prescriptionStatus ? (
+                <FiFileText className="text-purple-500 flex-shrink-0 mt-0.5" size={16} />
+              ) : (
+                <FiAlertCircle className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
+              )}
+              <div className={`text-xs leading-relaxed ${order.hasPrescription && !order.prescriptionStatus ? "text-purple-800" : "text-stone-800"}`}>
+                {order.hasPrescription && !order.prescriptionStatus ? (
+                  <>
+                    <strong>Prescription required:</strong> This order contains items with vision details that are <strong>not confirmed</strong>. You can approve the order but please ensure the prescription is reviewed before shipping.
+                  </>
+                ) : (
+                  <>
+                    <strong>Note:</strong> When you click "Approve Order", the system will move the order status to <strong>Packaging</strong>. This order can then be further processed in the Order Management page.
+                  </>
+                )}
               </div>
             </div>
           </div>

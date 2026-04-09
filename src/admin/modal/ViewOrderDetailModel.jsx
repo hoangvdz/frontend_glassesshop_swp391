@@ -488,13 +488,13 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                             <div className="mt-2 flex items-center gap-1.5 text-emerald-600">
                               <FiCheckCircle size={12} />
                               <span className="text-[10px] font-bold uppercase">
-                                Toa thuốc đã được duyệt
+                                Prescription Approved
                               </span>
                             </div>
                           )}
                           {rx.adminNote && (
                             <div className="mt-2 text-[11px] text-gray-500 italic bg-white/50 p-2 rounded-lg border border-gray-100">
-                              Ghi chú: {rx.adminNote}
+                              Note: {rx.adminNote}
                             </div>
                           )}
                         </div>
@@ -582,7 +582,7 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                     </div>
 
                     {/* Pre-order Payment Info */}
-                    {order.depositType === "PARTIAL" && (
+                    {order.depositType === "PARTIAL" && currentStatus !== "completed" && currentStatus !== "delivered" && (
                       <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
                         <div className="flex justify-between text-[11px]">
                           <span className="text-stone-400">Deposit Paid ({order.depositPaymentMethod || order.paymentMethod})</span>
@@ -594,12 +594,12 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                           <span className="text-xs font-bold text-blue-700">Remaining Balance</span>
                           <div className="flex flex-col items-end">
                             <span className="font-extrabold text-blue-600">
-                              {(order.finalPrice - order.depositAmount).toLocaleString("vi-VN")} ₫
+                              {order.paymentStatus === "PAID_FULL" || (order.remainingPaymentStatus === "PAID") ? "0" : (order.finalPrice - order.depositAmount).toLocaleString("vi-VN")} ₫
                             </span>
-                            {order.paymentMethod === "COD" || (order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) ? (
-                              <span className="text-[10px] text-green-600 font-bold uppercase">COD (Collect on Delivery)</span>
-                            ) : order.remainingPaymentStatus === "PAID" || order.paymentStatus === "PAID_FULL" ? (
+                            {order.paymentStatus === "PAID_FULL" || order.remainingPaymentStatus === "PAID" ? (
                               <span className="text-[10px] text-emerald-600 font-bold uppercase">Settled</span>
+                            ) : order.paymentMethod === "COD" || (order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12) ? (
+                              <span className="text-[10px] text-green-600 font-bold uppercase">COD (Collect on Delivery)</span>
                             ) : (
                               <span className="text-[10px] text-amber-600 font-bold uppercase animate-pulse">Waiting for customer ({Math.max(0, 12 - Math.floor((new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60)))}h left)</span>
                             )}
@@ -726,6 +726,24 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                                 <FiAlertCircle size={12} /> Waiting for customer payment (12h window)
                               </div>
                             )}
+
+                            {!allPrescriptionsApproved && (
+                              <div className="flex flex-col gap-2 p-2 bg-purple-50 border border-purple-200 rounded-lg shadow-sm border-dashed">
+                                <div className="flex items-center gap-1.5 text-purple-700 text-[10px] font-bold uppercase transition-all">
+                                  <FiAlertCircle size={12} className="animate-pulse" /> Prescription Details Unconfirmed
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    onClose();
+                                    navigate("/dashboard/prescriptions");
+                                  }}
+                                  className="text-[10px] font-bold text-purple-600 underline text-left hover:text-purple-800 transition-colors"
+                                >
+                                  Go to Prescription Management
+                                </button>
+                              </div>
+                            )}
+
                             <div className="flex gap-2">
                               <button
                                 onClick={() => {
@@ -736,27 +754,33 @@ function ViewOrderDetailsModal({ order, onClose, onUpdateStatus }) {
                                                           order.paymentStatus === "PAID_FULL" ||
                                                           is12hPassed;
                                   
-                                  const canShip = order.depositType !== "PARTIAL" || isBalanceSettled;
+                                  const canShip = (order.depositType !== "PARTIAL" || isBalanceSettled) && allPrescriptionsApproved;
                                   
                                   if (!canShip) {
-                                    alert(`Cannot ship yet. Premium pre-order requires full payment. Customer has ${Math.max(0, 12 - Math.floor(hoursPassed))}h left to pay via VNPay before it defaults to COD.`);
+                                    if (!allPrescriptionsApproved) {
+                                      alert("Cannot ship yet. All prescriptions in this order must be approved first.");
+                                    } else {
+                                      alert(`Cannot ship yet. Premium pre-order requires full payment. Customer has ${Math.max(0, 12 - Math.floor(hoursPassed))}h left to pay via VNPay before it defaults to COD.`);
+                                    }
                                     return;
                                   }
                                   onUpdateStatus("shipped");
                                 }}
                                 disabled={
-                                  order.depositType === "PARTIAL" && 
-                                  order.paymentMethod !== "COD" && 
-                                  order.remainingPaymentStatus !== "PAID" && 
-                                  order.paymentStatus !== "PAID_FULL" &&
-                                  !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12)
-                                }
-                                className={`flex-1 text-white text-xs font-semibold py-2 rounded-lg transition-colors ${
                                   (order.depositType === "PARTIAL" && 
                                    order.paymentMethod !== "COD" && 
                                    order.remainingPaymentStatus !== "PAID" && 
                                    order.paymentStatus !== "PAID_FULL" &&
-                                   !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12))
+                                   !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12)) ||
+                                  !allPrescriptionsApproved
+                                }
+                                className={`flex-1 text-white text-xs font-semibold py-2 rounded-lg transition-colors ${
+                                  ((order.depositType === "PARTIAL" && 
+                                   order.paymentMethod !== "COD" && 
+                                   order.remainingPaymentStatus !== "PAID" && 
+                                   order.paymentStatus !== "PAID_FULL" &&
+                                   !(order.stockReadyAt && (new Date() - new Date(order.stockReadyAt)) / (1000 * 60 * 60) > 12)) ||
+                                   !allPrescriptionsApproved)
                                    ? "bg-gray-400 cursor-not-allowed"
                                    : "bg-blue-600 hover:bg-blue-700"
                                 }`}

@@ -154,7 +154,7 @@ function ShippingProgressPage() {
 
   const handlePayBalance = async (method) => {
     if (method === "VNPAY") {
-      const remaining = order.total - (order.depositAmount || 0);
+      const remaining = (order.finalTotal || 0) - (order.depositAmount || 0);
       try {
         const url = await createVNPayPayment(remaining, order.orderId || order.id);
         window.location.href = url;
@@ -354,7 +354,7 @@ function ShippingProgressPage() {
 
                     {/* Pre-order Balance Payment UI */}
                     {order.depositType === "PARTIAL" && 
-                     order.status >= 1 && 
+                     order.status >= 1 && order.status < 3 && 
                      order.rawStatus !== "Cancelled" && 
                      order.remainingPaymentStatus !== "PAID" &&
                      order.paymentStatus !== "PAID_FULL" &&

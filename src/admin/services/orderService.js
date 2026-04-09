@@ -40,6 +40,8 @@ export const getAllOrders = async () => {
       depositAmount: o.depositAmount,
       depositType: o.depositType,
       status: mapStatus(o.status),
+      paymentStatus: o.paymentStatus,
+      remainingPaymentStatus: o.paymentStatus === "PAID_FULL" ? "PAID" : "UNPAID",
       createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
       rawDate: o.orderDate ? new Date(o.orderDate) : new Date(),
       orderItems: items,
@@ -66,6 +68,8 @@ export const getOrderById = async (id) => {
     total: o.finalPrice ?? o.totalPrice ?? 0,
     status: mapStatus(o.status),
     createdAt: new Date(o.orderDate || Date.now()).toLocaleDateString("vi-VN"),
+    paymentStatus: o.paymentStatus,
+    remainingPaymentStatus: o.paymentStatus === "PAID_FULL" ? "PAID" : "UNPAID",
     orderItems: items,
     hasPrescription,
   };

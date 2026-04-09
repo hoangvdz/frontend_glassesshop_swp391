@@ -702,8 +702,8 @@ function AdminPrescription() {
       try {
         const { getAllOrders } = await import("../services/orderService");
         const allOrders = await getAllOrders();
-        // Lọc các đơn đang chờ xử lý có toa thuốc
-        const pendingOrders = allOrders.filter(o => o.status === "pending" && o.hasPrescription);
+        // Lọc các đơn đang chờ xử lý hoặc đang đóng gói có toa thuốc
+        const pendingOrders = allOrders.filter(o => (o.status === "pending" || o.status === "processing") && o.hasPrescription);
         
         pendingOrders.forEach(order => {
           order.orderItems?.forEach((item, idx) => {
