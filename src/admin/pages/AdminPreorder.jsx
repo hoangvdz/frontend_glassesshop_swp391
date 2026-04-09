@@ -130,7 +130,7 @@ function MiniPipeline({ currentStep, cancelled }) {
    PREORDER ROW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const PreorderRow = memo(({ order, checkStock, onFastApprove }) => {
-  const canApprove = !order.cancelled && order.step === 0 && order.stock >= (order.quantity || 0);
+  const canApprove = !order.cancelled && order.step === 0 && order.allInStock;
 
   return (
     <tr className="hover:bg-gray-50/50 group text-gray-700">
@@ -172,9 +172,9 @@ const PreorderRow = memo(({ order, checkStock, onFastApprove }) => {
       </td>
 
       <td className="px-5 py-4">
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${order.stock >= order.quantity ? "bg-green-50 text-green-700 border-green-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${order.stock >= order.quantity ? "bg-green-500" : "bg-purple-400"}`} />
-          In Stock: {order.stock}
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${order.allInStock ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${order.allInStock ? "bg-green-500" : "bg-amber-400"}`} />
+          {order.allInStock ? "Ready to ship" : "Waiting for items"}
         </span>
       </td>
 
@@ -286,57 +286,68 @@ export default function AdminPreorders() {
     const fetchPreorder = async () => {
       const data = await getPreorderItemsService();
 
-      const mapped = await Promise.all(
-        data.map(async (item) => {
-          let stock = 0;
-
-          try {
-            const stockData = await getStockVariantById(item.variantId);
-            stock = stockData?.stockQuantity ?? 0;
-          } catch (e) {
-            console.error("Stock error:", e);
-          }
-
-          return {
-            productId: item.productId,
-            variantId: item.variantId,
-            color: item.color,
-            quantity: item.quantity, // ✅ đưa ra ngoài để tiện dùng
-            id: item.orderCode,
+      // 1. Group items by orderId
+      const groups = {};
+      data.forEach(item => {
+        if (!groups[item.orderId]) {
+          groups[item.orderId] = {
             orderId: item.orderId,
-
-            customer: item.customerName,
-            email: item.customerEmail,
+            orderCode: item.orderCode,
+            orderStatus: item.orderStatus,
+            customerName: item.customerName,
+            customerEmail: item.customerEmail,
             phone: item.phone,
             address: item.address,
-
-            createdAt: new Date(item.createdAt).toLocaleDateString("en-US"),
-            rawDate: new Date(item.createdAt),
+            createdAt: item.createdAt,
             note: item.note,
+            items: []
+          };
+        }
+        groups[item.orderId].items.push(item);
+      });
 
-            avatar: `https://ui-avatars.com/api/?name=${item.customerName}`,
+      // 2. Map groups to row objects with accurate stock per item
+      const mapped = await Promise.all(
+        Object.values(groups).map(async (group) => {
+          const itemsWithStock = await Promise.all(
+            group.items.map(async (it) => {
+              let currentStock = 0;
+              try {
+                const stockData = await getStockVariantById(it.variantId);
+                currentStock = stockData?.stockQuantity ?? 0;
+              } catch (e) {
+                console.error("Stock error:", e);
+              }
+              return {
+                ...it,
+                name: it.productName || "Product",
+                img: it.imageUrl || "https://placehold.co/50",
+                currentStock
+              };
+            })
+          );
 
-            items: [
-              {
-                name: item.productName || "Product",
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                img: item.imageUrl || "https://placehold.co/50",
-                prescription: item.prescription, // ✅ Thêm thông tin prescription
-              },
-            ],
+          // Determine overall stock status for the order
+          const allInStock = itemsWithStock.every(it => it.currentStock >= it.quantity);
 
-            hasPrescription: !!item.prescription,
-            prescriptionStatus: item.prescription?.status,
-
-            stock, // ✅ thêm vào đây
-
-            step: mapStatusToStep(item.orderStatus),
-            cancelled: item.orderStatus === "CANCELLED",
-
+          return {
+            id: group.orderCode,
+            orderId: group.orderId,
+            customer: group.customerName,
+            email: group.customerEmail,
+            phone: group.phone,
+            address: group.address,
+            createdAt: new Date(group.createdAt).toLocaleDateString("en-US"),
+            rawDate: new Date(group.createdAt),
+            note: group.note,
+            avatar: `https://ui-avatars.com/api/?name=${group.customerName}`,
+            items: itemsWithStock,
+            allInStock,
+            step: mapStatusToStep(group.orderStatus),
+            cancelled: group.orderStatus === "CANCELLED",
             history: [],
           };
-        }),
+        })
       );
 
       setOrders(mapped.sort((a, b) => a.rawDate - b.rawDate));
@@ -347,22 +358,22 @@ export default function AdminPreorders() {
 
   const checkStockBeforeConfirm = async (order) => {
     try {
-      const stockData = await getStockVariantById(order.variantId);
-      const currentStock = stockData?.stockQuantity ?? 0;
+      // Re-verify stock for all items
+      const itemsWithFreshStock = await Promise.all(
+        order.items.map(async (it) => {
+          const res = await getStockVariantById(it.variantId);
+          return { ...it, freshStock: res?.stockQuantity ?? 0 };
+        })
+      );
 
-      if (currentStock <= 0) {
-        showToast("Product out of stock!", "error");
+      const missingItems = itemsWithFreshStock.filter(it => it.freshStock < it.quantity);
+
+      if (missingItems.length > 0) {
+        showToast(`Missing stock for: ${missingItems.map(it => it.name).join(", ")}`, "error");
         return;
       }
 
-      const qtyOrder = order.quantity || 0;
-
-      if (currentStock < qtyOrder || qtyOrder === 0) {
-        showToast("Not enough stock!", "error");
-        return;
-      }
-
-      showToast("Inventory available for this order.");
+      showToast("All items are available in inventory.");
       setViewing(order);
     } catch (error) {
       console.error(error);
@@ -371,18 +382,21 @@ export default function AdminPreorders() {
   };
 
   const handleFastApprove = async (order) => {
-    if (!window.confirm(`Approve order ${order.id} immediately?`)) return;
+    if (!window.confirm(`Approve order ${order.id} and deduct stock for all items immediately?`)) return;
     setIsProcessing(true);
     try {
-      const variantRes = await getStockVariantById(order.variantId);
-      const currentStock = variantRes?.stockQuantity ?? variantRes?.quantity ?? 0;
-      const qtyToDeduct = Number(order.quantity) || 0;
-      const newQuantity = Math.max(0, currentStock - qtyToDeduct);
+      // 1. Deduct stock for all items
+      for (const item of order.items) {
+        const variantRes = await getStockVariantById(item.variantId);
+        const currentStock = variantRes?.stockQuantity ?? variantRes?.quantity ?? 0;
+        const newQuantity = Math.max(0, currentStock - (item.quantity || 0));
+        await updateStockService(item.variantId, newQuantity);
+      }
 
-      await updateStockService(order.variantId, newQuantity);
+      // 2. Update order status
       await updateOrderStatus(order.orderId, "PROCESSING");
 
-      showToast(`Order ${order.id} approved!`);
+      showToast(`Order ${order.id} approved and items deducted!`);
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error(error);
@@ -393,49 +407,28 @@ export default function AdminPreorders() {
   };
 
   const handleAutoFulfill = async () => {
-    // 1. Gom nhóm các item theo orderId để kiểm tra toàn bộ đơn hàng
-    const ordersMap = {};
-    orders.forEach(o => {
-      if (o.step !== 0 || o.cancelled) return;
-      if (!ordersMap[o.orderId]) {
-        ordersMap[o.orderId] = {
-          orderId: o.orderId,
-          code: o.id,
-          rawDate: o.rawDate,
-          items: []
-        };
-      }
-      ordersMap[o.orderId].items.push(o);
-    });
+    // 1. Filter out orders that are ready and pending
+    const candidates = orders.filter(o => o.step === 0 && !o.cancelled && o.allInStock);
 
-    // 2. Lọc ra các đơn hàng mà TẤT CẢ các món đều còn đủ hàng
-    const eligibleOrders = Object.values(ordersMap).filter(orderGroup => {
-      return orderGroup.items.every(item => {
-        const s = Number(item.stock) || 0;
-        const q = Number(item.quantity) || 0;
-        return s > 0 && s >= q;
-      });
-    });
-
-    if (eligibleOrders.length === 0) {
-      showToast("No orders were found where ALL items have sufficient stock.", "info");
+    if (candidates.length === 0) {
+      showToast("No additional orders found where ALL items are currently in stock.", "info");
       return;
     }
 
-    // 3. Sắp xếp đơn hàng theo ngày (FIFO)
-    const sortedOrders = [...eligibleOrders].sort((a, b) => a.rawDate - b.rawDate);
+    // 2. FIFO sorting already done in state, but let's be sure
+    const sorted = [...candidates].sort((a, b) => a.rawDate - b.rawDate);
 
-    // 4. Tính toán tồn kho lũy kế để đảm bảo không duyệt quá số lượng thực tế
-    const variantPool = {}; // variantId -> currentAvailableStock
+    // 3. Deduction Pool to prevent over-approving limited stock
+    const variantPool = {}; 
     const approvedTasks = [];
 
-    for (const group of sortedOrders) {
+    for (const order of sorted) {
       let canFulfillTotal = true;
       const groupTasks = [];
 
-      for (const item of group.items) {
+      for (const item of order.items) {
         if (variantPool[item.variantId] === undefined) {
-          variantPool[item.variantId] = Number(item.stock) || 0;
+          variantPool[item.variantId] = Number(item.currentStock) || 0;
         }
 
         if (variantPool[item.variantId] >= item.quantity) {
@@ -451,42 +444,39 @@ export default function AdminPreorders() {
       }
 
       if (canFulfillTotal) {
-        // Trừ kho tạm thời trong pool để đơn hàng sau không dùng lại số lượng này
         groupTasks.forEach(gt => {
           variantPool[gt.variantId] -= gt.quantity;
         });
         approvedTasks.push({
-          orderId: group.orderId,
-          code: group.code,
-          stockUpdates: groupTasks // Danh sách các item cần trừ kho
+          orderId: order.orderId,
+          code: order.id,
+          stockUpdates: groupTasks
         });
       }
     }
 
     if (approvedTasks.length === 0) {
-      showToast("Not enough aggregate stock to fulfill any complete orders.", "info");
+      showToast("Aggregate inventory limit reached. No more complete orders can be fulfilled.", "info");
       return;
     }
 
-    if (!window.confirm(`Found ${approvedTasks.length} orders where ALL items are in stock. Approve them now?`)) return;
+    if (!window.confirm(`Found ${approvedTasks.length} orders that can be fully satisfied. Approve them all now?`)) return;
 
     setIsProcessing(true);
     let count = 0;
     try {
       for (const t of approvedTasks) {
-        // Trừ kho cho từng món trong đơn hàng
         for (const update of t.stockUpdates) {
           await updateStockService(update.variantId, update.newQuantity);
         }
-        // Chuyển trạng thái đơn hàng
         await updateOrderStatus(t.orderId, "PROCESSING");
         count++;
       }
-      showToast(`Successfully auto-approved ${count} complete orders!`);
+      showToast(`Batch approved ${count} orders!`);
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error(error);
-      showToast("Error occurred during batch processing.", "error");
+      showToast("Batch processing interrupted by an error.", "error");
     } finally {
       setIsProcessing(false);
     }
@@ -811,24 +801,21 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
   const { showToast } = useToast();
 
   const handleApprove = async () => {
-    if (!window.confirm("Approve this pre-order and deduct inventory?")) return;
+    if (!window.confirm("Approve this pre-order and deduct inventory for ALL items?")) return;
     setLoading(true);
     try {
-      // 1. Lấy kho mới nhất từ server
-      const variantRes = await getStockVariantById(order.variantId);
-      const currentStock = variantRes?.stockQuantity ?? variantRes?.quantity ?? 0;
+      // 1. Deduct stock for each item sequentially
+      for (const item of order.items) {
+        const variantRes = await getStockVariantById(item.variantId);
+        const currentStock = variantRes?.stockQuantity ?? variantRes?.quantity ?? 0;
+        const qtyToDeduct = Number(item.quantity) || 0;
+        const newQuantity = Math.max(0, currentStock - qtyToDeduct);
+        
+        console.log(`Deducting ${qtyToDeduct} from ${currentStock} for ${item.name}. New stock: ${newQuantity}`);
+        await updateStockService(item.variantId, newQuantity);
+      }
 
-      // ✅ Tính toán số lượng kho thực tế sau khi trừ
-      const qtyToDeduct = Number(order.quantity) || 0;
-      const newQuantity = Math.max(0, currentStock - qtyToDeduct);
-
-      console.log(`Deducting ${qtyToDeduct} from ${currentStock}. New stock: ${newQuantity}`);
-
-      // 2. Cập nhật kho mới - CHỈ CẦN variantId và newQuantity
-      await updateStockService(order.variantId, newQuantity);
-
-
-      // 4. Cập nhật trạng thái đơn hàng sang PROCESSING
+      // 2. Update order status to PROCESSING
       await updateOrderStatus(order.orderId, "PROCESSING");
 
       showToast(`Processed successfully!`);
@@ -917,9 +904,9 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
                     </p>
                     <div className="mt-1 flex items-center gap-2">
                        <span
-                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.stock >= it.quantity ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${it.currentStock >= it.quantity ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
                        >
-                         In stock: {order.stock}
+                         In stock: {it.currentStock}
                        </span>
                        {it.prescription && (
                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${it.prescription.status ? "bg-indigo-50 text-indigo-700 border border-indigo-200" : "bg-purple-50 text-purple-700 border border-purple-200 animate-pulse"}`}>
@@ -965,15 +952,15 @@ function DetailModal({ order, onClose, onAdvance, onCancel }) {
             {order.step === 0 && !order.cancelled && (
               <button
                 disabled={
-                  loading || order.stock < (order.quantity || 0)
+                  loading || !order.allInStock
                 }
                 onClick={handleApprove}
                 className="flex-[2] px-4 py-2.5 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all disabled:opacity-50 disabled:grayscale"
               >
                 {loading
                   ? "PROCESSING..."
-                  : order.stock < (order.quantity || 0)
-                    ? "NOT ENOUGH STOCK"
+                  : !order.allInStock
+                    ? "WAITING FOR ALL ITEMS"
                     : "APPROVE ORDER"}
               </button>
             )}
