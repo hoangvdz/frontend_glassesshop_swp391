@@ -47,10 +47,14 @@ function ReturnRequestManagementPage() {
                 String(item.requestId || "").includes(q) ||
                 String(item.orderId || "").includes(q) ||
                 String(item.orderItemId || "").includes(q) ||
+                (item.productName || "").toLowerCase().includes(q) ||
+                (item.variantColor || "").toLowerCase().includes(q) ||
+                (item.variantSize || "").toLowerCase().includes(q) ||
                 (item.reason || "").toLowerCase().includes(q) ||
                 (item.description || "").toLowerCase().includes(q) ||
                 (item.rejectionReason || "").toLowerCase().includes(q) ||
                 (item.requestType || "").toLowerCase().includes(q) ||
+                String(item.returnQuantity || "").includes(q) ||
                 String(item.replacementOrderItemId || "").includes(q);
 
             return matchStatus && matchKeyword;
@@ -239,6 +243,7 @@ function ReturnRequestManagementPage() {
                                 <th className="px-4">Request ID</th>
                                 <th className="px-4">Order ID</th>
                                 <th className="px-4">Order Item ID</th>
+                                <th className="px-4">Product</th>
                                 <th className="px-4">Type</th>
                                 <th className="px-4">Reason</th>
                                 <th className="px-4">Description</th>
@@ -267,6 +272,40 @@ function ReturnRequestManagementPage() {
 
                                     <td className="px-4 py-4 text-stone-700">
                                         #{item.orderItemId ?? "N/A"}
+                                    </td>
+
+                                    <td className="px-4 py-4 min-w-[320px]">
+                                        <div className="flex gap-3">
+                                            <img
+                                                src={item.productImageUrl || "https://via.placeholder.com/64x64?text=No+Image"}
+                                                alt={item.productName || "Product"}
+                                                className="w-16 h-16 rounded-lg object-cover border border-stone-200 bg-white"
+                                            />
+
+                                            <div className="min-w-0">
+                                                <div className="font-semibold text-stone-900 line-clamp-2">
+                                                    {item.productName || "Unknown product"}
+                                                </div>
+
+                                                <div className="text-sm text-stone-500 mt-1">
+                                                    Color: {item.variantColor || "-"} | Size: {item.variantSize || "-"}
+                                                </div>
+
+                                                <div className="text-sm text-stone-500">
+                                                    Bought: {item.purchasedQuantity ?? "-"} | Return qty: {item.returnQuantity ?? "-"}
+                                                </div>
+
+                                                <div className="text-sm text-stone-500">
+                                                    Price: {formatCurrency(item.unitPrice)}
+                                                </div>
+
+                                                {(item.lensType || item.lensCoating) && (
+                                                    <div className="text-sm text-stone-500">
+                                                        Lens: {item.lensType || "-"} | Coating: {item.lensCoating || "-"}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </td>
 
                                     <td className="px-4 py-4 text-stone-700">
@@ -312,7 +351,13 @@ function ReturnRequestManagementPage() {
         </div>
     );
 }
-
+function formatCurrency(value) {
+    if (value == null) return "-";
+    return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+    }).format(value);
+}
 function StatusBadge({ status }) {
     const map = {
         PENDING: "bg-yellow-100 text-yellow-700",
